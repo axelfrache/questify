@@ -209,7 +209,7 @@ jobs:
     name: Deploy to Harbor
     runs-on: ubuntu-latest
     needs: [build-backend, build-frontend]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && secrets.HARBOR_URL != ''
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: production
     steps:
       - name: Download backend image
