@@ -18,7 +18,7 @@ jobs:
   # FORMAT STAGE
   # ============================================
   format-backend:
-    name: 🎨 Format Backend
+    name: Format Backend
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -38,7 +38,7 @@ jobs:
         run: ./mvnw spotless:check
 
   format-frontend:
-    name: 🎨 Format Frontend
+    name: Format Frontend
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -67,7 +67,7 @@ jobs:
   # TEST STAGE
   # ============================================
   test-backend:
-    name: 🧪 Test Backend
+    name: Test Backend
     runs-on: ubuntu-latest
     needs: format-backend
     defaults:
@@ -96,7 +96,7 @@ jobs:
           retention-days: 7
 
   test-frontend:
-    name: 🧪 Test Frontend
+    name: Test Frontend
     runs-on: ubuntu-latest
     needs: format-frontend
     defaults:
@@ -123,7 +123,7 @@ jobs:
   # BUILD STAGE
   # ============================================
   build-backend:
-    name: 🏗️ Build Backend Image
+    name: Build Backend Image
     runs-on: ubuntu-latest
     needs: test-backend
     steps:
@@ -163,7 +163,7 @@ jobs:
           retention-days: 1
 
   build-frontend:
-    name: 🏗️ Build Frontend Image
+    name: Build Frontend Image
     runs-on: ubuntu-latest
     needs: test-frontend
     steps:
@@ -206,7 +206,7 @@ jobs:
   # DEPLOY STAGE
   # ============================================
   deploy:
-    name: 🚀 Deploy to Harbor
+    name: Deploy to Harbor
     runs-on: ubuntu-latest
     needs: [build-backend, build-frontend]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -243,7 +243,7 @@ jobs:
 
       - name: Summary
         run: |
-          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Backend Image:** \`${{ env.BACKEND_IMAGE }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Frontend Image:** \`${{ env.FRONTEND_IMAGE }}\`" >> $GITHUB_STEP_SUMMARY
