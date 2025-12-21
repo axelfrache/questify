@@ -18,6 +18,7 @@ public class ProgressionService {
 
   private final UserRepository userRepository;
   private final LevelConfig levelConfig;
+  private final AchievementService achievementService;
 
   @Transactional
   public ProgressionResult awardXp(UUID userId, int amount, String source) {
@@ -41,6 +42,8 @@ public class ProgressionService {
       log.info("User {} leveled up: {} -> {} ({})", userId, previousLevel, currentLevel, source);
     if (gradeChanged)
       log.info("User {} grade changed: {} -> {} ({})", userId, previousGrade, currentGrade, source);
+
+    achievementService.checkAndUnlock(userId);
 
     return new ProgressionResult(
         previousXp,
