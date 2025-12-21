@@ -23,21 +23,17 @@ public class Quest {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
-  @NotBlank
-  @Size(min = 1, max = 200)
-  @Column(nullable = false)
+  @NotBlank @Size(min = 1, max = 200) @Column(nullable = false)
   private String title;
 
-  @Size(max = 2000)
-  private String description;
+  @Size(max = 2000) private String description;
 
   @Enumerated(EnumType.STRING)
   @Builder.Default
   @Column(nullable = false)
   private Difficulty difficulty = Difficulty.MEDIUM;
 
-  @Positive
-  @Builder.Default
+  @Positive @Builder.Default
   @Column(nullable = false)
   private int baseXpReward = 50;
 

@@ -1,5 +1,15 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Inbox, Sun, Calendar, Map, TrendingUp, BarChart3, Trophy, User, Settings } from 'lucide-react';
+import {
+  Inbox,
+  Sun,
+  Calendar,
+  Map,
+  TrendingUp,
+  BarChart3,
+  Trophy,
+  User,
+  Settings,
+} from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -98,4 +108,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-

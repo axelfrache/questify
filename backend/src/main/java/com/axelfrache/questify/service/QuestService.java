@@ -32,19 +32,21 @@ public class QuestService {
   public QuestResponse create(UUID userId, CreateQuestRequest request) {
     var user = findUserOrThrow(userId);
 
-    var category = request.categoryId() != null
-        ? categoryRepository.findById(request.categoryId()).orElse(null)
-        : null;
+    var category =
+        request.categoryId() != null
+            ? categoryRepository.findById(request.categoryId()).orElse(null)
+            : null;
 
-    var quest = Quest.builder()
-        .title(request.title())
-        .description(request.description())
-        .difficulty(request.difficulty() != null ? request.difficulty() : Difficulty.MEDIUM)
-        .baseXpReward(request.baseXpReward() != null ? request.baseXpReward() : 50)
-        .dueDate(request.dueDate())
-        .category(category)
-        .user(user)
-        .build();
+    var quest =
+        Quest.builder()
+            .title(request.title())
+            .description(request.description())
+            .difficulty(request.difficulty() != null ? request.difficulty() : Difficulty.MEDIUM)
+            .baseXpReward(request.baseXpReward() != null ? request.baseXpReward() : 50)
+            .dueDate(request.dueDate())
+            .category(category)
+            .user(user)
+            .build();
 
     questRepository.save(quest);
     return toResponse(quest);
@@ -57,14 +59,10 @@ public class QuestService {
     if (quest.getStatus() != QuestStatus.PENDING)
       throw new IllegalStateException("Cannot update a completed or cancelled quest");
 
-    if (request.title() != null)
-      quest.setTitle(request.title());
-    if (request.description() != null)
-      quest.setDescription(request.description());
-    if (request.difficulty() != null)
-      quest.setDifficulty(request.difficulty());
-    if (request.dueDate() != null)
-      quest.setDueDate(request.dueDate());
+    if (request.title() != null) quest.setTitle(request.title());
+    if (request.description() != null) quest.setDescription(request.description());
+    if (request.difficulty() != null) quest.setDifficulty(request.difficulty());
+    if (request.dueDate() != null) quest.setDueDate(request.dueDate());
 
     questRepository.save(quest);
     return toResponse(quest);
@@ -96,34 +94,38 @@ public class QuestService {
 
     Instant nextDueDate = null;
     if (quest.getDueDate() != null) {
-      nextDueDate = switch (quest.getRecurrenceInterval()) {
-        case DAILY -> quest.getDueDate().plus(1, java.time.temporal.ChronoUnit.DAYS);
-        case WEEKLY -> quest.getDueDate().plus(7, java.time.temporal.ChronoUnit.DAYS);
-        case MONTHLY -> quest.getDueDate().plus(30, java.time.temporal.ChronoUnit.DAYS); // Approximate
-        default -> null;
-      };
+      nextDueDate =
+          switch (quest.getRecurrenceInterval()) {
+            case DAILY -> quest.getDueDate().plus(1, java.time.temporal.ChronoUnit.DAYS);
+            case WEEKLY -> quest.getDueDate().plus(7, java.time.temporal.ChronoUnit.DAYS);
+            case MONTHLY ->
+                quest.getDueDate().plus(30, java.time.temporal.ChronoUnit.DAYS); // Approximate
+            default -> null;
+          };
     } else {
       // If no due date, base it on completion time? Or just don't set a due date?
       // Let's base it on now.
-      nextDueDate = switch (quest.getRecurrenceInterval()) {
-        case DAILY -> Instant.now().plus(1, java.time.temporal.ChronoUnit.DAYS);
-        case WEEKLY -> Instant.now().plus(7, java.time.temporal.ChronoUnit.DAYS);
-        case MONTHLY -> Instant.now().plus(30, java.time.temporal.ChronoUnit.DAYS);
-        default -> null;
-      };
+      nextDueDate =
+          switch (quest.getRecurrenceInterval()) {
+            case DAILY -> Instant.now().plus(1, java.time.temporal.ChronoUnit.DAYS);
+            case WEEKLY -> Instant.now().plus(7, java.time.temporal.ChronoUnit.DAYS);
+            case MONTHLY -> Instant.now().plus(30, java.time.temporal.ChronoUnit.DAYS);
+            default -> null;
+          };
     }
 
-    var nextQuest = Quest.builder()
-        .title(quest.getTitle())
-        .description(quest.getDescription())
-        .difficulty(quest.getDifficulty())
-        .baseXpReward(quest.getBaseXpReward())
-        .dueDate(nextDueDate)
-        .recurrenceInterval(quest.getRecurrenceInterval())
-        .category(quest.getCategory())
-        .user(quest.getUser())
-        .status(QuestStatus.PENDING)
-        .build();
+    var nextQuest =
+        Quest.builder()
+            .title(quest.getTitle())
+            .description(quest.getDescription())
+            .difficulty(quest.getDifficulty())
+            .baseXpReward(quest.getBaseXpReward())
+            .dueDate(nextDueDate)
+            .recurrenceInterval(quest.getRecurrenceInterval())
+            .category(quest.getCategory())
+            .user(quest.getUser())
+            .status(QuestStatus.PENDING)
+            .build();
 
     questRepository.save(nextQuest);
   }
@@ -181,14 +183,15 @@ public class QuestService {
   }
 
   private QuestResponse toResponse(Quest quest) {
-    var categoryResponse = quest.getCategory() != null
-        ? new CategoryResponse(
-            quest.getCategory().getId(),
-            quest.getCategory().getName(),
-            quest.getCategory().getIcon(),
-            quest.getCategory().getColor(),
-            quest.getCategory().isGlobal())
-        : null;
+    var categoryResponse =
+        quest.getCategory() != null
+            ? new CategoryResponse(
+                quest.getCategory().getId(),
+                quest.getCategory().getName(),
+                quest.getCategory().getIcon(),
+                quest.getCategory().getColor(),
+                quest.getCategory().isGlobal())
+            : null;
 
     return new QuestResponse(
         quest.getId(),

@@ -4,7 +4,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { LoginPage } from '@/pages/LoginPage';
 import { SignupPage } from '@/pages/SignupPage';
 import { AppLayout } from '@/layouts/AppLayout';
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from '@/components/theme-provider';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import {
   InboxPage,
