@@ -34,7 +34,13 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
 
-            <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+            <Route
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
               <Route path="/" element={<Navigate to="/inbox" replace />} />
               <Route path="/inbox" element={<InboxPage />} />
               <Route path="/today" element={<TodayPage />} />

@@ -28,12 +28,15 @@ export function TodayPage() {
     );
   }
 
-  const todaysQuests = quests?.filter((q) => {
-    if (!q.dueDate) return false;
-    return isSameDay(parseISO(q.dueDate), today);
-  }) || [];
+  const todaysQuests =
+    quests?.filter((q) => {
+      if (!q.dueDate) return false;
+      return isSameDay(parseISO(q.dueDate), today);
+    }) || [];
 
-  const plannedQuests = todaysQuests.filter((q) => q.status !== 'COMPLETED' && q.status !== 'CANCELLED');
+  const plannedQuests = todaysQuests.filter(
+    (q) => q.status !== 'COMPLETED' && q.status !== 'CANCELLED'
+  );
   const completedQuests = todaysQuests.filter((q) => q.status === 'COMPLETED');
 
   // Calculate XP progress (mock goal of 100 XP for now)
@@ -72,7 +75,12 @@ export function TodayPage() {
         ) : (
           <div className="space-y-3">
             {plannedQuests.map((quest) => (
-              <QuestItem key={quest.id} quest={quest} onComplete={handleComplete} isPending={completeQuestMutation.isPending} />
+              <QuestItem
+                key={quest.id}
+                quest={quest}
+                onComplete={handleComplete}
+                isPending={completeQuestMutation.isPending}
+              />
             ))}
           </div>
         )}
@@ -84,7 +92,12 @@ export function TodayPage() {
           <h2 className="text-lg font-semibold text-muted-foreground">Completed</h2>
           <div className="space-y-3">
             {completedQuests.map((quest) => (
-              <QuestItem key={quest.id} quest={quest} onComplete={handleComplete} isPending={completeQuestMutation.isPending} />
+              <QuestItem
+                key={quest.id}
+                quest={quest}
+                onComplete={handleComplete}
+                isPending={completeQuestMutation.isPending}
+              />
             ))}
           </div>
         </div>

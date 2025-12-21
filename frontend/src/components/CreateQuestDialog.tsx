@@ -38,7 +38,13 @@ export function CreateQuestDialog({ open, onOpenChange, onQuestCreated }: Create
     const createQuestMutation = useCreateQuest();
     const [date, setDate] = useState<Date>();
 
-    const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<CreateQuestRequest>();
+    const {
+        register,
+        handleSubmit,
+        reset,
+        setValue,
+        formState: { errors },
+    } = useForm<CreateQuestRequest>();
 
     useEffect(() => {
         if (open) {
@@ -94,7 +100,10 @@ export function CreateQuestDialog({ open, onOpenChange, onQuestCreated }: Create
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="difficulty">Difficulty</Label>
-                            <Select onValueChange={(value) => setValue('difficulty', value as any)} defaultValue="EASY">
+                            <Select
+                                onValueChange={(value) => setValue('difficulty', value as CreateQuestRequest['difficulty'])}
+                                defaultValue="EASY"
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select difficulty" />
                                 </SelectTrigger>
@@ -130,23 +139,18 @@ export function CreateQuestDialog({ open, onOpenChange, onQuestCreated }: Create
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
-                                    variant={"outline"}
+                                    variant={'outline'}
                                     className={cn(
-                                        "w-full justify-start text-left font-normal",
-                                        !date && "text-muted-foreground"
+                                        'w-full justify-start text-left font-normal',
+                                        !date && 'text-muted-foreground'
                                     )}
                                 >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                                    {date ? format(date, 'PPP') : <span>Pick a date</span>}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                    mode="single"
-                                    selected={date}
-                                    onSelect={setDate}
-                                    initialFocus
-                                />
+                                <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
                             </PopoverContent>
                         </Popover>
                     </div>

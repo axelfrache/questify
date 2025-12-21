@@ -30,8 +30,7 @@ export function AppLayout() {
           <CreateQuestDialog
             open={isCreateDialogOpen}
             onOpenChange={setIsCreateDialogOpen}
-            onQuestCreated={() => {
-            }}
+            onQuestCreated={() => {}}
           />
         </div>
       </div>

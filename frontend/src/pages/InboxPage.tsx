@@ -26,20 +26,19 @@ export function InboxPage() {
     setSearchParams({});
   };
 
-  const activeQuests = quests
-    ?.filter((q) => q.status !== 'CANCELLED')
-    .sort((a, b) => {
-      if (a.status === b.status) return 0;
-      return a.status === 'PENDING' ? -1 : 1;
-    }) || [];
+  const activeQuests =
+    quests
+      ?.filter((q) => q.status !== 'CANCELLED')
+      .sort((a, b) => {
+        if (a.status === b.status) return 0;
+        return a.status === 'PENDING' ? -1 : 1;
+      }) || [];
 
   const filteredQuests = categoryId
     ? activeQuests.filter((q) => q.category?.id === categoryId)
     : activeQuests;
 
-  const currentCategory = categoryId
-    ? categories?.find((c) => c.id === categoryId)
-    : null;
+  const currentCategory = categoryId ? categories?.find((c) => c.id === categoryId) : null;
 
   if (isLoadingQuests || isLoadingCategories) {
     return (
@@ -93,8 +92,9 @@ export function InboxPage() {
                 />
                 <div className="flex-1">
                   <CardTitle
-                    className={`text-base ${quest.status === 'COMPLETED' ? 'line-through text-muted-foreground' : ''
-                      }`}
+                    className={`text-base ${
+                      quest.status === 'COMPLETED' ? 'line-through text-muted-foreground' : ''
+                    }`}
                   >
                     {quest.title}
                   </CardTitle>
