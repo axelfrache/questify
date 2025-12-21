@@ -85,6 +85,7 @@ export function useCreateCategory() {
     mutationFn: (data: CreateCategoryRequest) => api.createCategory(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['stats', 'categories'] });
     },
   });
 }

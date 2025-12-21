@@ -1,12 +1,17 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCategoryStats } from '@/hooks/use-api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { CreateCategoryDialog } from '@/components/CreateCategoryDialog';
 
 export function RegionsPage() {
   const navigate = useNavigate();
   const { data: categoryStats, isLoading } = useCategoryStats();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -23,9 +28,15 @@ export function RegionsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Regions</h1>
-        <p className="text-muted-foreground">Your quest categories.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Regions</h1>
+          <p className="text-muted-foreground">Your quest categories.</p>
+        </div>
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Region
+        </Button>
       </div>
 
       {!categoryStats || categoryStats.length === 0 ? (
@@ -57,7 +68,9 @@ export function RegionsPage() {
                   </div>
                   <Progress value={stats.progress} className="h-2" />
                   <p className="text-xs text-muted-foreground pt-1">
-                    {stats.completedQuests} / {stats.totalQuests} Quests
+                    {stats.totalQuests === 0
+                      ? 'No quests yet'
+                      : `${stats.completedQuests} / ${stats.totalQuests} Quests`}
                   </p>
                 </div>
               </CardContent>
@@ -65,6 +78,8 @@ export function RegionsPage() {
           ))}
         </div>
       )}
+
+      <CreateCategoryDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
     </div>
   );
 }

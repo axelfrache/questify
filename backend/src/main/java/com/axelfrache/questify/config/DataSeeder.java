@@ -20,18 +20,18 @@ public class DataSeeder implements CommandLineRunner {
 
   @Override
   public void run(String... args) {
-    seedGlobalCategories();
+    // seedGlobalCategories(); // Disabled as per user request
     seedAchievements();
   }
 
-  private void seedGlobalCategories() {
-    createGlobalCategoryIfNotExists("Health & Fitness", "🏃", "#10B981");
-    createGlobalCategoryIfNotExists("Work & Career", "💼", "#3B82F6");
-    createGlobalCategoryIfNotExists("Learning & Growth", "📚", "#8B5CF6");
-    createGlobalCategoryIfNotExists("Home & Life", "🏠", "#F59E0B");
-    createGlobalCategoryIfNotExists("Finance", "💰", "#059669");
-    createGlobalCategoryIfNotExists("Hobbies", "🎨", "#EC4899");
-  }
+  // private void seedGlobalCategories() {
+  // createGlobalCategoryIfNotExists("Health & Fitness", "🏃", "#10B981");
+  // createGlobalCategoryIfNotExists("Work & Career", "💼", "#3B82F6");
+  // createGlobalCategoryIfNotExists("Learning & Growth", "📚", "#8B5CF6");
+  // createGlobalCategoryIfNotExists("Home & Life", "🏠", "#F59E0B");
+  // createGlobalCategoryIfNotExists("Finance", "💰", "#059669");
+  // createGlobalCategoryIfNotExists("Hobbies", "🎨", "#EC4899");
+  // }
 
   private void seedAchievements() {
     createGeneralAchievement("FIRST_STEP", "The First Step", "Complete your first quest", "🎯", 1);

@@ -1,0 +1,120 @@
+import { useForm } from 'react-hook-form';
+import { type CreateCategoryRequest } from '@/lib/api';
+import { useCreateCategory } from '@/hooks/use-api';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Loader2 } from 'lucide-react';
+
+interface CreateCategoryDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+const PRESET_COLORS = [
+  { name: 'Emerald', value: '#10B981' },
+  { name: 'Blue', value: '#3B82F6' },
+  { name: 'Violet', value: '#8B5CF6' },
+  { name: 'Amber', value: '#F59E0B' },
+  { name: 'Green', value: '#059669' },
+  { name: 'Pink', value: '#EC4899' },
+  { name: 'Red', value: '#EF4444' },
+  { name: 'Cyan', value: '#06B6D4' },
+];
+
+export function CreateCategoryDialog({ open, onOpenChange }: CreateCategoryDialogProps) {
+  const createCategoryMutation = useCreateCategory();
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<CreateCategoryRequest>();
+
+  const onSubmit = (data: CreateCategoryRequest) => {
+    createCategoryMutation.mutate(data, {
+      onSuccess: () => {
+        onOpenChange(false);
+        reset();
+      },
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Create New Region</DialogTitle>
+          <DialogDescription>Add a new region to organize your quests.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="name">Name</Label>
+            <Input
+              id="name"
+              placeholder="e.g., Work, Health"
+              {...register('name', { required: true })}
+            />
+            {errors.name && <span className="text-xs text-destructive">Name is required</span>}
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="icon">Icon (Emoji)</Label>
+              <Input id="icon" placeholder="e.g., 🏃" {...register('icon', { required: true })} />
+              {errors.icon && <span className="text-xs text-destructive">Icon is required</span>}
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="color">Color</Label>
+              <Select
+                onValueChange={(value) => setValue('color', value)}
+                defaultValue={PRESET_COLORS[0].value}
+              >
+                <SelectTrigger id="color">
+                  <SelectValue placeholder="Select color" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRESET_COLORS.map((color) => (
+                    <SelectItem key={color.value} value={color.value}>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-4 h-4 rounded-full"
+                          style={{ backgroundColor: color.value }}
+                        />
+                        {color.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={createCategoryMutation.isPending}>
+              {createCategoryMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Create Region
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
