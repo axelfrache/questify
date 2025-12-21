@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@/contexts/AuthContext';
 import { LoginPage } from '@/pages/LoginPage';
 import { SignupPage } from '@/pages/SignupPage';
 import { AppLayout } from '@/layouts/AppLayout';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 import {
   InboxPage,
   TodayPage,
@@ -14,82 +16,39 @@ import {
   ProfilePage,
 } from '@/pages';
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) {
-    return <div className="flex min-h-svh items-center justify-center">Loading...</div>;
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
-}
-
-function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) {
-    return <div className="flex min-h-svh items-center justify-center">Loading...</div>;
-  }
-
-  if (isAuthenticated) {
-    return <Navigate to="/inbox" replace />;
-  }
-
-  return <>{children}</>;
-}
-
-function AppRoutes() {
-  return (
-    <Routes>
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <LoginPage />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/signup"
-        element={
-          <PublicRoute>
-            <SignupPage />
-          </PublicRoute>
-        }
-      />
-      <Route
-        element={
-          <ProtectedRoute>
-            <AppLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route path="/inbox" element={<InboxPage />} />
-        <Route path="/today" element={<TodayPage />} />
-        <Route path="/upcoming" element={<UpcomingPage />} />
-        <Route path="/regions" element={<RegionsPage />} />
-        <Route path="/progress" element={<ProgressPage />} />
-        <Route path="/stats" element={<StatsPage />} />
-        <Route path="/milestones" element={<MilestonesPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-      </Route>
-      <Route path="/" element={<Navigate to="/inbox" replace />} />
-      <Route path="/dashboard" element={<Navigate to="/inbox" replace />} />
-    </Routes>
-  );
-}
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      retry: 1,
+    },
+  },
+});
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+
+            <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+              <Route path="/" element={<Navigate to="/inbox" replace />} />
+              <Route path="/inbox" element={<InboxPage />} />
+              <Route path="/today" element={<TodayPage />} />
+              <Route path="/upcoming" element={<UpcomingPage />} />
+              <Route path="/regions" element={<RegionsPage />} />
+              <Route path="/progress" element={<ProgressPage />} />
+              <Route path="/stats" element={<StatsPage />} />
+              <Route path="/milestones" element={<MilestonesPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+            </Route>
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
 

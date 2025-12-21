@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { api, type QuestResponse, type CategoryResponse } from '@/lib/api';
+import { useQuests, useCategories, useCompleteQuest } from '@/hooks/use-api';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,64 +13,35 @@ export function InboxPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryId = searchParams.get('category');
 
-  const [quests, setQuests] = useState<QuestResponse[]>([]);
-  const [categories, setCategories] = useState<CategoryResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: quests, isLoading: isLoadingQuests, error: errorQuests } = useQuests();
+  const { data: categories, isLoading: isLoadingCategories } = useCategories();
+  const completeQuestMutation = useCompleteQuest();
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const [questsData, categoriesData] = await Promise.all([
-        api.getQuests(),
-        api.getCategories(),
-      ]);
-
-      // Filter out cancelled quests and sort by status (PENDING first)
-      const activeQuests = questsData
-        .filter((q) => q.status !== 'CANCELLED')
-        .sort((a, b) => {
-          if (a.status === b.status) return 0;
-          return a.status === 'PENDING' ? -1 : 1;
-        });
-
-      setQuests(activeQuests);
-      setCategories(categoriesData);
-    } catch (err) {
-      setError('Failed to load data');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleComplete = async (id: string, currentStatus: string) => {
+  const handleComplete = (id: string, currentStatus: string) => {
     if (currentStatus === 'COMPLETED') return;
-
-    try {
-      // Optimistic update
-      setQuests((prev) => prev.map((q) => (q.id === id ? { ...q, status: 'COMPLETED' } : q)));
-
-      await api.completeQuest(id);
-    } catch (err) {
-      console.error('Failed to complete quest', err);
-      // Revert on failure
-      fetchData();
-    }
+    completeQuestMutation.mutate(id);
   };
 
   const clearFilter = () => {
     setSearchParams({});
   };
 
-  const filteredQuests = categoryId ? quests.filter((q) => q.category?.id === categoryId) : quests;
+  const activeQuests = quests
+    ?.filter((q) => q.status !== 'CANCELLED')
+    .sort((a, b) => {
+      if (a.status === b.status) return 0;
+      return a.status === 'PENDING' ? -1 : 1;
+    }) || [];
 
-  const currentCategory = categoryId ? categories.find((c) => c.id === categoryId) : null;
+  const filteredQuests = categoryId
+    ? activeQuests.filter((q) => q.category?.id === categoryId)
+    : activeQuests;
 
-  if (isLoading) {
+  const currentCategory = categoryId
+    ? categories?.find((c) => c.id === categoryId)
+    : null;
+
+  if (isLoadingQuests || isLoadingCategories) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
@@ -99,9 +69,9 @@ export function InboxPage() {
         )}
       </div>
 
-      {error && (
+      {errorQuests && (
         <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>Failed to load quests</AlertDescription>
         </Alert>
       )}
 
@@ -119,13 +89,12 @@ export function InboxPage() {
                 <Checkbox
                   checked={quest.status === 'COMPLETED'}
                   onCheckedChange={() => handleComplete(quest.id, quest.status)}
-                  disabled={quest.status === 'COMPLETED'}
+                  disabled={quest.status === 'COMPLETED' || completeQuestMutation.isPending}
                 />
                 <div className="flex-1">
                   <CardTitle
-                    className={`text-base ${
-                      quest.status === 'COMPLETED' ? 'line-through text-muted-foreground' : ''
-                    }`}
+                    className={`text-base ${quest.status === 'COMPLETED' ? 'line-through text-muted-foreground' : ''
+                      }`}
                   >
                     {quest.title}
                   </CardTitle>

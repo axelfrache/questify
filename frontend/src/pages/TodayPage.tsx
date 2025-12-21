@@ -1,65 +1,40 @@
-import { useEffect, useState } from 'react';
-import { api, type DailyStats, type QuestResponse } from '@/lib/api';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
+import { useDailyStats, useQuests, useCompleteQuest } from '@/hooks/use-api';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
-import { isSameDay, parseISO } from 'date-fns';
+import { isSameDay, parseISO, startOfDay } from 'date-fns';
+import { type QuestResponse } from '@/lib/api';
 
 export function TodayPage() {
-  const [stats, setStats] = useState<DailyStats | null>(null);
-  const [quests, setQuests] = useState<QuestResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: stats, isLoading: isLoadingStats } = useDailyStats();
+  const { data: quests, isLoading: isLoadingQuests } = useQuests();
+  const completeQuestMutation = useCompleteQuest();
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const [statsData, questsData] = await Promise.all([api.getDailyStats(), api.getQuests()]);
-      setStats(statsData);
-
-      // Filter for today's quests
-      const today = new Date();
-      const todaysQuests = questsData.filter((q) => {
-        if (!q.dueDate) return false;
-        return isSameDay(parseISO(q.dueDate), today);
-      });
-
-      setQuests(todaysQuests);
-    } catch (err) {
-      console.error('Failed to load today data', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleComplete = async (id: string, currentStatus: string) => {
+  const handleComplete = (id: string, currentStatus: string) => {
     if (currentStatus === 'COMPLETED') return;
-    try {
-      await api.completeQuest(id);
-      fetchData(); // Refresh to update stats and list
-    } catch (err) {
-      console.error('Failed to complete quest', err);
-    }
+    completeQuestMutation.mutate(id);
   };
 
-  if (isLoading) {
+  const today = startOfDay(new Date());
+
+  if (isLoadingStats || isLoadingQuests) {
     return (
       <div className="space-y-6">
+        <Skeleton className="h-24 w-full" />
         <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-4 w-full" />
-        <div className="space-y-4">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-        </div>
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
       </div>
     );
   }
 
-  const plannedQuests = quests.filter((q) => q.status !== 'COMPLETED' && q.status !== 'CANCELLED');
-  const completedQuests = quests.filter((q) => q.status === 'COMPLETED');
+  const todaysQuests = quests?.filter((q) => {
+    if (!q.dueDate) return false;
+    return isSameDay(parseISO(q.dueDate), today);
+  }) || [];
+
+  const plannedQuests = todaysQuests.filter((q) => q.status !== 'COMPLETED' && q.status !== 'CANCELLED');
+  const completedQuests = todaysQuests.filter((q) => q.status === 'COMPLETED');
 
   // Calculate XP progress (mock goal of 100 XP for now)
   const xpGoal = 100;
@@ -67,12 +42,8 @@ export function TodayPage() {
   const progressPercentage = Math.min((currentXp / xpGoal) * 100, 100);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Today's Path</h1>
-        <p className="text-muted-foreground">Take one step at a time.</p>
-      </div>
-
+    <div className="space-y-8">
+      {/* Daily Progress Header */}
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
           <span>Daily Goal</span>
@@ -82,43 +53,42 @@ export function TodayPage() {
         </div>
         <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
           <div
-            className="h-full bg-primary transition-all duration-500 ease-in-out"
+            className="h-full bg-primary transition-all duration-500"
             style={{ width: `${progressPercentage}%` }}
           />
         </div>
+        <p className="text-xs text-muted-foreground text-right">
+          {stats?.questsCompleted || 0} quests completed today
+        </p>
       </div>
 
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-lg font-semibold mb-4">Planned</h2>
-          {plannedQuests.length === 0 ? (
-            <div className="rounded-lg border p-4 text-muted-foreground text-center text-sm">
-              No quests planned for today.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {plannedQuests.map((quest) => (
-                <QuestItem key={quest.id} quest={quest} onComplete={handleComplete} />
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div>
-          <h2 className="text-lg font-semibold mb-4">Completed</h2>
-          {completedQuests.length === 0 ? (
-            <div className="rounded-lg border p-4 text-muted-foreground text-center text-sm">
-              Nothing completed yet.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {completedQuests.map((quest) => (
-                <QuestItem key={quest.id} quest={quest} onComplete={handleComplete} />
-              ))}
-            </div>
-          )}
-        </div>
+      {/* Planned Section */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold">Planned for Today</h2>
+        {plannedQuests.length === 0 ? (
+          <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
+            No quests scheduled for today. Check your inbox or add a new one!
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {plannedQuests.map((quest) => (
+              <QuestItem key={quest.id} quest={quest} onComplete={handleComplete} isPending={completeQuestMutation.isPending} />
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Completed Section */}
+      {completedQuests.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-muted-foreground">Completed</h2>
+          <div className="space-y-3">
+            {completedQuests.map((quest) => (
+              <QuestItem key={quest.id} quest={quest} onComplete={handleComplete} isPending={completeQuestMutation.isPending} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -126,9 +96,11 @@ export function TodayPage() {
 function QuestItem({
   quest,
   onComplete,
+  isPending,
 }: {
   quest: QuestResponse;
   onComplete: (id: string, status: string) => void;
+  isPending: boolean;
 }) {
   return (
     <Card className={quest.status === 'COMPLETED' ? 'opacity-60' : ''}>
@@ -136,7 +108,7 @@ function QuestItem({
         <Checkbox
           checked={quest.status === 'COMPLETED'}
           onCheckedChange={() => onComplete(quest.id, quest.status)}
-          disabled={quest.status === 'COMPLETED'}
+          disabled={quest.status === 'COMPLETED' || isPending}
         />
         <div className="flex-1">
           <p
@@ -145,7 +117,10 @@ function QuestItem({
             {quest.title}
           </p>
         </div>
-        <Badge variant="outline">+{quest.xpReward} XP</Badge>
+        <div className="text-xs text-muted-foreground">
+          {quest.category && <span className="mr-3">{quest.category.icon}</span>}
+          <span>+{quest.xpReward} XP</span>
+        </div>
       </CardContent>
     </Card>
   );
