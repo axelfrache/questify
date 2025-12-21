@@ -6,10 +6,13 @@ import {
   type UpdateQuestRequest,
 } from '@/lib/api';
 
-export function useQuests(status?: 'PENDING' | 'COMPLETED' | 'CANCELLED') {
+export function useQuests(
+  status?: 'PENDING' | 'COMPLETED' | 'CANCELLED',
+  view?: 'today' | 'inbox'
+) {
   return useQuery({
-    queryKey: ['quests', status],
-    queryFn: () => api.getQuests(status),
+    queryKey: ['quests', status, view],
+    queryFn: () => api.getQuests(status, view),
   });
 }
 
@@ -111,5 +114,12 @@ export function useProgressSummary() {
   return useQuery({
     queryKey: ['stats', 'summary'],
     queryFn: () => api.getProgressSummary(),
+  });
+}
+
+export function useCategoryStats() {
+  return useQuery({
+    queryKey: ['stats', 'categories'],
+    queryFn: () => api.getCategoryStats(),
   });
 }

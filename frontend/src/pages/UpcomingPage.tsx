@@ -76,7 +76,7 @@ export function UpcomingPage() {
                           </p>
                         )}
                       </div>
-                      <Badge variant="outline">+{quest.xpReward} XP</Badge>
+                      <Badge variant="outline">+{quest.totalXpReward} XP</Badge>
                     </CardContent>
                   </Card>
                 ))}

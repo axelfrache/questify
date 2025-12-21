@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useQuests, useCategories, useCompleteQuest } from '@/hooks/use-api';
+import { useQuests, useCategories, useCompleteQuest, useDeleteQuest } from '@/hooks/use-api';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,19 +8,40 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import { X } from 'lucide-react';
+import { X, MoreVertical, Edit, Trash } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { CreateQuestDialog } from '@/components/CreateQuestDialog';
+import { type QuestResponse } from '@/lib/api';
 
 export function InboxPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryId = searchParams.get('category');
 
-  const { data: quests, isLoading: isLoadingQuests, error: errorQuests } = useQuests();
+  const {
+    data: quests,
+    isLoading: isLoadingQuests,
+    error: errorQuests,
+  } = useQuests(undefined, 'inbox');
   const { data: categories, isLoading: isLoadingCategories } = useCategories();
   const completeQuestMutation = useCompleteQuest();
+  const deleteQuestMutation = useDeleteQuest();
+
+  const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
 
   const handleComplete = (id: string, currentStatus: string) => {
     if (currentStatus === 'COMPLETED') return;
     completeQuestMutation.mutate(id);
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this quest?')) {
+      deleteQuestMutation.mutate(id);
+    }
   };
 
   const clearFilter = () => {
@@ -88,7 +110,11 @@ export function InboxPage() {
                 <Checkbox
                   checked={quest.status === 'COMPLETED'}
                   onCheckedChange={() => handleComplete(quest.id, quest.status)}
-                  disabled={quest.status === 'COMPLETED' || completeQuestMutation.isPending}
+                  disabled={
+                    quest.status === 'COMPLETED' ||
+                    completeQuestMutation.isPending ||
+                    (quest.recurrenceInterval && quest.recurrenceInterval !== 'NONE')
+                  }
                 />
                 <div className="flex-1">
                   <CardTitle
@@ -100,7 +126,27 @@ export function InboxPage() {
                   </CardTitle>
                 </div>
                 <Badge variant={getDifficultyVariant(quest.difficulty)}>{quest.difficulty}</Badge>
-                <Badge variant="outline">+{quest.xpReward} XP</Badge>
+                <Badge variant="outline">+{quest.totalXpReward} XP</Badge>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setEditingQuest(quest)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleDelete(quest.id)}
+                      className="text-destructive"
+                    >
+                      <Trash className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </CardHeader>
               <CardContent>
                 {quest.description && (
@@ -122,6 +168,24 @@ export function InboxPage() {
           ))}
         </div>
       )}
+      <CreateQuestDialog
+        open={!!editingQuest}
+        onOpenChange={(open) => !open && setEditingQuest(null)}
+        questToEdit={
+          editingQuest
+            ? {
+                id: editingQuest.id,
+                title: editingQuest.title,
+                description: editingQuest.description,
+                difficulty: editingQuest.difficulty,
+                categoryId: editingQuest.category?.id,
+                dueDate: editingQuest.dueDate,
+                recurrenceInterval: editingQuest.recurrenceInterval,
+                baseXpReward: editingQuest.baseXpReward,
+              }
+            : undefined
+        }
+      />
     </div>
   );
 }

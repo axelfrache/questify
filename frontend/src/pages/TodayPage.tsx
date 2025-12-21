@@ -1,21 +1,37 @@
-import { useDailyStats, useQuests, useCompleteQuest } from '@/hooks/use-api';
+import { useState } from 'react';
+import { useDailyStats, useQuests, useCompleteQuest, useDeleteQuest } from '@/hooks/use-api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
-import { isSameDay, parseISO, startOfDay } from 'date-fns';
+import { Button } from '@/components/ui/button';
 import { type QuestResponse } from '@/lib/api';
+import { MoreVertical, Edit, Trash } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 
 export function TodayPage() {
   const { data: stats, isLoading: isLoadingStats } = useDailyStats();
-  const { data: quests, isLoading: isLoadingQuests } = useQuests();
+  const { data: quests, isLoading: isLoadingQuests } = useQuests(undefined, 'today');
   const completeQuestMutation = useCompleteQuest();
+  const deleteQuestMutation = useDeleteQuest();
+
+  const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
 
   const handleComplete = (id: string, currentStatus: string) => {
     if (currentStatus === 'COMPLETED') return;
     completeQuestMutation.mutate(id);
   };
 
-  const today = startOfDay(new Date());
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this quest?')) {
+      deleteQuestMutation.mutate(id);
+    }
+  };
 
   if (isLoadingStats || isLoadingQuests) {
     return (
@@ -28,16 +44,9 @@ export function TodayPage() {
     );
   }
 
-  const todaysQuests =
-    quests?.filter((q) => {
-      if (!q.dueDate) return false;
-      return isSameDay(parseISO(q.dueDate), today);
-    }) || [];
-
-  const plannedQuests = todaysQuests.filter(
-    (q) => q.status !== 'COMPLETED' && q.status !== 'CANCELLED'
-  );
-  const completedQuests = todaysQuests.filter((q) => q.status === 'COMPLETED');
+  const plannedQuests =
+    quests?.filter((q) => q.status !== 'COMPLETED' && q.status !== 'CANCELLED') || [];
+  const completedQuests = quests?.filter((q) => q.status === 'COMPLETED') || [];
 
   // Calculate XP progress (mock goal of 100 XP for now)
   const xpGoal = 100;
@@ -79,6 +88,8 @@ export function TodayPage() {
                 key={quest.id}
                 quest={quest}
                 onComplete={handleComplete}
+                onEdit={setEditingQuest}
+                onDelete={handleDelete}
                 isPending={completeQuestMutation.isPending}
               />
             ))}
@@ -96,12 +107,33 @@ export function TodayPage() {
                 key={quest.id}
                 quest={quest}
                 onComplete={handleComplete}
+                onEdit={setEditingQuest}
+                onDelete={handleDelete}
                 isPending={completeQuestMutation.isPending}
               />
             ))}
           </div>
         </div>
       )}
+
+      <CreateQuestDialog
+        open={!!editingQuest}
+        onOpenChange={(open) => !open && setEditingQuest(null)}
+        questToEdit={
+          editingQuest
+            ? {
+                id: editingQuest.id,
+                title: editingQuest.title,
+                description: editingQuest.description,
+                difficulty: editingQuest.difficulty,
+                categoryId: editingQuest.category?.id,
+                dueDate: editingQuest.dueDate,
+                recurrenceInterval: editingQuest.recurrenceInterval,
+                baseXpReward: editingQuest.baseXpReward,
+              }
+            : undefined
+        }
+      />
     </div>
   );
 }
@@ -109,10 +141,14 @@ export function TodayPage() {
 function QuestItem({
   quest,
   onComplete,
+  onEdit,
+  onDelete,
   isPending,
 }: {
   quest: QuestResponse;
   onComplete: (id: string, status: string) => void;
+  onEdit: (quest: QuestResponse) => void;
+  onDelete: (id: string) => void;
   isPending: boolean;
 }) {
   return (
@@ -130,9 +166,28 @@ function QuestItem({
             {quest.title}
           </p>
         </div>
-        <div className="text-xs text-muted-foreground">
-          {quest.category && <span className="mr-3">{quest.category.icon}</span>}
-          <span>+{quest.xpReward} XP</span>
+        <div className="text-xs text-muted-foreground flex items-center gap-4">
+          <div className="flex items-center">
+            {quest.category && <span className="mr-3">{quest.category.icon}</span>}
+            <span>+{quest.totalXpReward} XP</span>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEdit(quest)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDelete(quest.id)} className="text-destructive">
+                <Trash className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardContent>
     </Card>

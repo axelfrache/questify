@@ -83,9 +83,14 @@ class ApiClient {
     });
   }
 
-  async getQuests(status?: 'PENDING' | 'COMPLETED' | 'CANCELLED'): Promise<QuestResponse[]> {
-    const query = status ? `?status=${status}` : '';
-    return this.request<QuestResponse[]>(`/api/quests${query}`);
+  async getQuests(
+    status?: 'PENDING' | 'COMPLETED' | 'CANCELLED',
+    view?: 'today' | 'inbox'
+  ): Promise<QuestResponse[]> {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    if (view) params.append('view', view);
+    return this.request<QuestResponse[]>(`/api/quests?${params.toString()}`);
   }
 
   async createQuest(data: CreateQuestRequest): Promise<QuestResponse> {
@@ -160,6 +165,10 @@ class ApiClient {
     return this.request<ProgressSummary>('/api/stats/summary');
   }
 
+  async getCategoryStats(): Promise<CategoryStats[]> {
+    return this.request<CategoryStats[]>('/api/stats/categories');
+  }
+
   async getUserProfile(id: string): Promise<UserDto> {
     return this.request<UserDto>(`/api/users/${id}`);
   }
@@ -177,9 +186,10 @@ export interface QuestResponse {
   status: 'PENDING' | 'COMPLETED' | 'CANCELLED';
   category?: CategoryResponse;
   dueDate?: string;
-  xpReward: number;
+  baseXpReward: number;
+  totalXpReward: number;
   createdAt: string;
-  recurrenceInterval: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  recurrenceInterval: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
 }
 
 export interface CreateQuestRequest {
@@ -188,7 +198,8 @@ export interface CreateQuestRequest {
   difficulty: 'EASY' | 'MEDIUM' | 'HARD' | 'EPIC';
   categoryId?: string;
   dueDate?: string;
-  recurrenceInterval?: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  recurrenceInterval?: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
+  baseXpReward?: number;
 }
 
 export interface UpdateQuestRequest {
@@ -198,7 +209,8 @@ export interface UpdateQuestRequest {
   status?: 'PENDING' | 'COMPLETED' | 'CANCELLED';
   categoryId?: string;
   dueDate?: string;
-  recurrenceInterval?: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  recurrenceInterval?: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
+  baseXpReward?: number;
 }
 
 export interface CategoryResponse {
@@ -252,6 +264,17 @@ export interface UserProgressionDto {
   level: number;
   currentXp: number;
   xpToNextLevel: number;
+  grade: string;
+}
+
+export interface CategoryStats {
+  categoryId: string;
+  name: string;
+  icon: string;
+  color: string;
+  totalQuests: number;
+  completedQuests: number;
+  progress: number;
   grade: string;
 }
 

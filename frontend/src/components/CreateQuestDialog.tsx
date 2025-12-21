@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { type CreateQuestRequest } from '@/lib/api';
-import { useCategories, useCreateQuest } from '@/hooks/use-api';
+import { useCategories, useCreateQuest, useUpdateQuest } from '@/hooks/use-api';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -31,11 +31,18 @@ interface CreateQuestDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onQuestCreated?: () => void;
+  questToEdit?: CreateQuestRequest & { id: string };
 }
 
-export function CreateQuestDialog({ open, onOpenChange, onQuestCreated }: CreateQuestDialogProps) {
+export function CreateQuestDialog({
+  open,
+  onOpenChange,
+  onQuestCreated,
+  questToEdit,
+}: CreateQuestDialogProps) {
   const { data: categories } = useCategories();
   const createQuestMutation = useCreateQuest();
+  const updateQuestMutation = useUpdateQuest();
   const [date, setDate] = useState<Date>();
 
   const {
@@ -48,35 +55,60 @@ export function CreateQuestDialog({ open, onOpenChange, onQuestCreated }: Create
 
   useEffect(() => {
     if (open) {
-      reset();
-      setDate(undefined);
+      if (questToEdit) {
+        setValue('title', questToEdit.title);
+        setValue('description', questToEdit.description);
+        setValue('difficulty', questToEdit.difficulty);
+        setValue('categoryId', questToEdit.categoryId);
+        setValue('recurrenceInterval', questToEdit.recurrenceInterval);
+        setValue('baseXpReward', questToEdit.baseXpReward);
+        if (questToEdit.dueDate) {
+          setDate(new Date(questToEdit.dueDate));
+        } else {
+          setDate(undefined);
+        }
+      } else {
+        reset();
+        setDate(undefined);
+      }
     }
-  }, [open, reset]);
+  }, [open, questToEdit, reset, setValue]);
 
   const onSubmit = (data: CreateQuestRequest) => {
-    createQuestMutation.mutate(
-      {
-        ...data,
-        dueDate: date ? date.toISOString() : undefined,
-      },
-      {
+    const payload = {
+      ...data,
+      dueDate: date ? date.toISOString() : undefined,
+    };
+
+    if (questToEdit) {
+      updateQuestMutation.mutate(
+        { id: questToEdit.id, data: payload },
+        {
+          onSuccess: () => {
+            onOpenChange(false);
+            if (onQuestCreated) onQuestCreated();
+          },
+        }
+      );
+    } else {
+      createQuestMutation.mutate(payload, {
         onSuccess: () => {
           onOpenChange(false);
-          if (onQuestCreated) {
-            onQuestCreated();
-          }
+          if (onQuestCreated) onQuestCreated();
         },
-      }
-    );
+      });
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create New Quest</DialogTitle>
+          <DialogTitle>{questToEdit ? 'Edit Quest' : 'Create New Quest'}</DialogTitle>
           <DialogDescription>
-            Embark on a new adventure. Define your quest details below.
+            {questToEdit
+              ? 'Update your quest details below.'
+              : 'Embark on a new adventure. Define your quest details below.'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 py-4">
@@ -104,9 +136,9 @@ export function CreateQuestDialog({ open, onOpenChange, onQuestCreated }: Create
                 onValueChange={(value) =>
                   setValue('difficulty', value as CreateQuestRequest['difficulty'])
                 }
-                defaultValue="EASY"
+                defaultValue={questToEdit?.difficulty || 'EASY'}
               >
-                <SelectTrigger>
+                <SelectTrigger id="difficulty">
                   <SelectValue placeholder="Select difficulty" />
                 </SelectTrigger>
                 <SelectContent>
@@ -119,8 +151,11 @@ export function CreateQuestDialog({ open, onOpenChange, onQuestCreated }: Create
             </div>
             <div className="grid gap-2">
               <Label htmlFor="category">Category</Label>
-              <Select onValueChange={(value) => setValue('categoryId', value)}>
-                <SelectTrigger>
+              <Select
+                onValueChange={(value) => setValue('categoryId', value)}
+                defaultValue={questToEdit?.categoryId}
+              >
+                <SelectTrigger id="category">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -136,51 +171,57 @@ export function CreateQuestDialog({ open, onOpenChange, onQuestCreated }: Create
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label>Due Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={'outline'}
-                    className={cn(
-                      'w-full justify-start text-left font-normal',
-                      !date && 'text-muted-foreground'
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, 'PPP') : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="recurrence">Recurrence</Label>
-              <Select
-                onValueChange={(value) =>
-                  setValue('recurrenceInterval', value as CreateQuestRequest['recurrenceInterval'])
-                }
-                defaultValue="NONE"
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Repeat" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="NONE">None</SelectItem>
-                  <SelectItem value="DAILY">Daily</SelectItem>
-                  <SelectItem value="WEEKLY">Weekly</SelectItem>
-                  <SelectItem value="MONTHLY">Monthly</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="grid gap-2">
+            <Label>Due Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={'outline'}
+                  className={cn(
+                    'w-full justify-start text-left font-normal',
+                    !date && 'text-muted-foreground'
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date ? format(date, 'PPP') : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="recurrence">Recurrence</Label>
+            <Select
+              onValueChange={(value) =>
+                setValue('recurrenceInterval', value as CreateQuestRequest['recurrenceInterval'])
+              }
+              defaultValue={questToEdit?.recurrenceInterval || 'NONE'}
+            >
+              <SelectTrigger id="recurrence">
+                <SelectValue placeholder="Repeat" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NONE">None</SelectItem>
+                <SelectItem value="DAILY">Daily</SelectItem>
+                <SelectItem value="WEEKLY">Weekly</SelectItem>
+                <SelectItem value="MONTHLY">Monthly</SelectItem>
+                <SelectItem value="CUSTOM" disabled>
+                  Custom (Coming Soon)
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={createQuestMutation.isPending}>
-              {createQuestMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Quest
+            <Button
+              type="submit"
+              disabled={createQuestMutation.isPending || updateQuestMutation.isPending}
+            >
+              {(createQuestMutation.isPending || updateQuestMutation.isPending) && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              {questToEdit ? 'Update Quest' : 'Create Quest'}
             </Button>
           </DialogFooter>
         </form>
