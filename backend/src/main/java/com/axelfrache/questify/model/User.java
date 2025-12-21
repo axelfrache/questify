@@ -30,6 +30,9 @@ public class User {
   @Email @NotBlank @Column(unique = true, nullable = false)
   private String email;
 
+  @NotBlank @Column(nullable = false)
+  private String password;
+
   @Builder.Default
   @Column(nullable = false)
   private long totalXp = 0;

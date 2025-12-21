@@ -6,6 +6,8 @@ services:
     container_name: questify-backend
     ports:
       - "8080:8080"
+    env_file:
+      - ./backend/.env
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     healthcheck:

@@ -46,6 +46,7 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+backend/.env
 application-local.properties
 application-local.yml
 
