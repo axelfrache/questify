@@ -22,7 +22,7 @@ public class QuestService {
 
   private final QuestRepository questRepository;
   private final UserRepository userRepository;
-  private final UserService userService;
+  private final ProgressionService progressionService;
 
   @Transactional
   public QuestResponse create(UUID userId, CreateQuestRequest request) {
@@ -46,9 +46,8 @@ public class QuestService {
   public QuestResponse update(UUID questId, UpdateQuestRequest request) {
     var quest = findQuestOrThrow(questId);
 
-    if (quest.getStatus() != QuestStatus.PENDING) {
+    if (quest.getStatus() != QuestStatus.PENDING)
       throw new IllegalStateException("Cannot update a completed or cancelled quest");
-    }
 
     if (request.title() != null) quest.setTitle(request.title());
     if (request.description() != null) quest.setDescription(request.description());
@@ -70,7 +69,8 @@ public class QuestService {
     quest.setCompletedAt(Instant.now());
     questRepository.save(quest);
 
-    userService.addXp(quest.getUser().getId(), quest.calculateTotalXpReward());
+    progressionService.awardXp(
+        quest.getUser().getId(), quest.calculateTotalXpReward(), "Quest: " + quest.getTitle());
 
     return toResponse(quest);
   }
