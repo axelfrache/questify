@@ -1,9 +1,18 @@
-import { ModeToggle } from '@/components/mode-toggle';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useTheme } from '@/components/theme-provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 
 export function SettingsPage() {
+  const { theme, setTheme } = useTheme();
+
   return (
     <div className="space-y-6">
       <div>
@@ -23,9 +32,23 @@ export function SettingsPage() {
             <CardContent className="flex items-center justify-between">
               <div className="space-y-1">
                 <Label>Interface Theme</Label>
-                <p className="text-sm text-muted-foreground">Switch between light and dark mode.</p>
+                <p className="text-sm text-muted-foreground">
+                  Select the theme for the application.
+                </p>
               </div>
-              <ModeToggle />
+              <Select
+                value={theme}
+                onValueChange={(value: 'light' | 'dark' | 'system') => setTheme(value)}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select theme" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Light</SelectItem>
+                  <SelectItem value="dark">Dark</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                </SelectContent>
+              </Select>
             </CardContent>
           </Card>
         </section>

@@ -5,6 +5,7 @@ import type { AuthResponse } from '@/lib/api';
 
 interface User {
   email: string;
+  username: string;
 }
 
 interface AuthContextType {
@@ -25,8 +26,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const accessToken = localStorage.getItem('accessToken');
     const userEmail = localStorage.getItem('userEmail');
-    if (accessToken && userEmail) {
-      setUser({ email: userEmail });
+    const username = localStorage.getItem('username');
+    if (accessToken && userEmail && username) {
+      setUser({ email: userEmail, username });
     }
     setIsLoading(false);
   }, []);
@@ -35,7 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('accessToken', response.accessToken);
     localStorage.setItem('refreshToken', response.refreshToken);
     localStorage.setItem('userEmail', email);
-    setUser({ email });
+    localStorage.setItem('username', response.username);
+    setUser({ email, username: response.username });
   };
 
   const login = async (email: string, password: string) => {
@@ -60,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('userEmail');
+    localStorage.removeItem('username');
     setUser(null);
   };
 
