@@ -1,30 +1,111 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { api, type CategoryResponse, type QuestResponse } from '@/lib/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
+
 export function RegionsPage() {
+  const navigate = useNavigate();
+  const [categories, setCategories] = useState<CategoryResponse[]>([]);
+  const [quests, setQuests] = useState<QuestResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const [categoriesData, questsData] = await Promise.all([
+        api.getCategories(),
+        api.getQuests(),
+      ]);
+      setCategories(categoriesData);
+      setQuests(questsData);
+    } catch (err) {
+      console.error('Failed to load data', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getCategoryStats = (categoryId: string) => {
+    const categoryQuests = quests.filter((q) => q.category?.id === categoryId);
+    const total = categoryQuests.length;
+    const completed = categoryQuests.filter((q) => q.status === 'COMPLETED').length;
+    const progress = total > 0 ? (completed / total) * 100 : 0;
+
+    // Determine grade based on completed quests (mock logic for now)
+    let grade = 'Novice';
+    if (completed >= 5) grade = 'Apprentice';
+    if (completed >= 15) grade = 'Explorer';
+    if (completed >= 30) grade = 'Master';
+
+    return { total, completed, progress, grade };
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <Skeleton className="h-40" />
+          <Skeleton className="h-40" />
+          <Skeleton className="h-40" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Regions</h1>
         <p className="text-muted-foreground">Your quest categories.</p>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-lg border p-6">
-          <div className="text-2xl">🏃</div>
-          <h3 className="mt-2 font-semibold">Fitness</h3>
-          <p className="text-sm text-muted-foreground">Grade: Explorer</p>
-          <div className="mt-2 h-2 w-full rounded-full bg-muted">
-            <div className="h-2 w-2/5 rounded-full bg-primary" />
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">12 / 30 Quests</p>
+
+      {categories.length === 0 ? (
+        <div className="rounded-lg border p-8 text-center text-muted-foreground">
+          No regions discovered yet. Create a category to start exploring!
         </div>
-        <div className="rounded-lg border p-6">
-          <div className="text-2xl">💼</div>
-          <h3 className="mt-2 font-semibold">Career</h3>
-          <p className="text-sm text-muted-foreground">Grade: Novice</p>
-          <div className="mt-2 h-2 w-full rounded-full bg-muted">
-            <div className="h-2 w-1/6 rounded-full bg-primary" />
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">2 / 30 Quests</p>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {categories.map((category) => {
+            const stats = getCategoryStats(category.id);
+
+            return (
+              <Card
+                key={category.id}
+                className="hover:bg-accent/50 transition-colors cursor-pointer"
+                onClick={() => navigate(`/inbox?category=${category.id}`)}
+              >
+                <CardHeader className="pb-2">
+                  <div
+                    className="text-3xl mb-2 w-12 h-12 flex items-center justify-center rounded-lg"
+                    style={{ backgroundColor: `${category.color}20`, color: category.color }}
+                  >
+                    {category.icon}
+                  </div>
+                  <CardTitle>{category.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Progress</span>
+                      <span>{stats.grade}</span>
+                    </div>
+                    <Progress value={stats.progress} className="h-2" />
+                    <p className="text-xs text-muted-foreground pt-1">
+                      {stats.completed} / {stats.total} Quests
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
-      </div>
+      )}
     </div>
   );
 }

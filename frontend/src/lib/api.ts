@@ -82,6 +82,182 @@ class ApiClient {
       body: JSON.stringify({ refreshToken }),
     });
   }
+
+  // --- Quests ---
+
+  async getQuests(status?: 'PENDING' | 'COMPLETED' | 'CANCELLED'): Promise<QuestResponse[]> {
+    const query = status ? `?status=${status}` : '';
+    return this.request<QuestResponse[]>(`/api/quests${query}`);
+  }
+
+  async createQuest(data: CreateQuestRequest): Promise<QuestResponse> {
+    return this.request<QuestResponse>('/api/quests', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateQuest(id: string, data: UpdateQuestRequest): Promise<QuestResponse> {
+    return this.request<QuestResponse>(`/api/quests/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async completeQuest(id: string): Promise<QuestResponse> {
+    return this.request<QuestResponse>(`/api/quests/${id}/complete`, {
+      method: 'POST',
+    });
+  }
+
+  async cancelQuest(id: string): Promise<QuestResponse> {
+    return this.request<QuestResponse>(`/api/quests/${id}/cancel`, {
+      method: 'POST',
+    });
+  }
+
+  async deleteQuest(id: string): Promise<void> {
+    return this.request<void>(`/api/quests/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // --- Categories ---
+
+  async getCategories(): Promise<CategoryResponse[]> {
+    return this.request<CategoryResponse[]>('/api/categories');
+  }
+
+  async createCategory(data: CreateCategoryRequest): Promise<CategoryResponse> {
+    return this.request<CategoryResponse>('/api/categories', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCategory(id: string, data: CreateCategoryRequest): Promise<CategoryResponse> {
+    return this.request<CategoryResponse>(`/api/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    return this.request<void>(`/api/categories/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // --- Stats ---
+
+  async getDailyStats(): Promise<DailyStats> {
+    return this.request<DailyStats>('/api/stats/today');
+  }
+
+  async getWeeklyStats(): Promise<WeeklyStats> {
+    return this.request<WeeklyStats>('/api/stats/week');
+  }
+
+  async getMonthlyStats(): Promise<MonthlyStats> {
+    return this.request<MonthlyStats>('/api/stats/month');
+  }
+
+  async getProgressSummary(): Promise<ProgressSummary> {
+    return this.request<ProgressSummary>('/api/stats/summary');
+  }
+
+  // --- User ---
+
+  async getUserProfile(id: string): Promise<UserDto> {
+    return this.request<UserDto>(`/api/users/${id}`);
+  }
+
+  async getUserProgression(id: string): Promise<UserProgressionDto> {
+    return this.request<UserProgressionDto>(`/api/users/${id}/progression`);
+  }
+}
+
+export interface QuestResponse {
+  id: string;
+  title: string;
+  description?: string;
+  difficulty: 'EASY' | 'MEDIUM' | 'HARD' | 'EPIC';
+  status: 'PENDING' | 'COMPLETED' | 'CANCELLED';
+  category?: CategoryResponse;
+  dueDate?: string; // ISO date string
+  xpReward: number;
+  createdAt: string;
+}
+
+export interface CreateQuestRequest {
+  title: string;
+  description?: string;
+  difficulty: 'EASY' | 'MEDIUM' | 'HARD' | 'EPIC';
+  categoryId?: string;
+  dueDate?: string;
+}
+
+export interface UpdateQuestRequest {
+  title?: string;
+  description?: string;
+  difficulty?: 'EASY' | 'MEDIUM' | 'HARD' | 'EPIC';
+  status?: 'PENDING' | 'COMPLETED' | 'CANCELLED';
+  categoryId?: string;
+  dueDate?: string;
+}
+
+export interface CategoryResponse {
+  id: string;
+  name: string;
+  color: string;
+  icon: string;
+}
+
+export interface CreateCategoryRequest {
+  name: string;
+  color: string;
+  icon: string;
+}
+
+export interface DailyStats {
+  date: string;
+  questsCompleted: number;
+  xpEarned: number;
+}
+
+export interface WeeklyStats {
+  startDate: string;
+  endDate: string;
+  questsCompleted: number;
+  xpEarned: number;
+  dailyBreakdown: Record<string, number>; // date -> xp
+}
+
+export interface MonthlyStats {
+  year: number;
+  month: number;
+  questsCompleted: number;
+  xpEarned: number;
+}
+
+export interface ProgressSummary {
+  totalXp: number;
+  currentLevel: number;
+  currentGrade: string;
+  xpToNextLevel: number;
+}
+
+export interface UserDto {
+  id: string;
+  username: string;
+  email: string;
+}
+
+export interface UserProgressionDto {
+  level: number;
+  currentXp: number;
+  xpToNextLevel: number;
+  grade: string;
 }
 
 export const api = new ApiClient(API_BASE_URL);
