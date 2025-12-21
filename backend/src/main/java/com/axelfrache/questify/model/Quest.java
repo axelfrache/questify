@@ -46,6 +46,10 @@ public class Quest {
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "category_id")
+  private Category category;
+
   private Instant dueDate;
 
   private Instant completedAt;

@@ -1,5 +1,6 @@
 package com.axelfrache.questify.service;
 
+import com.axelfrache.questify.dto.CategoryResponse;
 import com.axelfrache.questify.dto.CreateQuestRequest;
 import com.axelfrache.questify.dto.QuestResponse;
 import com.axelfrache.questify.dto.UpdateQuestRequest;
@@ -7,6 +8,7 @@ import com.axelfrache.questify.model.Difficulty;
 import com.axelfrache.questify.model.Quest;
 import com.axelfrache.questify.model.QuestStatus;
 import com.axelfrache.questify.model.User;
+import com.axelfrache.questify.repository.CategoryRepository;
 import com.axelfrache.questify.repository.QuestRepository;
 import com.axelfrache.questify.repository.UserRepository;
 import java.time.Instant;
@@ -22,11 +24,17 @@ public class QuestService {
 
   private final QuestRepository questRepository;
   private final UserRepository userRepository;
+  private final CategoryRepository categoryRepository;
   private final ProgressionService progressionService;
 
   @Transactional
   public QuestResponse create(UUID userId, CreateQuestRequest request) {
     var user = findUserOrThrow(userId);
+
+    var category =
+        request.categoryId() != null
+            ? categoryRepository.findById(request.categoryId()).orElse(null)
+            : null;
 
     var quest =
         Quest.builder()
@@ -35,6 +43,7 @@ public class QuestService {
             .difficulty(request.difficulty() != null ? request.difficulty() : Difficulty.MEDIUM)
             .baseXpReward(request.baseXpReward() != null ? request.baseXpReward() : 50)
             .dueDate(request.dueDate())
+            .category(category)
             .user(user)
             .build();
 
@@ -128,6 +137,16 @@ public class QuestService {
   }
 
   private QuestResponse toResponse(Quest quest) {
+    var categoryResponse =
+        quest.getCategory() != null
+            ? new CategoryResponse(
+                quest.getCategory().getId(),
+                quest.getCategory().getName(),
+                quest.getCategory().getIcon(),
+                quest.getCategory().getColor(),
+                quest.getCategory().isGlobal())
+            : null;
+
     return new QuestResponse(
         quest.getId(),
         quest.getTitle(),
@@ -136,6 +155,7 @@ public class QuestService {
         quest.getBaseXpReward(),
         quest.calculateTotalXpReward(),
         quest.getStatus(),
+        categoryResponse,
         quest.getDueDate(),
         quest.getCompletedAt(),
         quest.getCreatedAt(),

@@ -13,6 +13,7 @@ public record QuestResponse(
     int baseXpReward,
     int totalXpReward,
     QuestStatus status,
+    CategoryResponse category,
     Instant dueDate,
     Instant completedAt,
     Instant createdAt,
