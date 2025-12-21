@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Inbox, Sun, Calendar, Map, TrendingUp, BarChart3, Trophy, User } from 'lucide-react';
+import { Inbox, Sun, Calendar, Map, TrendingUp, BarChart3, Trophy, User, Settings } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -24,7 +24,10 @@ const insightItems = [
   { title: 'Milestones', url: '/milestones', icon: Trophy },
 ];
 
-const accountItems = [{ title: 'Profile', url: '/profile', icon: User }];
+const accountItems = [
+  { title: 'Profile', url: '/profile', icon: User },
+  { title: 'Settings', url: '/settings', icon: Settings },
+];
 
 export function AppSidebar() {
   const location = useLocation();
@@ -95,3 +98,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+

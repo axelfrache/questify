@@ -9,3 +9,4 @@ export { ProgressPage } from './ProgressPage';
 export { StatsPage } from './StatsPage';
 export { MilestonesPage } from './MilestonesPage';
 export { ProfilePage } from './ProfilePage';
+export { SettingsPage } from './SettingsPage';
