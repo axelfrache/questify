@@ -16,9 +16,17 @@ public class JwtService {
 
   private final JwtConfig jwtConfig;
 
-  public String generateToken(UserDetails userDetails) {
+  public String generateAccessToken(UserDetails userDetails) {
+    return generateToken(userDetails, jwtConfig.getAccessExpiration());
+  }
+
+  public String generateRefreshToken(UserDetails userDetails) {
+    return generateToken(userDetails, jwtConfig.getRefreshExpiration());
+  }
+
+  private String generateToken(UserDetails userDetails, long expiration) {
     var now = new Date();
-    var expiry = new Date(now.getTime() + jwtConfig.getExpiration());
+    var expiry = new Date(now.getTime() + expiration);
 
     return Jwts.builder()
         .subject(userDetails.getUsername())

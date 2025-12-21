@@ -2,6 +2,7 @@ package com.axelfrache.questify.controller;
 
 import com.axelfrache.questify.dto.AuthResponse;
 import com.axelfrache.questify.dto.LoginRequest;
+import com.axelfrache.questify.dto.RefreshTokenRequest;
 import com.axelfrache.questify.dto.RegisterRequest;
 import com.axelfrache.questify.service.AuthService;
 import jakarta.validation.Valid;
@@ -24,5 +25,16 @@ public class AuthController {
   @PostMapping("/login")
   public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
     return ResponseEntity.ok(authService.login(request));
+  }
+
+  @PostMapping("/refresh")
+  public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+    return ResponseEntity.ok(authService.refresh(request));
+  }
+
+  @PostMapping("/logout")
+  public ResponseEntity<Void> logout(@Valid @RequestBody RefreshTokenRequest request) {
+    authService.logout(request);
+    return ResponseEntity.ok().build();
   }
 }
