@@ -30,6 +30,16 @@ RUN echo 'server { \
     gzip_min_length 1024; \
     gzip_types text/plain text/css text/xml text/javascript application/javascript application/json application/xml; \
     \
+    # API proxy to backend \
+    location /api/ { \
+    proxy_pass http://questify-backend:8080/api/; \
+    proxy_http_version 1.1; \
+    proxy_set_header Host $host; \
+    proxy_set_header X-Real-IP $remote_addr; \
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
+    proxy_set_header X-Forwarded-Proto $scheme; \
+    } \
+    \
     # SPA routing - redirect all requests to index.html \
     location / { \
     try_files $uri $uri/ /index.html; \
