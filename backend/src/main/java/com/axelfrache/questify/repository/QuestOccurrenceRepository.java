@@ -32,4 +32,7 @@ public interface QuestOccurrenceRepository extends JpaRepository<QuestOccurrence
 
   boolean existsByQuestTemplateAndScheduledDate(
       QuestTemplate questTemplate, LocalDate scheduledDate);
+
+  java.util.Optional<QuestOccurrence> findByQuestTemplateAndScheduledDate(
+      QuestTemplate template, LocalDate scheduledDate);
 }

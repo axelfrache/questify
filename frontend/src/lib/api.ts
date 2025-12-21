@@ -85,13 +85,17 @@ class ApiClient {
   }
 
   async getQuests(
-    status?: 'PENDING' | 'COMPLETED' | 'CANCELLED',
-    view?: 'today' | 'inbox'
+    status?: 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'SKIPPED',
+    view?: 'today' | 'inbox' | 'upcoming' | 'recurring'
   ): Promise<QuestResponse[]> {
     const params = new URLSearchParams();
     if (status) params.append('status', status);
     if (view) params.append('view', view);
     return this.request<QuestResponse[]>(`/api/quests?${params.toString()}`);
+  }
+
+  async getQuest(id: string): Promise<QuestResponse> {
+    return this.request<QuestResponse>(`/api/quests/${id}`);
   }
 
   async createQuest(data: CreateQuestRequest): Promise<QuestResponse> {
@@ -109,7 +113,19 @@ class ApiClient {
   }
 
   async completeQuest(id: string): Promise<QuestResponse> {
-    return this.request<QuestResponse>(`/api/quests/${id}/complete`, {
+    return this.request<QuestResponse>(`/api/occurrences/${id}/complete`, {
+      method: 'POST',
+    });
+  }
+
+  async skipQuest(id: string): Promise<QuestResponse> {
+    return this.request<QuestResponse>(`/api/occurrences/${id}/skip`, {
+      method: 'POST',
+    });
+  }
+
+  async toggleQuestActive(id: string): Promise<QuestResponse> {
+    return this.request<QuestResponse>(`/api/quests/${id}/toggle-active`, {
       method: 'POST',
     });
   }
@@ -184,7 +200,7 @@ export interface QuestResponse {
   title: string;
   description?: string;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD' | 'EPIC';
-  status: 'PENDING' | 'COMPLETED' | 'CANCELLED';
+  status: 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'SKIPPED';
   category?: CategoryResponse;
   dueDate?: string;
   baseXpReward: number;
@@ -207,7 +223,7 @@ export interface UpdateQuestRequest {
   title?: string;
   description?: string;
   difficulty?: 'EASY' | 'MEDIUM' | 'HARD' | 'EPIC';
-  status?: 'PENDING' | 'COMPLETED' | 'CANCELLED';
+  status?: 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'SKIPPED';
   categoryId?: string;
   dueDate?: string;
   recurrenceInterval?: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';

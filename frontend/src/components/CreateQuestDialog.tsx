@@ -50,6 +50,7 @@ export function CreateQuestDialog({
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<CreateQuestRequest>();
 
@@ -172,26 +173,6 @@ export function CreateQuestDialog({
             </div>
           </div>
           <div className="grid gap-2">
-            <Label>Due Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={'outline'}
-                  className={cn(
-                    'w-full justify-start text-left font-normal',
-                    !date && 'text-muted-foreground'
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, 'PPP') : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
-              </PopoverContent>
-            </Popover>
-          </div>
-          <div className="grid gap-2">
             <Label htmlFor="recurrence">Recurrence</Label>
             <Select
               onValueChange={(value) =>
@@ -212,6 +193,27 @@ export function CreateQuestDialog({
                 </SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="grid gap-2">
+            <Label>Due Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={'outline'}
+                  disabled={watch('recurrenceInterval') && watch('recurrenceInterval') !== 'NONE'}
+                  className={cn(
+                    'w-full justify-start text-left font-normal',
+                    !date && 'text-muted-foreground'
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date ? format(date, 'PPP') : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+              </PopoverContent>
+            </Popover>
           </div>
           <DialogFooter>
             <Button

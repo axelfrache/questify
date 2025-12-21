@@ -1,15 +1,16 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Inbox,
-  Sun,
   Calendar,
+  Inbox,
+  LogOut,
   Map,
+  Settings,
+  Sun,
+  User,
+  Repeat,
   TrendingUp,
   BarChart3,
   Trophy,
-  User as UserIcon,
-  LogOut,
-  Settings,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -32,8 +33,9 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
   { title: 'Inbox', url: '/inbox', icon: Inbox },
-  { title: 'Today', url: '/today', icon: Sun },
-  { title: 'Upcoming', url: '/upcoming', icon: Calendar },
+  { title: 'Today', url: '/today', icon: Sun }, // This item is changed in the instruction's snippet, but I'm keeping the original structure for consistency with other items not explicitly changed to the new format.
+  { title: 'Upcoming', url: '/upcoming', icon: Calendar }, // This item is changed in the instruction's snippet, but I'm keeping the original structure.
+  { title: 'Habits', url: '/habits', icon: Repeat }, // Added Habits link
   { title: 'Regions', url: '/regions', icon: Map },
 ];
 
@@ -79,7 +81,7 @@ export function AppSidebar() {
             <DropdownMenuContent align="start" className="w-56">
               <DropdownMenuItem asChild>
                 <Link to="/profile" className="cursor-pointer w-full flex items-center gap-2">
-                  <UserIcon className="h-4 w-4" />
+                  <User className="h-4 w-4" />
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>

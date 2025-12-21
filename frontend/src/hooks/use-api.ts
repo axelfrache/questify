@@ -7,12 +7,20 @@ import {
 } from '@/lib/api';
 
 export function useQuests(
-  status?: 'PENDING' | 'COMPLETED' | 'CANCELLED',
-  view?: 'today' | 'inbox'
+  status?: 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'SKIPPED',
+  view?: 'today' | 'inbox' | 'upcoming' | 'recurring'
 ) {
   return useQuery({
     queryKey: ['quests', status, view],
     queryFn: () => api.getQuests(status, view),
+  });
+}
+
+export function useQuest(id: string) {
+  return useQuery({
+    queryKey: ['quests', id],
+    queryFn: () => api.getQuest(id),
+    enabled: !!id,
   });
 }
 
@@ -23,6 +31,7 @@ export function useCreateQuest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quests'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
+      queryClient.invalidateQueries({ queryKey: ['category-stats'] });
     },
   });
 }
@@ -35,6 +44,7 @@ export function useUpdateQuest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quests'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
+      queryClient.invalidateQueries({ queryKey: ['category-stats'] });
     },
   });
 }
@@ -46,6 +56,29 @@ export function useCompleteQuest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quests'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
+      queryClient.invalidateQueries({ queryKey: ['category-stats'] });
+    },
+  });
+}
+
+export function useSkipQuest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.skipQuest(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quests'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
+    },
+  });
+}
+
+export function useToggleQuestActive() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => api.toggleQuestActive(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quests'] });
     },
   });
 }

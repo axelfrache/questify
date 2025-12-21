@@ -257,6 +257,56 @@ public class QuestService {
   }
 
   @Transactional(readOnly = true)
+  public List<QuestResponse> findUpcomingQuests(UUID userId) {
+    var user = findUserOrThrow(userId);
+    var templates = questTemplateRepository.findByUserAndActiveTrueAndDeletedFalse(user);
+    LocalDate today = LocalDate.now();
+    LocalDate endDate = today.plusDays(7);
+
+    List<QuestResponse> upcomingQuests = new java.util.ArrayList<>();
+
+    for (LocalDate date = today.plusDays(1);
+        date.isBefore(endDate.plusDays(1));
+        date = date.plusDays(1)) {
+      for (var template : templates) {
+        if (template.getRecurrenceRule() == null) continue;
+
+        if (shouldGenerateOccurrence(template, date)) {
+          // Check if real occurrence exists
+          var existingOccurrence =
+              questOccurrenceRepository.findByQuestTemplateAndScheduledDate(template, date);
+          if (existingOccurrence.isPresent()) {
+            upcomingQuests.add(toResponse(existingOccurrence.get()));
+          } else {
+            // Create ghost response
+            upcomingQuests.add(toGhostResponse(template, date));
+          }
+        }
+      }
+    }
+
+    return upcomingQuests;
+  }
+
+  @Transactional
+  public QuestResponse skip(UUID id) {
+    var occurrence = findOccurrenceOrThrow(id);
+
+    if (occurrence.getStatus() != QuestStatus.PENDING)
+      throw new IllegalStateException("Quest is already completed, cancelled or skipped");
+
+    LocalDate today = LocalDate.now();
+    if (occurrence.getScheduledDate().isAfter(today)) {
+      throw new IllegalStateException("Cannot skip a future quest occurrence");
+    }
+
+    occurrence.setStatus(QuestStatus.SKIPPED);
+    questOccurrenceRepository.save(occurrence);
+
+    return toResponse(occurrence);
+  }
+
+  @Transactional(readOnly = true)
   public List<QuestResponse> findByUserAndStatus(UUID userId, QuestStatus status) {
     var occurrences = questOccurrenceRepository.findByUserIdAndStatus(userId, status);
     return occurrences.stream().map(this::toResponse).toList();
@@ -305,6 +355,24 @@ public class QuestService {
     return questOccurrenceRepository
         .findById(id)
         .orElseThrow(() -> new IllegalArgumentException("Quest occurrence not found: " + id));
+  }
+
+  @Transactional(readOnly = true)
+  public List<QuestResponse> findRecurringTemplates(UUID userId) {
+    var user = findUserOrThrow(userId);
+    return questTemplateRepository
+        .findByUserAndRecurrenceRuleIsNotNullAndDeletedFalse(user)
+        .stream()
+        .map(this::toResponse)
+        .collect(Collectors.toList());
+  }
+
+  @Transactional
+  public QuestResponse toggleActive(UUID id) {
+    var template = findTemplateOrThrow(id);
+    template.setActive(!template.isActive());
+    questTemplateRepository.save(template);
+    return toResponse(template);
   }
 
   private QuestResponse toResponse(QuestTemplate template) {
@@ -357,6 +425,42 @@ public class QuestService {
         categoryResponse,
         dueDate,
         completedAt,
+        template.getCreatedAt(),
+        template.getUpdatedAt(),
+        recurrenceType);
+  }
+
+  private QuestResponse toGhostResponse(QuestTemplate template, LocalDate scheduledDate) {
+    var categoryResponse =
+        template.getCategory() != null
+            ? new CategoryResponse(
+                template.getCategory().getId(),
+                template.getCategory().getName(),
+                template.getCategory().getIcon(),
+                template.getCategory().getColor(),
+                template.getCategory().isGlobal())
+            : null;
+
+    Instant dueDate = scheduledDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
+    int totalXp =
+        (int) Math.round(template.getBaseXpReward() * template.getDifficulty().getMultiplier());
+
+    RecurrenceType recurrenceType = RecurrenceType.NONE;
+    if (template.getRecurrenceRule() != null) {
+      recurrenceType = template.getRecurrenceRule().getType();
+    }
+
+    return new QuestResponse(
+        template.getId(), // Using template ID for ghost
+        template.getTitle(),
+        template.getDescription(),
+        template.getDifficulty(),
+        template.getBaseXpReward(),
+        totalXp,
+        QuestStatus.PENDING,
+        categoryResponse,
+        dueDate,
+        null,
         template.getCreatedAt(),
         template.getUpdatedAt(),
         recurrenceType);

@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { LoginPage } from '@/pages/LoginPage';
 import { SignupPage } from '@/pages/SignupPage';
+import { RegionsPage } from '@/pages/RegionsPage';
+import { HabitsPage } from '@/pages/HabitsPage';
 import { AppLayout } from '@/layouts/AppLayout';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
@@ -10,7 +12,6 @@ import {
   InboxPage,
   TodayPage,
   UpcomingPage,
-  RegionsPage,
   ProgressPage,
   StatsPage,
   MilestonesPage,
@@ -49,6 +50,7 @@ function App() {
                 <Route path="/today" element={<TodayPage />} />
                 <Route path="/upcoming" element={<UpcomingPage />} />
                 <Route path="/regions" element={<RegionsPage />} />
+                <Route path="/habits" element={<HabitsPage />} /> {/* Added Habits route */}
                 <Route path="/progress" element={<ProgressPage />} />
                 <Route path="/stats" element={<StatsPage />} />
                 <Route path="/milestones" element={<MilestonesPage />} />

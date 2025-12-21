@@ -8,7 +8,8 @@ import lombok.RequiredArgsConstructor;
 public enum QuestStatus {
   PENDING("Pending"),
   COMPLETED("Completed"),
-  CANCELLED("Cancelled");
+  CANCELLED("Cancelled"),
+  SKIPPED("Skipped");
 
   private final String label;
 }

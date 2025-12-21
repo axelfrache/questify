@@ -42,6 +42,14 @@ public class QuestController {
       return ResponseEntity.ok(questService.findTodayQuests(userId));
     }
 
+    if ("upcoming".equalsIgnoreCase(view)) {
+      return ResponseEntity.ok(questService.findUpcomingQuests(userId));
+    }
+
+    if ("recurring".equalsIgnoreCase(view)) {
+      return ResponseEntity.ok(questService.findRecurringTemplates(userId));
+    }
+
     if (status != null) return ResponseEntity.ok(questService.findByUserAndStatus(userId, status));
 
     return ResponseEntity.ok(questService.findByUser(userId));
@@ -66,6 +74,11 @@ public class QuestController {
   @PostMapping("/{id}/cancel")
   public ResponseEntity<QuestResponse> cancel(@PathVariable UUID id) {
     return ResponseEntity.ok(questService.cancel(id));
+  }
+
+  @PostMapping("/{id}/toggle-active")
+  public ResponseEntity<QuestResponse> toggleActive(@PathVariable UUID id) {
+    return ResponseEntity.ok(questService.toggleActive(id));
   }
 
   @DeleteMapping("/{id}")

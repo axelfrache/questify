@@ -12,4 +12,6 @@ public interface QuestTemplateRepository extends JpaRepository<QuestTemplate, UU
   List<QuestTemplate> findByUserAndActiveTrueAndDeletedFalse(User user);
 
   List<QuestTemplate> findByUserAndActiveTrue(User user);
+
+  List<QuestTemplate> findByUserAndRecurrenceRuleIsNotNullAndDeletedFalse(User user);
 }
