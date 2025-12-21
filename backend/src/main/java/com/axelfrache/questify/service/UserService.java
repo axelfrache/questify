@@ -30,6 +30,13 @@ public class UserService {
     return toProgressionDto(user);
   }
 
+  @Transactional
+  public void addXp(UUID userId, int amount) {
+    var user = findUserOrThrow(userId);
+    user.setTotalXp(user.getTotalXp() + amount);
+    userRepository.save(user);
+  }
+
   public int calculateLevel(long totalXp) {
     var level = 1;
     var accumulated = 0L;
