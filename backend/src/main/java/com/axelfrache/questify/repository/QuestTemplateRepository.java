@@ -7,7 +7,9 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface QuestTemplateRepository extends JpaRepository<QuestTemplate, UUID> {
-    List<QuestTemplate> findByUserOrderByCreatedAtDesc(User user);
+  List<QuestTemplate> findByUserAndDeletedFalseOrderByCreatedAtDesc(User user);
 
-    List<QuestTemplate> findByUserAndActiveTrue(User user);
+  List<QuestTemplate> findByUserAndActiveTrueAndDeletedFalse(User user);
+
+  List<QuestTemplate> findByUserAndActiveTrue(User user);
 }

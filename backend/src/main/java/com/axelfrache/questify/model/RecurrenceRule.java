@@ -17,10 +17,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RecurrenceRule {
 
-    @Enumerated(EnumType.STRING)
-    private RecurrenceType type;
+  @Enumerated(EnumType.STRING)
+  private RecurrenceType type;
 
-    private Integer interval;
+  @jakarta.persistence.Column(name = "recurrence_interval")
+  private Integer interval;
 
-    private List<DayOfWeek> daysOfWeek;
+  private List<DayOfWeek> daysOfWeek;
 }

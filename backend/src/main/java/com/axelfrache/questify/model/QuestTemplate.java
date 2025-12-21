@@ -19,48 +19,50 @@ import org.hibernate.annotations.UpdateTimestamp;
 @AllArgsConstructor
 public class QuestTemplate {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @NotBlank
-    @Size(min = 1, max = 200)
-    @Column(nullable = false)
-    private String title;
+  @NotBlank @Size(min = 1, max = 200) @Column(nullable = false)
+  private String title;
 
-    @Size(max = 2000)
-    private String description;
+  @Size(max = 2000) private String description;
 
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
-    @Column(nullable = false)
-    private Difficulty difficulty = Difficulty.MEDIUM;
+  @Enumerated(EnumType.STRING)
+  @Builder.Default
+  @Column(nullable = false)
+  private Difficulty difficulty = Difficulty.MEDIUM;
 
-    @Positive
-    @Builder.Default
-    @Column(nullable = false)
-    private int baseXpReward = 50;
+  @Positive @Builder.Default
+  @Column(nullable = false)
+  private int baseXpReward = 50;
 
-    @Embedded
-    private RecurrenceRule recurrenceRule;
+  @Embedded private RecurrenceRule recurrenceRule;
 
-    @Builder.Default
-    @Column(nullable = false)
-    private boolean active = true;
+  @Builder.Default
+  @Column(nullable = false)
+  private boolean active = true;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+  @Builder.Default
+  @Column(nullable = false)
+  private boolean deleted = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    private Category category;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private Instant createdAt;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "category_id")
+  private Category category;
 
-    @UpdateTimestamp
-    @Column(nullable = false)
-    private Instant updatedAt;
+  @CreationTimestamp
+  @Column(nullable = false, updatable = false)
+  private Instant createdAt;
+
+  @OneToMany(mappedBy = "questTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
+  private java.util.List<QuestOccurrence> occurrences;
+
+  @UpdateTimestamp
+  @Column(nullable = false)
+  private Instant updatedAt;
 }

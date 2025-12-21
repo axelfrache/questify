@@ -9,7 +9,9 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
-@Table(name = "quest_occurrences")
+@Table(
+    name = "quest_occurrences",
+    uniqueConstraints = {@UniqueConstraint(columnNames = {"quest_template_id", "scheduledDate"})})
 @Getter
 @Setter
 @Builder
@@ -17,31 +19,31 @@ import org.hibernate.annotations.UpdateTimestamp;
 @AllArgsConstructor
 public class QuestOccurrence {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "quest_template_id", nullable = false)
-    private QuestTemplate questTemplate;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "quest_template_id", nullable = false)
+  private QuestTemplate questTemplate;
 
-    @Column(nullable = false)
-    private LocalDate scheduledDate;
+  @Column(nullable = false)
+  private LocalDate scheduledDate;
 
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
-    @Column(nullable = false)
-    private QuestStatus status = QuestStatus.PENDING;
+  @Enumerated(EnumType.STRING)
+  @Builder.Default
+  @Column(nullable = false)
+  private QuestStatus status = QuestStatus.PENDING;
 
-    private Instant completedAt;
+  private Instant completedAt;
 
-    private int xpEarned;
+  private int xpEarned;
 
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private Instant createdAt;
+  @CreationTimestamp
+  @Column(nullable = false, updatable = false)
+  private Instant createdAt;
 
-    @UpdateTimestamp
-    @Column(nullable = false)
-    private Instant updatedAt;
+  @UpdateTimestamp
+  @Column(nullable = false)
+  private Instant updatedAt;
 }

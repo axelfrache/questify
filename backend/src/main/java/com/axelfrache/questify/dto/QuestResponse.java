@@ -7,17 +7,16 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record QuestResponse(
-        UUID id,
-        String title,
-        String description,
-        Difficulty difficulty,
-        int baseXpReward,
-        int totalXpReward,
-        QuestStatus status,
-        CategoryResponse category,
-        Instant dueDate,
-        Instant completedAt,
-        Instant createdAt,
-        Instant updatedAt,
-        RecurrenceType recurrenceInterval) {
-}
+    UUID id,
+    String title,
+    String description,
+    Difficulty difficulty,
+    int baseXpReward,
+    int totalXpReward,
+    QuestStatus status,
+    CategoryResponse category,
+    Instant dueDate,
+    Instant completedAt,
+    Instant createdAt,
+    Instant updatedAt,
+    RecurrenceType recurrenceInterval) {}

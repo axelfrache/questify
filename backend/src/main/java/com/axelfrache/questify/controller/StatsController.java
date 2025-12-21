@@ -49,6 +49,13 @@ public class StatsController {
     return ResponseEntity.ok(statsService.getProgressSummary(userId));
   }
 
+  @GetMapping("/categories")
+  public ResponseEntity<java.util.List<com.axelfrache.questify.dto.CategoryStats>> getCategoryStats(
+      @AuthenticationPrincipal UserDetails userDetails) {
+    var userId = getUserId(userDetails);
+    return ResponseEntity.ok(statsService.getCategoryStats(userId));
+  }
+
   private UUID getUserId(UserDetails userDetails) {
     return userRepository
         .findByEmail(userDetails.getUsername())

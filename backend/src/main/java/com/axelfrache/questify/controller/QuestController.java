@@ -34,8 +34,14 @@ public class QuestController {
   @GetMapping
   public ResponseEntity<List<QuestResponse>> findAll(
       @AuthenticationPrincipal UserDetails userDetails,
-      @RequestParam(required = false) QuestStatus status) {
+      @RequestParam(required = false) QuestStatus status,
+      @RequestParam(required = false) String view) {
     var userId = getUserId(userDetails);
+
+    if ("today".equalsIgnoreCase(view)) {
+      return ResponseEntity.ok(questService.findTodayQuests(userId));
+    }
+
     if (status != null) return ResponseEntity.ok(questService.findByUserAndStatus(userId, status));
 
     return ResponseEntity.ok(questService.findByUser(userId));

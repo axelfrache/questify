@@ -30,8 +30,7 @@ public class AchievementService {
     var newlyUnlocked = new ArrayList<AchievementResponse>();
 
     for (var achievement : allAchievements) {
-      if (userAchievementRepository.existsByUserAndAchievement(user, achievement))
-        continue;
+      if (userAchievementRepository.existsByUserAndAchievement(user, achievement)) continue;
 
       if (isAchievementEarned(user, achievement)) {
         var userAchievement = UserAchievement.builder().user(user).achievement(achievement).build();
@@ -78,7 +77,8 @@ public class AchievementService {
 
   private boolean checkGeneralAchievement(User user, Achievement achievement) {
     var occurrences = questOccurrenceRepository.findAllByUserId(user.getId());
-    var completed = occurrences.stream().filter(q -> q.getStatus() == QuestStatus.COMPLETED).toList();
+    var completed =
+        occurrences.stream().filter(q -> q.getStatus() == QuestStatus.COMPLETED).toList();
 
     return switch (achievement.getCode()) {
       case "FIRST_STEP" -> completed.size() >= 1;
@@ -89,15 +89,20 @@ public class AchievementService {
   }
 
   private boolean checkCategoryAchievement(User user, Achievement achievement) {
-    if (achievement.getCategory() == null)
-      return false;
+    if (achievement.getCategory() == null) return false;
 
     var occurrences = questOccurrenceRepository.findAllByUserId(user.getId());
-    var completedInCategory = occurrences.stream()
-        .filter(q -> q.getStatus() == QuestStatus.COMPLETED)
-        .filter(q -> q.getQuestTemplate().getCategory() != null)
-        .filter(q -> q.getQuestTemplate().getCategory().getId().equals(achievement.getCategory().getId()))
-        .count();
+    var completedInCategory =
+        occurrences.stream()
+            .filter(q -> q.getStatus() == QuestStatus.COMPLETED)
+            .filter(q -> q.getQuestTemplate().getCategory() != null)
+            .filter(
+                q ->
+                    q.getQuestTemplate()
+                        .getCategory()
+                        .getId()
+                        .equals(achievement.getCategory().getId()))
+            .count();
 
     return completedInCategory >= achievement.getThreshold();
   }
@@ -106,24 +111,26 @@ public class AchievementService {
     var today = LocalDate.now();
     var weekStart = today.minusDays(6);
 
-    return (int) completed.stream()
-        .filter(q -> q.getCompletedAt() != null)
-        .map(q -> q.getCompletedAt().atZone(ZoneId.of(user.getTimezone())).toLocalDate())
-        .filter(d -> !d.isBefore(weekStart) && !d.isAfter(today))
-        .distinct()
-        .count();
+    return (int)
+        completed.stream()
+            .filter(q -> q.getCompletedAt() != null)
+            .map(q -> q.getCompletedAt().atZone(ZoneId.of(user.getTimezone())).toLocalDate())
+            .filter(d -> !d.isBefore(weekStart) && !d.isAfter(today))
+            .distinct()
+            .count();
   }
 
   private int getActiveDaysInCurrentMonth(User user, List<QuestOccurrence> completed) {
     var today = LocalDate.now();
     var monthStart = today.withDayOfMonth(1);
 
-    return (int) completed.stream()
-        .filter(q -> q.getCompletedAt() != null)
-        .map(q -> q.getCompletedAt().atZone(ZoneId.of(user.getTimezone())).toLocalDate())
-        .filter(d -> !d.isBefore(monthStart) && !d.isAfter(today))
-        .distinct()
-        .count();
+    return (int)
+        completed.stream()
+            .filter(q -> q.getCompletedAt() != null)
+            .map(q -> q.getCompletedAt().atZone(ZoneId.of(user.getTimezone())).toLocalDate())
+            .filter(d -> !d.isBefore(monthStart) && !d.isAfter(today))
+            .distinct()
+            .count();
   }
 
   private Map<UUID, UserAchievement> getUnlockedMap(User user) {
