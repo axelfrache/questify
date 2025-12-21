@@ -2,7 +2,17 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { LoginPage } from '@/pages/LoginPage';
 import { SignupPage } from '@/pages/SignupPage';
-import { DashboardPage } from '@/pages/DashboardPage';
+import { AppLayout } from '@/layouts/AppLayout';
+import {
+  InboxPage,
+  TodayPage,
+  UpcomingPage,
+  RegionsPage,
+  ProgressPage,
+  StatsPage,
+  MilestonesPage,
+  ProfilePage,
+} from '@/pages';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -26,7 +36,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/inbox" replace />;
   }
 
   return <>{children}</>;
@@ -52,14 +62,23 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/dashboard"
         element={
           <ProtectedRoute>
-            <DashboardPage />
+            <AppLayout />
           </ProtectedRoute>
         }
-      />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      >
+        <Route path="/inbox" element={<InboxPage />} />
+        <Route path="/today" element={<TodayPage />} />
+        <Route path="/upcoming" element={<UpcomingPage />} />
+        <Route path="/regions" element={<RegionsPage />} />
+        <Route path="/progress" element={<ProgressPage />} />
+        <Route path="/stats" element={<StatsPage />} />
+        <Route path="/milestones" element={<MilestonesPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+      </Route>
+      <Route path="/" element={<Navigate to="/inbox" replace />} />
+      <Route path="/dashboard" element={<Navigate to="/inbox" replace />} />
     </Routes>
   );
 }

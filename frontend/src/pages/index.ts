@@ -1,3 +1,11 @@
 export { LoginPage } from './LoginPage';
 export { SignupPage } from './SignupPage';
 export { DashboardPage } from './DashboardPage';
+export { InboxPage } from './InboxPage';
+export { TodayPage } from './TodayPage';
+export { UpcomingPage } from './UpcomingPage';
+export { RegionsPage } from './RegionsPage';
+export { ProgressPage } from './ProgressPage';
+export { StatsPage } from './StatsPage';
+export { MilestonesPage } from './MilestonesPage';
+export { ProfilePage } from './ProfilePage';
