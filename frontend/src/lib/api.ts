@@ -225,6 +225,40 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  async updateUserProfile(
+    id: string,
+    data: { username?: string; timezone?: string }
+  ): Promise<UserDto> {
+    return this.request<UserDto>(`/api/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async changePassword(
+    id: string,
+    data: { currentPassword: string; newPassword: string }
+  ): Promise<void> {
+    const url = `${this.baseUrl}/api/users/${id}/password`;
+    const accessToken = localStorage.getItem('accessToken');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw { message: await response.text(), status: response.status };
+    }
+  }
 }
 
 export interface QuestResponse {
@@ -307,6 +341,7 @@ export interface UserDto {
   id: string;
   username: string;
   email: string;
+  timezone: string;
   profilePictureUrl: string | null;
 }
 
