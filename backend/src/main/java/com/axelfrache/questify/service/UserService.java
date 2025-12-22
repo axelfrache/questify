@@ -1,11 +1,13 @@
 package com.axelfrache.questify.service;
 
 import com.axelfrache.questify.config.LevelConfig;
+import com.axelfrache.questify.dto.UpdateUserRequest;
 import com.axelfrache.questify.dto.UserDto;
 import com.axelfrache.questify.dto.UserProgressionDto;
 import com.axelfrache.questify.model.Grade;
 import com.axelfrache.questify.model.User;
 import com.axelfrache.questify.repository.UserRepository;
+import java.time.ZoneId;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,47 @@ public class UserService {
   public UserProgressionDto getUserProgression(UUID id) {
     var user = findUserOrThrow(id);
     return toProgressionDto(user);
+  }
+
+  @Transactional
+  public UserDto updateProfile(UUID userId, UpdateUserRequest request) {
+    var user = findUserOrThrow(userId);
+
+    if (request.username() != null && !request.username().isBlank()) {
+      if (!request.username().equals(user.getUsername())
+          && userRepository.existsByUsername(request.username())) {
+        throw new IllegalArgumentException("Username already exists");
+      }
+      user.setUsername(request.username());
+    }
+
+    if (request.timezone() != null && !request.timezone().isBlank())
+      try {
+        ZoneId.of(request.timezone());
+        user.setTimezone(request.timezone());
+      } catch (Exception e) {
+        throw new IllegalArgumentException("Invalid timezone: " + request.timezone());
+      }
+
+    userRepository.save(user);
+    return toUserDto(user);
+  }
+
+  @Transactional
+  public void changePassword(
+      UUID userId, com.axelfrache.questify.dto.ChangePasswordRequest request) {
+    var user = findUserOrThrow(userId);
+    var passwordEncoder = getPasswordEncoder();
+
+    if (!passwordEncoder.matches(request.currentPassword(), user.getPassword()))
+      throw new IllegalArgumentException("Current password is incorrect");
+
+    user.setPassword(passwordEncoder.encode(request.newPassword()));
+    userRepository.save(user);
+  }
+
+  private org.springframework.security.crypto.password.PasswordEncoder getPasswordEncoder() {
+    return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
   }
 
   @Transactional

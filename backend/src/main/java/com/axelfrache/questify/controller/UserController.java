@@ -1,8 +1,11 @@
 package com.axelfrache.questify.controller;
 
+import com.axelfrache.questify.dto.ChangePasswordRequest;
+import com.axelfrache.questify.dto.UpdateUserRequest;
 import com.axelfrache.questify.dto.UserDto;
 import com.axelfrache.questify.dto.UserProgressionDto;
 import com.axelfrache.questify.service.UserService;
+import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -20,6 +23,19 @@ public class UserController {
   @GetMapping("/{id}")
   public ResponseEntity<UserDto> getUser(@PathVariable UUID id) {
     return ResponseEntity.ok(userService.getUserById(id));
+  }
+
+  @PutMapping("/{id}")
+  public ResponseEntity<UserDto> updateUser(
+      @PathVariable UUID id, @Valid @RequestBody UpdateUserRequest request) {
+    return ResponseEntity.ok(userService.updateProfile(id, request));
+  }
+
+  @PostMapping("/{id}/password")
+  public ResponseEntity<Void> changePassword(
+      @PathVariable UUID id, @Valid @RequestBody ChangePasswordRequest request) {
+    userService.changePassword(id, request);
+    return ResponseEntity.ok().build();
   }
 
   @GetMapping("/{id}/progression")
