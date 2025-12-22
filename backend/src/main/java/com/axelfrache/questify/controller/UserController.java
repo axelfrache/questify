@@ -5,8 +5,10 @@ import com.axelfrache.questify.dto.UserProgressionDto;
 import com.axelfrache.questify.service.UserService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/users")
@@ -23,5 +25,16 @@ public class UserController {
   @GetMapping("/{id}/progression")
   public ResponseEntity<UserProgressionDto> getUserProgression(@PathVariable UUID id) {
     return ResponseEntity.ok(userService.getUserProgression(id));
+  }
+
+  @PostMapping(value = "/{id}/profile-picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<UserDto> uploadProfilePicture(
+      @PathVariable UUID id, @RequestParam("file") MultipartFile file) {
+    return ResponseEntity.ok(userService.updateProfilePicture(id, file));
+  }
+
+  @DeleteMapping("/{id}/profile-picture")
+  public ResponseEntity<UserDto> deleteProfilePicture(@PathVariable UUID id) {
+    return ResponseEntity.ok(userService.deleteProfilePicture(id));
   }
 }

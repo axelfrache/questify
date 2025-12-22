@@ -17,6 +17,7 @@ public class UserService {
 
   private final UserRepository userRepository;
   private final LevelConfig levelConfig;
+  private final StorageService storageService;
 
   @Transactional(readOnly = true)
   public UserDto getUserById(UUID id) {
@@ -79,12 +80,42 @@ public class UserService {
         .orElseThrow(() -> new IllegalArgumentException("User not found: " + id));
   }
 
+  @Transactional
+  public UserDto updateProfilePicture(
+      UUID userId, org.springframework.web.multipart.MultipartFile file) {
+    var user = findUserOrThrow(userId);
+
+    if (user.getProfilePictureUrl() != null) {
+      storageService.deleteFile(user.getProfilePictureUrl());
+    }
+
+    var url = storageService.uploadProfilePicture(userId, file);
+    user.setProfilePictureUrl(url);
+    userRepository.save(user);
+
+    return toUserDto(user);
+  }
+
+  @Transactional
+  public UserDto deleteProfilePicture(UUID userId) {
+    var user = findUserOrThrow(userId);
+
+    if (user.getProfilePictureUrl() != null) {
+      storageService.deleteFile(user.getProfilePictureUrl());
+      user.setProfilePictureUrl(null);
+      userRepository.save(user);
+    }
+
+    return toUserDto(user);
+  }
+
   private UserDto toUserDto(User user) {
     return new UserDto(
         user.getId(),
         user.getUsername(),
         user.getEmail(),
         user.getTimezone(),
+        user.getProfilePictureUrl(),
         user.getCreatedAt(),
         user.getUpdatedAt());
   }

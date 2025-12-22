@@ -8,5 +8,6 @@ public record UserDto(
     String username,
     String email,
     String timezone,
+    String profilePictureUrl,
     Instant createdAt,
     Instant updatedAt) {}

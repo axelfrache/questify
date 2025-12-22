@@ -115,6 +115,11 @@ public class AuthService {
 
     refreshTokenRepository.save(refreshToken);
 
-    return new AuthResponse(accessToken, refreshTokenValue, user.getUsername());
+    return new AuthResponse(
+        accessToken,
+        refreshTokenValue,
+        user.getId(),
+        user.getUsername(),
+        user.getProfilePictureUrl());
   }
 }

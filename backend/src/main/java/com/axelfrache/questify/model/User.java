@@ -41,6 +41,9 @@ public class User {
   @Column(nullable = false)
   private String timezone = "UTC";
 
+  @Column(length = 500)
+  private String profilePictureUrl;
+
   @CreationTimestamp
   @Column(nullable = false, updatable = false)
   private Instant createdAt;
