@@ -14,7 +14,9 @@ export interface RegisterRequest {
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
+  userId: string;
   username: string;
+  profilePictureUrl: string | null;
 }
 
 export interface ApiError {
@@ -193,6 +195,36 @@ class ApiClient {
   async getUserProgression(id: string): Promise<UserProgressionDto> {
     return this.request<UserProgressionDto>(`/api/users/${id}/progression`);
   }
+
+  async uploadProfilePicture(id: string, file: File): Promise<UserDto> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const url = `${this.baseUrl}/api/users/${id}/profile-picture`;
+    const accessToken = localStorage.getItem('accessToken');
+    const headers: Record<string, string> = {};
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw { message: await response.text(), status: response.status };
+    }
+
+    return response.json();
+  }
+
+  async deleteProfilePicture(id: string): Promise<UserDto> {
+    return this.request<UserDto>(`/api/users/${id}/profile-picture`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export interface QuestResponse {
@@ -275,6 +307,7 @@ export interface UserDto {
   id: string;
   username: string;
   email: string;
+  profilePictureUrl: string | null;
 }
 
 export interface UserProgressionDto {

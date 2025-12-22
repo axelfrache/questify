@@ -73,7 +73,7 @@ export function AppSidebar() {
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-3 outline-none">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="" />
+                <AvatarImage src={user?.profilePictureUrl || undefined} alt={user?.username} />
                 <AvatarFallback>{user?.username ? getInitials(user.username) : 'U'}</AvatarFallback>
               </Avatar>
               <span className="font-medium">{user?.username || 'User'}</span>
