@@ -1,4 +1,24 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: questify-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: questify
+      POSTGRES_USER: questify
+      POSTGRES_PASSWORD: questify
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U questify -d questify" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - questify-network
+
   backend:
     build:
       context: ./backend
@@ -10,12 +30,20 @@ services:
       - ./backend/.env
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/questify
+      - SPRING_DATASOURCE_USERNAME=questify
+      - SPRING_DATASOURCE_PASSWORD=questify
+      - SPRING_DATASOURCE_DRIVER=org.postgresql.Driver
+      - SPRING_JPA_DDL_AUTO=update
+      - H2_CONSOLE_ENABLED=false
       - S3_ENDPOINT=http://minio:9000
       - S3_ACCESS_KEY=minioadmin
       - S3_SECRET_KEY=minioadmin
       - S3_BUCKET=questify-profiles
       - S3_REGION=us-east-1
     depends_on:
+      postgres:
+        condition: service_healthy
       minio:
         condition: service_healthy
     healthcheck:
@@ -83,4 +111,5 @@ networks:
     driver: bridge
 
 volumes:
+  postgres-data:
   minio-data:
