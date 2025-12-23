@@ -42,8 +42,7 @@ service:
 
 replicaCount: 1
 
-nodeSelector:
-  node-role.kubernetes.io/worker: ""
+nodeSelector: {}
 
 tolerations: []
 
