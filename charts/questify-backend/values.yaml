@@ -37,8 +37,8 @@ s3:
     secretKeyKey: root-password
 
 jwt:
-  accessExpiration: 900000
-  refreshExpiration: 604800000
+  accessExpiration: "900000"
+  refreshExpiration: "604800000"
   secret: "your-256-bit-secret-here-change-in-production"
   existingSecret: ""
   secretKey: jwt-secret
