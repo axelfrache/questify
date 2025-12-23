@@ -26,12 +26,76 @@ export interface ApiError {
 
 class ApiClient {
   private baseUrl: string;
+  private onUnauthorized: (() => void) | null = null;
+  private isRefreshing = false;
+  private refreshPromise: Promise<AuthResponse> | null = null;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
   }
 
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  setOnUnauthorized(callback: () => void) {
+    this.onUnauthorized = callback;
+  }
+
+  private clearTokens() {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('username');
+    localStorage.removeItem('profilePictureUrl');
+  }
+
+  private async tryRefreshToken(): Promise<boolean> {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) {
+      return false;
+    }
+
+    if (this.isRefreshing && this.refreshPromise) {
+      try {
+        await this.refreshPromise;
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    this.isRefreshing = true;
+    try {
+      this.refreshPromise = this.refreshTokenRequest(refreshToken);
+      const response = await this.refreshPromise;
+
+      localStorage.setItem('accessToken', response.accessToken);
+      localStorage.setItem('refreshToken', response.refreshToken);
+
+      return true;
+    } catch {
+      this.clearTokens();
+      return false;
+    } finally {
+      this.isRefreshing = false;
+      this.refreshPromise = null;
+    }
+  }
+
+  private async refreshTokenRequest(refreshToken: string): Promise<AuthResponse> {
+    const url = `${this.baseUrl}/api/auth/refresh`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Refresh failed');
+    }
+
+    return response.json();
+  }
+
+  private async request<T>(endpoint: string, options: RequestInit = {}, retry = true): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -46,6 +110,22 @@ class ApiClient {
       ...options,
       headers,
     });
+
+    if ((response.status === 401 || response.status === 403) && retry) {
+      const refreshed = await this.tryRefreshToken();
+      if (refreshed) {
+        return this.request<T>(endpoint, options, false);
+      } else {
+        if (this.onUnauthorized) {
+          this.onUnauthorized();
+        }
+        const error: ApiError = {
+          message: 'Session expired. Please log in again.',
+          status: response.status,
+        };
+        throw error;
+      }
+    }
 
     if (!response.ok) {
       const error: ApiError = {

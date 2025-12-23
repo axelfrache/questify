@@ -26,7 +26,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const clearAuthState = () => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('username');
+    localStorage.removeItem('profilePictureUrl');
+    setUser(null);
+  };
+
   useEffect(() => {
+    api.setOnUnauthorized(() => {
+      clearAuthState();
+    });
+
     const accessToken = localStorage.getItem('accessToken');
     const userId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
@@ -81,13 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Ignore logout errors
       }
     }
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('username');
-    localStorage.removeItem('profilePictureUrl');
-    setUser(null);
+    clearAuthState();
   };
 
   const updateProfilePicture = (url: string | null) => {
