@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: questify
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Questify application project
+
+  sourceRepos:
+    - 'https://github.com/axelfrache/questify.git'
+
+  destinations:
+    - namespace: questify
+      server: https://kubernetes.default.svc
+    - namespace: argocd
+      server: https://kubernetes.default.svc
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  roles:
+    - name: admin
+      description: Admin role for Questify project
+      policies:
+        - p, proj:questify:admin, applications, *, questify/*, allow
+      groups:
+        - questify-admins
+
+  orphanedResources:
+    warn: true

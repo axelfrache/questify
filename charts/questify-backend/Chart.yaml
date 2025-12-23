@@ -1,0 +1,16 @@
+apiVersion: v2
+name: questify-backend
+description: Questify Backend API (Spring Boot)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+keywords:
+  - questify
+  - backend
+  - api
+  - spring-boot
+
+maintainers:
+  - name: Axel Frache
+    url: https://github.com/axelfrache

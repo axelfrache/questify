@@ -1,0 +1,92 @@
+image:
+  repository: minio/minio
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+mcImage:
+  repository: minio/mc
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+auth:
+  rootUser: minioadmin
+  rootPassword: minioadmin
+  existingSecret: ""
+  secretKeys:
+    rootUserKey: root-user
+    rootPasswordKey: root-password
+
+buckets:
+  - name: questify-profiles
+    policy: download
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+persistence:
+  enabled: true
+  storageClass: "longhorn"
+  size: 10Gi
+  accessModes:
+    - ReadWriteOnce
+
+service:
+  type: ClusterIP
+  apiPort: 9000
+  consolePort: 9001
+
+replicaCount: 1
+
+nodeSelector:
+  node-role.kubernetes.io/worker: ""
+
+tolerations: []
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  periodSeconds: 15
+  timeoutSeconds: 10
+  failureThreshold: 3
+
+createBuckets:
+  enabled: true
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL

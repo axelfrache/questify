@@ -1,0 +1,15 @@
+apiVersion: v2
+name: minio
+description: MinIO object storage for Questify
+type: application
+version: 0.1.0
+appVersion: "latest"
+
+keywords:
+  - minio
+  - s3
+  - object-storage
+
+maintainers:
+  - name: Axel Frache
+    url: https://github.com/axelfrache

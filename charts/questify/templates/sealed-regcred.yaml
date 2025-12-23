@@ -1,0 +1,14 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: regcred
+  namespace: questify
+spec:
+  encryptedData:
+    .dockerconfigjson: AgC70vh40RbHVklD85D9VC/zvRgyEaPiIYo+vJYkzhtU9IFfJLle9ucP76c5K9XAiWkZtqW+9Wlt9Ft2zxudSqcYqIFkitO9FDW3/hYYGVEuoBBlL9DRWEnKjKQ1ixPL1ngCaXIkafSdWtR2pop5f42N0+KHE8+TfiPqkzhAXg2HSthZt6wJoaTv0zQ+ESBAqhkqmv78W32ojk12HK0YmVOXzu6/0MJiyzfVE4waC4JQ6P6ZhBp4XvjkBtHS293eoftO5+fZX6FSjXwPGCZBG2pFQHGlyE8iQ50mJVi8CmBSnfT2TJOM6ZWGWiQWtGBzvDggD38HL3iw0MerKkjMKfHySiFbRPY7hSULi1NapcV7pSKKYwA/817Lpi/MZqHHptdekJUZY7Jl8PgGqXUObyxj6T3XJgAJn+L57CQ8f5yL2dHrarvzDBOTwwpRDArApFPijD6yzl7yYxYDRxK9I3yookpKOcvj6Kta4Z3BrTUm6wHquA3e1+p28Clwk9FrkeXrD6g1/Zray+5mtQztY2JoNVV+GW0P9DL67GP2Ta6v37zLDKNjyTSMYA4tKQaToTkuILhli9Tp8atO684xOe/YD7vHUkr6AVDgg1cf0eQEv7QlDuymXfJ5s1dyXUj6EqgLIu6XF6QSUV14NiFjOf4DUpIUKTq7O8gDb2e8cgSV98Al61I4vneGfBxsIr8sSjeVouBtD9DIbWYCAVzm2l0+nUMY9ZIIEkXFKDBYar6FkN7oE4m+bjb8y9BP0GpeevGgRMNCevLoNq2t+/FZqJ2LLAHMEaGr8viAGQ4xFRdg2EyTcH1CVgh9f1r/tNAviOYAoeQ2wkGig/oyb6sUeF6J2tyeOmcYu9YyZYSIuq7CfaUjxigGP2GyfiAX5jkh19TKcosVfZnb+SJrZili8z5I1R28bRrkmNDsKTcp9d1+4wV0228=
+  template:
+    metadata:
+      name: regcred
+      namespace: questify
+    type: kubernetes.io/dockerconfigjson

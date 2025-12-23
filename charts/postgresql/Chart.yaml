@@ -1,0 +1,14 @@
+apiVersion: v2
+name: postgresql
+description: PostgreSQL database for Questify
+type: application
+version: 0.1.0
+appVersion: "16"
+
+keywords:
+  - postgresql
+  - database
+
+maintainers:
+  - name: Axel Frache
+    url: https://github.com/axelfrache

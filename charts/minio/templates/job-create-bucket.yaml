@@ -1,0 +1,62 @@
+{{- if .Values.createBuckets.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "minio.fullname" . }}-create-buckets
+  labels:
+    {{- include "minio.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "minio.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: bucket-provisioner
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        {{- toYaml .Values.createBuckets.podSecurityContext | nindent 8 }}
+      containers:
+        - name: mc
+          image: "{{ .Values.mcImage.repository }}:{{ .Values.mcImage.tag }}"
+          imagePullPolicy: {{ .Values.mcImage.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.createBuckets.containerSecurityContext | nindent 12 }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "Waiting for MinIO to be ready..."
+              until mc alias set myminio http://{{ include "minio.fullname" . }}:{{ .Values.service.apiPort }} $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD; do
+                echo "MinIO not ready yet, retrying in 5s..."
+                sleep 5
+              done
+              echo "MinIO is ready. Creating buckets..."
+              {{- range .Values.buckets }}
+              mc mb myminio/{{ .name }} --ignore-existing
+              {{- if eq .policy "download" }}
+              mc anonymous set download myminio/{{ .name }}
+              {{- else if eq .policy "upload" }}
+              mc anonymous set upload myminio/{{ .name }}
+              {{- else if eq .policy "public" }}
+              mc anonymous set public myminio/{{ .name }}
+              {{- end }}
+              echo "Bucket {{ .name }} created successfully"
+              {{- end }}
+              echo "All buckets created successfully!"
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "minio.secretName" . }}
+                  key: {{ .Values.auth.secretKeys.rootUserKey }}
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "minio.secretName" . }}
+                  key: {{ .Values.auth.secretKeys.rootPasswordKey }}
+{{- end }}

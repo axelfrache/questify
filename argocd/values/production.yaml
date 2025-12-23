@@ -1,0 +1,54 @@
+global:
+  imageRegistry: "registry.axelfrache.me"
+
+ingress:
+  host: app.getquestify.com
+  tls:
+    enabled: true
+    secretName: questify-tls
+
+postgresql:
+  auth:
+    password: "CHANGE_ME_SECURE_PASSWORD"
+  persistence:
+    size: 20Gi
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+minio:
+  auth:
+    rootUser: "admin"
+    rootPassword: "CHANGE_ME_SECURE_PASSWORD"
+  persistence:
+    size: 50Gi
+
+backend:
+  image:
+    tag: "v1.0.0"
+  replicaCount: 2
+  jwt:
+    secret: "CHANGE_ME_256_BIT_SECRET_FOR_JWT_PRODUCTION"
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "2000m"
+
+frontend:
+  image:
+    tag: "v1.0.0"
+  replicaCount: 2
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "500m"
