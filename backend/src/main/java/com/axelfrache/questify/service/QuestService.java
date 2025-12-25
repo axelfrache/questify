@@ -145,13 +145,12 @@ public class QuestService {
       throw new IllegalStateException("Quest is already completed or cancelled");
 
     LocalDate today = LocalDate.now();
-    if (occurrence.getScheduledDate().isAfter(today)) {
-      throw new IllegalStateException("Cannot complete a future quest occurrence");
+    boolean isRecurring = occurrence.getQuestTemplate().getRecurrenceRule() != null;
+    if (isRecurring && occurrence.getScheduledDate().isAfter(today)) {
+      throw new IllegalStateException("Cannot complete a future recurring quest occurrence");
     }
 
     occurrence.setStatus(QuestStatus.COMPLETED);
-    occurrence.setCompletedAt(Instant.now());
-
     occurrence.setCompletedAt(Instant.now());
 
     int totalXp = occurrence.getQuestTemplate().getBaseXpReward();
