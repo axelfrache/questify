@@ -13,6 +13,27 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
+import confetti from 'canvas-confetti';
+
+const fireConfettiFromElement = (element: HTMLElement) => {
+  const rect = element.getBoundingClientRect();
+  const x = rect.left + rect.width / 2;
+  const y = rect.top + rect.height / 2;
+
+  confetti({
+    particleCount: 50,
+    spread: 60,
+    origin: {
+      x: x / window.innerWidth,
+      y: y / window.innerHeight,
+    },
+    colors: ['#22c55e', '#16a34a', '#4ade80', '#86efac', '#fbbf24', '#f59e0b'],
+    startVelocity: 25,
+    gravity: 0.8,
+    scalar: 0.9,
+    ticks: 100,
+  });
+};
 
 export function TodayPage() {
   const { data: stats, isLoading: isLoadingStats } = useDailyStats();
@@ -22,8 +43,13 @@ export function TodayPage() {
 
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
 
-  const handleComplete = (id: string, currentStatus: string) => {
+  const handleComplete = (id: string, currentStatus: string, checkboxElement?: HTMLElement) => {
     if (currentStatus === 'COMPLETED') return;
+
+    if (checkboxElement) {
+      fireConfettiFromElement(checkboxElement);
+    }
+
     completeQuestMutation.mutate(id);
   };
 
@@ -46,9 +72,8 @@ export function TodayPage() {
 
   const plannedQuests =
     quests?.filter((q) => q.status !== 'COMPLETED' && q.status !== 'CANCELLED') || [];
-  const completedQuests = quests?.filter((q) => q.status === 'COMPLETED') || [];
+  const completedQuests = quests?.filter((q) => q.status === 'COMPLETED').reverse() || [];
 
-  // Calculate XP progress (mock goal of 100 XP for now)
   const xpGoal = 100;
   const currentXp = stats?.xpEarned || 0;
   const progressPercentage = Math.min((currentXp / xpGoal) * 100, 100);
@@ -146,17 +171,22 @@ function QuestItem({
   isPending,
 }: {
   quest: QuestResponse;
-  onComplete: (id: string, status: string) => void;
+  onComplete: (id: string, status: string, checkboxElement?: HTMLElement) => void;
   onEdit: (quest: QuestResponse) => void;
   onDelete: (id: string) => void;
   isPending: boolean;
 }) {
+  const handleCheckboxClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const target = event.currentTarget;
+    onComplete(quest.id, quest.status, target);
+  };
+
   return (
     <Card className={quest.status === 'COMPLETED' ? 'opacity-60' : ''}>
       <CardContent className="p-4 flex items-center gap-4">
         <Checkbox
           checked={quest.status === 'COMPLETED'}
-          onCheckedChange={() => onComplete(quest.id, quest.status)}
+          onClick={handleCheckboxClick}
           disabled={quest.status === 'COMPLETED' || isPending}
         />
         <div className="flex-1">

@@ -17,6 +17,27 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import { type QuestResponse } from '@/lib/api';
+import confetti from 'canvas-confetti';
+
+const fireConfettiFromElement = (element: HTMLElement) => {
+  const rect = element.getBoundingClientRect();
+  const x = rect.left + rect.width / 2;
+  const y = rect.top + rect.height / 2;
+
+  confetti({
+    particleCount: 50,
+    spread: 60,
+    origin: {
+      x: x / window.innerWidth,
+      y: y / window.innerHeight,
+    },
+    colors: ['#22c55e', '#16a34a', '#4ade80', '#86efac', '#fbbf24', '#f59e0b'],
+    startVelocity: 25,
+    gravity: 0.8,
+    scalar: 0.9,
+    ticks: 100,
+  });
+};
 
 export function InboxPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -33,8 +54,13 @@ export function InboxPage() {
 
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
 
-  const handleComplete = (id: string, currentStatus: string) => {
+  const handleComplete = (id: string, currentStatus: string, checkboxElement?: HTMLElement) => {
     if (currentStatus === 'COMPLETED') return;
+
+    if (checkboxElement) {
+      fireConfettiFromElement(checkboxElement);
+    }
+
     completeQuestMutation.mutate(id);
   };
 
@@ -109,7 +135,9 @@ export function InboxPage() {
               <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
                 <Checkbox
                   checked={quest.status === 'COMPLETED'}
-                  onCheckedChange={() => handleComplete(quest.id, quest.status)}
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                    handleComplete(quest.id, quest.status, e.currentTarget);
+                  }}
                   disabled={
                     quest.status === 'COMPLETED' ||
                     completeQuestMutation.isPending ||
