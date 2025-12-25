@@ -42,6 +42,10 @@ public class QuestController {
       return ResponseEntity.ok(questService.findTodayQuests(userId));
     }
 
+    if ("inbox".equalsIgnoreCase(view)) {
+      return ResponseEntity.ok(questService.findInboxQuests(userId));
+    }
+
     if ("upcoming".equalsIgnoreCase(view)) {
       return ResponseEntity.ok(questService.findUpcomingQuests(userId));
     }

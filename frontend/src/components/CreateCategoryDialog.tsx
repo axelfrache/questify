@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { type CreateCategoryRequest } from '@/lib/api';
 import { useCreateCategory } from '@/hooks/use-api';
@@ -20,6 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
+import { EmojiPicker } from '@/components/EmojiPicker';
 
 interface CreateCategoryDialogProps {
   open: boolean;
@@ -39,26 +41,43 @@ const PRESET_COLORS = [
 
 export function CreateCategoryDialog({ open, onOpenChange }: CreateCategoryDialogProps) {
   const createCategoryMutation = useCreateCategory();
+  const [selectedIcon, setSelectedIcon] = useState('');
 
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
     reset,
     formState: { errors },
   } = useForm<CreateCategoryRequest>();
+
+  const regionName = watch('name');
+
+  useEffect(() => {
+    setValue('icon', selectedIcon);
+  }, [selectedIcon, setValue]);
 
   const onSubmit = (data: CreateCategoryRequest) => {
     createCategoryMutation.mutate(data, {
       onSuccess: () => {
         onOpenChange(false);
         reset();
+        setSelectedIcon('');
       },
     });
   };
 
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      reset();
+      setSelectedIcon('');
+    }
+    onOpenChange(isOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create New Region</DialogTitle>
@@ -75,12 +94,17 @@ export function CreateCategoryDialog({ open, onOpenChange }: CreateCategoryDialo
             {errors.name && <span className="text-xs text-destructive">Name is required</span>}
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="icon">Icon (Emoji)</Label>
-              <Input id="icon" placeholder="e.g., 🏃" {...register('icon', { required: true })} />
+            <div className="grid gap-2 min-w-0">
+              <Label>Icon (optional)</Label>
+              <EmojiPicker
+                value={selectedIcon}
+                onChange={setSelectedIcon}
+                regionName={regionName}
+              />
+              <input type="hidden" {...register('icon', { required: true })} />
               {errors.icon && <span className="text-xs text-destructive">Icon is required</span>}
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-2 min-w-0">
               <Label htmlFor="color">Color</Label>
               <Select
                 onValueChange={(value) => setValue('color', value)}

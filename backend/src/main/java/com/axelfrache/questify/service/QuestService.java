@@ -256,6 +256,17 @@ public class QuestService {
         .collect(Collectors.toList());
   }
 
+  @Transactional
+  public List<QuestResponse> findInboxQuests(UUID userId) {
+    ensureDailyOccurrences(userId);
+    var allOccurrences = questOccurrenceRepository.findAllByUserId(userId);
+    return allOccurrences.stream()
+        .filter(q -> q.getStatus() == QuestStatus.PENDING)
+        .sorted((o1, o2) -> o2.getScheduledDate().compareTo(o1.getScheduledDate()))
+        .map(this::toResponse)
+        .collect(Collectors.toList());
+  }
+
   @Transactional(readOnly = true)
   public List<QuestResponse> findUpcomingQuests(UUID userId) {
     var user = findUserOrThrow(userId);

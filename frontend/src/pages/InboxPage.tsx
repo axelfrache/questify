@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuests, useCategories, useCompleteQuest, useDeleteQuest } from '@/hooks/use-api';
+import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format } from 'date-fns';
 import { X, MoreVertical, Edit, Trash } from 'lucide-react';
 import {
   DropdownMenu,
@@ -74,17 +72,11 @@ export function InboxPage() {
     setSearchParams({});
   };
 
-  const activeQuests =
-    quests
-      ?.filter((q) => q.status !== 'CANCELLED')
-      .sort((a, b) => {
-        if (a.status === b.status) return 0;
-        return a.status === 'PENDING' ? -1 : 1;
-      }) || [];
+  const pendingQuests = quests?.filter((q) => q.status === 'PENDING') || [];
 
   const filteredQuests = categoryId
-    ? activeQuests.filter((q) => q.category?.id === categoryId)
-    : activeQuests;
+    ? pendingQuests.filter((q) => q.category?.id === categoryId)
+    : pendingQuests;
 
   const currentCategory = categoryId ? categories?.find((c) => c.id === categoryId) : null;
 
@@ -123,79 +115,26 @@ export function InboxPage() {
       )}
 
       {filteredQuests.length === 0 ? (
-        <div className="rounded-lg border p-8 text-center text-muted-foreground">
+        <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
           {categoryId
             ? `No quests found in ${currentCategory?.name || 'this category'}.`
             : 'No quests found. Start your journey by adding a new quest!'}
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="space-y-3">
           {filteredQuests.map((quest) => (
-            <Card key={quest.id} className={quest.status === 'COMPLETED' ? 'opacity-60' : ''}>
-              <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
-                <Checkbox
-                  checked={quest.status === 'COMPLETED'}
-                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                    handleComplete(quest.id, quest.status, e.currentTarget);
-                  }}
-                  disabled={
-                    quest.status === 'COMPLETED' ||
-                    completeQuestMutation.isPending ||
-                    (quest.recurrenceInterval && quest.recurrenceInterval !== 'NONE')
-                  }
-                />
-                <div className="flex-1">
-                  <CardTitle
-                    className={`text-base ${
-                      quest.status === 'COMPLETED' ? 'line-through text-muted-foreground' : ''
-                    }`}
-                  >
-                    {quest.title}
-                  </CardTitle>
-                </div>
-                <Badge variant={getDifficultyVariant(quest.difficulty)}>{quest.difficulty}</Badge>
-                <Badge variant="outline">+{quest.totalXpReward} XP</Badge>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setEditingQuest(quest)}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleDelete(quest.id)}
-                      className="text-destructive"
-                    >
-                      <Trash className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </CardHeader>
-              <CardContent>
-                {quest.description && (
-                  <p className="text-sm text-muted-foreground mb-2">{quest.description}</p>
-                )}
-                <div className="flex gap-4 text-xs text-muted-foreground">
-                  {quest.category && (
-                    <span className="flex items-center gap-1">
-                      <span>{quest.category.icon}</span>
-                      {quest.category.name}
-                    </span>
-                  )}
-                  {quest.dueDate && (
-                    <span>Due: {format(new Date(quest.dueDate), 'MMM d, yyyy')}</span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <QuestItem
+              key={quest.id}
+              quest={quest}
+              onComplete={handleComplete}
+              onEdit={setEditingQuest}
+              onDelete={handleDelete}
+              isPending={completeQuestMutation.isPending}
+            />
           ))}
         </div>
       )}
+
       <CreateQuestDialog
         open={!!editingQuest}
         onOpenChange={(open) => !open && setEditingQuest(null)}
@@ -218,19 +157,63 @@ export function InboxPage() {
   );
 }
 
-function getDifficultyVariant(
-  difficulty: string
-): 'default' | 'secondary' | 'destructive' | 'outline' {
-  switch (difficulty) {
-    case 'EASY':
-      return 'secondary';
-    case 'MEDIUM':
-      return 'default';
-    case 'HARD':
-      return 'destructive';
-    case 'EPIC':
-      return 'destructive';
-    default:
-      return 'outline';
-  }
+function QuestItem({
+  quest,
+  onComplete,
+  onEdit,
+  onDelete,
+  isPending,
+}: {
+  quest: QuestResponse;
+  onComplete: (id: string, status: string, checkboxElement?: HTMLElement) => void;
+  onEdit: (quest: QuestResponse) => void;
+  onDelete: (id: string) => void;
+  isPending: boolean;
+}) {
+  const handleCheckboxClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const target = event.currentTarget;
+    onComplete(quest.id, quest.status, target);
+  };
+
+  return (
+    <Card className={quest.status === 'COMPLETED' ? 'opacity-60' : ''}>
+      <CardContent className="p-4 flex items-center gap-4">
+        <Checkbox
+          checked={quest.status === 'COMPLETED'}
+          onClick={handleCheckboxClick}
+          disabled={quest.status === 'COMPLETED' || isPending}
+        />
+        <div className="flex-1">
+          <p
+            className={`font-medium ${quest.status === 'COMPLETED' ? 'line-through text-muted-foreground' : ''}`}
+          >
+            {quest.title}
+          </p>
+        </div>
+        <div className="text-xs text-muted-foreground flex items-center gap-4">
+          <div className="flex items-center">
+            {quest.category && <span className="mr-3">{quest.category.icon}</span>}
+            <span>+{quest.totalXpReward} XP</span>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEdit(quest)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDelete(quest.id)} className="text-destructive">
+                <Trash className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }

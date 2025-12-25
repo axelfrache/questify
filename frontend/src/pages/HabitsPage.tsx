@@ -3,7 +3,13 @@ import { useQuests, useDeleteQuest } from '@/hooks/use-api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Edit2, Trash2, Repeat } from 'lucide-react';
+import { MoreVertical, Edit, Trash, Repeat } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import type { QuestResponse } from '@/lib/api';
 
@@ -12,14 +18,22 @@ export function HabitsPage() {
   const deleteQuest = useDeleteQuest();
   const [editingHabit, setEditingHabit] = useState<QuestResponse | null>(null);
 
+  const handleDelete = (id: string) => {
+    if (
+      confirm('Are you sure you want to delete this habit? Future occurrences will be stopped.')
+    ) {
+      deleteQuest.mutate(id);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
-        <div className="grid gap-4">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
+        <div className="space-y-3">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
         </div>
       </div>
     );
@@ -33,61 +47,46 @@ export function HabitsPage() {
       </div>
 
       {!habits || habits.length === 0 ? (
-        <div className="rounded-lg border p-8 text-center text-muted-foreground">
+        <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
           No habits set up yet. Create a recurring quest to see it here!
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="space-y-3">
           {habits.map((habit) => (
             <Card key={habit.id}>
-              <CardContent className="p-6 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4 flex-1">
-                  <div
-                    className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl"
-                    style={{
-                      backgroundColor: habit.category?.color
-                        ? `${habit.category.color}20`
-                        : '#f3f4f6',
-                      color: habit.category?.color || '#6b7280',
-                    }}
-                  >
-                    {habit.category?.icon || '📝'}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-lg">{habit.title}</h3>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Repeat className="w-3 h-3" />
-                      <span>{habit.recurrenceInterval}</span>
-                      <span>•</span>
-                      <span>{habit.difficulty}</span>
-                      <span>•</span>
-                      <span>{habit.baseXpReward} XP</span>
-                    </div>
-                  </div>
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Repeat className="w-4 h-4" />
+                  <span className="text-xs">{habit.recurrenceInterval}</span>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="icon" onClick={() => setEditingHabit(habit)}>
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive hover:text-destructive/90"
-                    onClick={() => {
-                      if (
-                        confirm(
-                          'Are you sure you want to delete this habit? Future occurrences will be stopped.'
-                        )
-                      ) {
-                        deleteQuest.mutate(habit.id);
-                      }
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                <div className="flex-1">
+                  <p className="font-medium">{habit.title}</p>
+                </div>
+                <div className="text-xs text-muted-foreground flex items-center gap-4">
+                  <div className="flex items-center">
+                    {habit.category && <span className="mr-3">{habit.category.icon}</span>}
+                    <span>+{habit.totalXpReward} XP</span>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setEditingHabit(habit)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDelete(habit.id)}
+                        className="text-destructive"
+                      >
+                        <Trash className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </CardContent>
             </Card>

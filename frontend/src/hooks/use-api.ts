@@ -98,9 +98,9 @@ export function useDeleteQuest() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.deleteQuest(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['quests'] });
-      queryClient.invalidateQueries({ queryKey: ['stats'] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['quests'] });
+      await queryClient.refetchQueries({ queryKey: ['stats'] });
     },
   });
 }
