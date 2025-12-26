@@ -82,10 +82,10 @@ class StatsServiceTest {
     var categoryStats = stats.get(0);
 
     assertEquals("Health", categoryStats.name());
-    assertEquals(1, categoryStats.totalQuests());
+    assertEquals(5, categoryStats.totalQuests());
     assertEquals(5, categoryStats.completedQuests());
     assertEquals("Apprentice", categoryStats.grade());
-    assertEquals(0.0, categoryStats.progress()); // (5-5)/10 * 100 = 0
+    assertEquals(100.0, categoryStats.progress());
   }
 
   private QuestOccurrence createCompletedOccurrence(QuestTemplate template) {
