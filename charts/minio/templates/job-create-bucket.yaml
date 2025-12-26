@@ -19,17 +19,24 @@ spec:
       restartPolicy: OnFailure
       securityContext:
         {{- toYaml .Values.createBuckets.podSecurityContext | nindent 8 }}
+      volumes:
+        - name: mc-config
+          emptyDir: {}
       containers:
         - name: mc
           image: "{{ .Values.mcImage.repository }}:{{ .Values.mcImage.tag }}"
           imagePullPolicy: {{ .Values.mcImage.pullPolicy }}
           securityContext:
             {{- toYaml .Values.createBuckets.containerSecurityContext | nindent 12 }}
+          volumeMounts:
+            - name: mc-config
+              mountPath: /tmp/.mc
           command:
             - /bin/sh
             - -c
             - |
               set -e
+              export MC_CONFIG_DIR=/tmp/.mc
               echo "Waiting for MinIO to be ready..."
               until mc alias set myminio http://{{ include "minio.fullname" . }}:{{ .Values.service.apiPort }} $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD; do
                 echo "MinIO not ready yet, retrying in 5s..."
@@ -49,6 +56,8 @@ spec:
               {{- end }}
               echo "All buckets created successfully!"
           env:
+            - name: HOME
+              value: /tmp
             - name: MINIO_ROOT_USER
               valueFrom:
                 secretKeyRef:
