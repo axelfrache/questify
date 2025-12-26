@@ -29,6 +29,7 @@ database:
 
 s3:
   endpoint: http://questify-minio:9000
+  publicUrl: https://s3.getquestify.com
   bucket: questify-profiles
   region: us-east-1
   existingSecret: questify-minio

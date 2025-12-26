@@ -40,6 +40,14 @@ service:
   apiPort: 9000
   consolePort: 9001
 
+ingress:
+  enabled: false
+  className: ""
+  host: s3.getquestify.com
+  annotations: {}
+  tls: []
+
+
 replicaCount: 1
 
 nodeSelector: {}

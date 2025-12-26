@@ -69,6 +69,8 @@ spec:
             # S3/MinIO configuration
             - name: S3_ENDPOINT
               value: {{ .Values.s3.endpoint | quote }}
+            - name: S3_PUBLIC_URL
+              value: {{ .Values.s3.publicUrl | quote }}
             - name: S3_BUCKET
               value: {{ .Values.s3.bucket | quote }}
             - name: S3_REGION
