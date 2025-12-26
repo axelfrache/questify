@@ -21,23 +21,9 @@ interface QuestCardProps {
   onDelete?: (id: string) => void;
   isPending?: boolean;
   disabled?: boolean;
+  hideCheckbox?: boolean;
 }
 
-/**
- * QuestCard Component
- *
- * A polished quest card with:
- * - Category accent (left border)
- * - Improved typography hierarchy
- * - Metadata chips (recurrence, difficulty)
- * - XP badge with secondary color
- * - Card states: pending, completed, disabled
- *
- * States Logic:
- * - Pending: Normal appearance, hover effects enabled
- * - Completed: Reduced opacity, strikethrough title, chips faded
- * - Disabled: Reduced opacity, non-interactive (for future occurrences)
- */
 export function QuestCard({
   quest,
   onComplete,
@@ -45,6 +31,7 @@ export function QuestCard({
   onDelete,
   isPending = false,
   disabled = false,
+  hideCheckbox = false,
 }: QuestCardProps) {
   const [showXpAnimation, setShowXpAnimation] = useState(false);
 
@@ -56,7 +43,6 @@ export function QuestCard({
 
     const target = event.currentTarget;
 
-    // Trigger XP badge animation
     setShowXpAnimation(true);
     setTimeout(() => setShowXpAnimation(false), 600);
 
@@ -67,12 +53,9 @@ export function QuestCard({
     <Card
       className={cn(
         'group relative overflow-hidden transition-all duration-200',
-        // Category accent - left border
         'border-l-[3px]',
-        // States
         isCompleted && 'opacity-60',
         disabled && 'opacity-40 cursor-not-allowed',
-        // Hover effect (only when not completed/disabled)
         !isCompleted && !disabled && 'hover:scale-[1.01] hover:shadow-md'
       )}
       style={{
@@ -81,15 +64,19 @@ export function QuestCard({
     >
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
-          {/* Checkbox */}
-          <div className="pt-0.5">
-            <Checkbox
-              checked={isCompleted}
-              onClick={handleCheckboxClick}
-              disabled={isCompleted || isPending || disabled}
-              className={cn('transition-transform', !isCompleted && !disabled && 'hover:scale-110')}
-            />
-          </div>
+          {!hideCheckbox && (
+            <div className="pt-0.5">
+              <Checkbox
+                checked={isCompleted}
+                onClick={handleCheckboxClick}
+                disabled={isCompleted || isPending || disabled}
+                className={cn(
+                  'transition-transform',
+                  !isCompleted && !disabled && 'hover:scale-110'
+                )}
+              />
+            </div>
+          )}
 
           {/* Main content */}
           <div className="flex-1 min-w-0 space-y-1.5">
