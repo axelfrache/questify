@@ -38,7 +38,16 @@ spec:
         maxDuration: 1m
 
   ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      jqPathExpressions:
+        - .spec.volumeClaimTemplates[]?.apiVersion
+        - .spec.volumeClaimTemplates[]?.kind
+        - .spec.volumeClaimTemplates[]?.status
     - group: ""
       kind: PersistentVolumeClaim
       jsonPointers:
         - /spec/resources/requests/storage
+        - /spec/volumeName
+        - /spec/volumeMode
+
