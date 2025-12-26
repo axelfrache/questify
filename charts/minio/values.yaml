@@ -41,10 +41,11 @@ service:
   consolePort: 9001
 
 ingress:
-  enabled: false
-  className: ""
+  enabled: true
+  className: nginx
   host: s3.getquestify.com
-  annotations: {}
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
   tls: []
 
 
