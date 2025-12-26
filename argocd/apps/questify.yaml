@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: questify-apps
+  name: questify
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://github.com/axelfrache/questify.git
     targetRevision: HEAD
-    path: argocd/apps
+    path: argocd/children
 
   destination:
     server: https://kubernetes.default.svc

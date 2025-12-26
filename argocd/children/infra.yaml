@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: questify-namespace
+  name: questify-infra
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "0"
@@ -13,11 +13,7 @@ spec:
   source:
     repoURL: https://github.com/axelfrache/questify.git
     targetRevision: HEAD
-    path: charts/questify
-    helm:
-      releaseName: questify
-      valueFiles:
-        - values.yaml
+    path: argocd/manifests/infra
 
   destination:
     server: https://kubernetes.default.svc
@@ -30,9 +26,3 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
-    retry:
-      limit: 3
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 1m
