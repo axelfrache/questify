@@ -396,25 +396,37 @@ export interface DailyStats {
 }
 
 export interface WeeklyStats {
-  startDate: string;
-  endDate: string;
   questsCompleted: number;
   xpEarned: number;
-  dailyBreakdown: Record<string, number>;
+  averagePerDay: number;
+  dailyBreakdown: DailyStats[];
 }
 
 export interface MonthlyStats {
-  year: number;
-  month: number;
   questsCompleted: number;
   xpEarned: number;
+  activeDays: number;
+}
+
+export interface UserProgressionDto {
+  id: string;
+  username: string;
+  totalXp: number;
+  level: number;
+  grade: string;
+  gradeLabel: string;
+  currentLevelXp: number;
+  nextLevelXp: number;
+  progressPercent: number;
 }
 
 export interface ProgressSummary {
-  totalXp: number;
-  currentLevel: number;
-  currentGrade: string;
-  xpToNextLevel: number;
+  today: DailyStats;
+  thisWeek: WeeklyStats;
+  thisMonth: MonthlyStats;
+  totalQuestsCompleted: number;
+  favoriteCategory: string | null;
+  levelProgress: UserProgressionDto;
 }
 
 export interface UserDto {

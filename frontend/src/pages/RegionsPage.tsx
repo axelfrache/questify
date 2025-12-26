@@ -70,7 +70,7 @@ export function RegionsPage() {
                   <p className="text-xs text-muted-foreground pt-1">
                     {stats.totalQuests === 0
                       ? 'No quests yet'
-                      : `${stats.completedQuests} Completed • ${stats.totalQuests} Active`}
+                      : `${stats.completedQuests}/${stats.totalQuests} quests completed`}
                   </p>
                 </div>
               </CardContent>

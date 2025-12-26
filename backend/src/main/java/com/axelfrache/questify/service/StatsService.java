@@ -134,23 +134,13 @@ public class StatsService {
   public List<CategoryStats> getCategoryStats(UUID userId) {
     var user = userRepository.findById(userId).orElseThrow();
     var categories = categoryRepository.findAllForUser(user);
-    var templates = questTemplateRepository.findByUserAndActiveTrue(user);
     var occurrences = questOccurrenceRepository.findAllByUserId(userId);
 
     return categories.stream()
         .map(
             category -> {
-              var categoryTemplates =
-                  templates.stream()
-                      .filter(
-                          t ->
-                              t.getCategory() != null
-                                  && t.getCategory().getId().equals(category.getId()))
-                      .toList();
-
               var categoryOccurrences =
                   occurrences.stream()
-                      .filter(q -> q.getStatus() == QuestStatus.COMPLETED)
                       .filter(
                           q ->
                               q.getQuestTemplate().getCategory() != null
@@ -160,24 +150,27 @@ public class StatsService {
                                       .equals(category.getId()))
                       .toList();
 
-              var totalQuests = categoryTemplates.size();
-              var completedQuests = categoryOccurrences.size();
+              var totalQuests = categoryOccurrences.size();
+              var completedQuests =
+                  (int)
+                      categoryOccurrences.stream()
+                          .filter(q -> q.getStatus() == QuestStatus.COMPLETED)
+                          .count();
 
-              double progress = 0;
-              String grade = "Novice";
+              double progress =
+                  totalQuests > 0 ? ((double) completedQuests / totalQuests) * 100 : 0;
 
-              if (completedQuests >= 30) {
+              String grade;
+              if (completedQuests >= 50) {
                 grade = "Master";
-                progress = 100;
-              } else if (completedQuests >= 15) {
+              } else if (completedQuests >= 25) {
+                grade = "Expert";
+              } else if (completedQuests >= 10) {
                 grade = "Explorer";
-                progress = ((completedQuests - 15) / 15.0) * 100;
               } else if (completedQuests >= 5) {
                 grade = "Apprentice";
-                progress = ((completedQuests - 5) / 10.0) * 100;
               } else {
                 grade = "Novice";
-                progress = (completedQuests / 5.0) * 100;
               }
 
               return new CategoryStats(
