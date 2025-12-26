@@ -1,17 +1,8 @@
 import { useState } from 'react';
 import { useDailyStats, useQuests, useCompleteQuest, useDeleteQuest } from '@/hooks/use-api';
-import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
 import { type QuestResponse } from '@/lib/api';
-import { MoreVertical, Edit, Trash } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { QuestCard } from '@/components/QuestCard';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import confetti from 'canvas-confetti';
 
@@ -43,13 +34,10 @@ export function TodayPage() {
 
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
 
-  const handleComplete = (id: string, currentStatus: string, checkboxElement?: HTMLElement) => {
-    if (currentStatus === 'COMPLETED') return;
-
+  const handleComplete = (id: string, checkboxElement?: HTMLElement) => {
     if (checkboxElement) {
       fireConfettiFromElement(checkboxElement);
     }
-
     completeQuestMutation.mutate(id);
   };
 
@@ -109,7 +97,7 @@ export function TodayPage() {
         ) : (
           <div className="space-y-3">
             {plannedQuests.map((quest) => (
-              <QuestItem
+              <QuestCard
                 key={quest.id}
                 quest={quest}
                 onComplete={handleComplete}
@@ -128,7 +116,7 @@ export function TodayPage() {
           <h2 className="text-lg font-semibold text-muted-foreground">Completed</h2>
           <div className="space-y-3">
             {completedQuests.map((quest) => (
-              <QuestItem
+              <QuestCard
                 key={quest.id}
                 quest={quest}
                 onComplete={handleComplete}
@@ -160,66 +148,5 @@ export function TodayPage() {
         }
       />
     </div>
-  );
-}
-
-function QuestItem({
-  quest,
-  onComplete,
-  onEdit,
-  onDelete,
-  isPending,
-}: {
-  quest: QuestResponse;
-  onComplete: (id: string, status: string, checkboxElement?: HTMLElement) => void;
-  onEdit: (quest: QuestResponse) => void;
-  onDelete: (id: string) => void;
-  isPending: boolean;
-}) {
-  const handleCheckboxClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    const target = event.currentTarget;
-    onComplete(quest.id, quest.status, target);
-  };
-
-  return (
-    <Card className={quest.status === 'COMPLETED' ? 'opacity-60' : ''}>
-      <CardContent className="p-4 flex items-center gap-4">
-        <Checkbox
-          checked={quest.status === 'COMPLETED'}
-          onClick={handleCheckboxClick}
-          disabled={quest.status === 'COMPLETED' || isPending}
-        />
-        <div className="flex-1">
-          <p
-            className={`font-medium ${quest.status === 'COMPLETED' ? 'line-through text-muted-foreground' : ''}`}
-          >
-            {quest.title}
-          </p>
-        </div>
-        <div className="text-xs text-muted-foreground flex items-center gap-4">
-          <div className="flex items-center">
-            {quest.category && <span className="mr-3">{quest.category.icon}</span>}
-            <span>+{quest.totalXpReward} XP</span>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit(quest)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDelete(quest.id)} className="text-destructive">
-                <Trash className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </CardContent>
-    </Card>
   );
 }

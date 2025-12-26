@@ -31,6 +31,7 @@ import {
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { CalendarIcon, Loader2 } from 'lucide-react';
+import { DIFFICULTY_CONFIG } from '@/lib/quest-config';
 
 interface CreateQuestDialogProps {
   open: boolean;
@@ -38,13 +39,6 @@ interface CreateQuestDialogProps {
   onQuestCreated?: () => void;
   questToEdit?: CreateQuestRequest & { id: string };
 }
-
-const DIFFICULTY_CONFIG = {
-  EASY: { label: 'Easy', xp: 50, color: 'text-emerald-500' },
-  MEDIUM: { label: 'Medium', xp: 75, color: 'text-blue-500' },
-  HARD: { label: 'Hard', xp: 100, color: 'text-orange-500' },
-  EPIC: { label: 'Epic', xp: 150, color: 'text-violet-500' },
-};
 
 export function CreateQuestDialog({
   open,
@@ -175,7 +169,7 @@ export function CreateQuestDialog({
                     <SelectItem key={key} value={key}>
                       <span className="flex items-center justify-between w-full gap-2">
                         <span>{config.label}</span>
-                        <span className={cn('text-xs', config.color)}>+{config.xp} XP</span>
+                        <span className={cn('text-xs', config.textColor)}>+{config.xp} XP</span>
                       </span>
                     </SelectItem>
                   ))}

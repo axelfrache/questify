@@ -1,8 +1,8 @@
 import { useQuests } from '@/hooks/use-api';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, parseISO, isTomorrow } from 'date-fns';
+import { QuestCard } from '@/components/QuestCard';
 
 export function UpcomingPage() {
   const { data: quests, isLoading } = useQuests(undefined, 'upcoming');
@@ -20,7 +20,7 @@ export function UpcomingPage() {
   const groupedQuests = (quests || []).reduce(
     (groups, quest) => {
       if (!quest.dueDate) return groups;
-      const date = quest.dueDate.split('T')[0]; // Simple date extraction
+      const date = quest.dueDate.split('T')[0];
       if (!groups[date]) {
         groups[date] = [];
       }
@@ -30,7 +30,6 @@ export function UpcomingPage() {
     {} as Record<string, typeof quests>
   );
 
-  // Sort dates
   const sortedDates = Object.keys(groupedQuests).sort();
 
   return (
@@ -58,30 +57,7 @@ export function UpcomingPage() {
                 </h2>
                 <div className="space-y-3">
                   {dateQuests.map((quest) => (
-                    <Card key={quest.id}>
-                      <CardContent className="p-4 flex items-center gap-4">
-                        <div
-                          className="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
-                          style={{
-                            backgroundColor: quest.category?.color
-                              ? `${quest.category.color}20`
-                              : '#f3f4f6',
-                            color: quest.category?.color || '#6b7280',
-                          }}
-                        >
-                          {quest.category?.icon || '📝'}
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium">{quest.title}</p>
-                          {quest.description && (
-                            <p className="text-sm text-muted-foreground truncate">
-                              {quest.description}
-                            </p>
-                          )}
-                        </div>
-                        <Badge variant="outline">+{quest.totalXpReward} XP</Badge>
-                      </CardContent>
-                    </Card>
+                    <QuestCard key={quest.id} quest={quest} disabled={true} />
                   ))}
                 </div>
               </div>
