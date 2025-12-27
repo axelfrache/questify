@@ -246,8 +246,11 @@ class ApiClient {
     });
   }
 
-  async deleteCategory(id: string): Promise<void> {
-    return this.request<void>(`/api/categories/${id}`, {
+  async deleteCategory(
+    id: string,
+    questAction: 'MOVE_TO_INBOX' | 'DELETE_ALL' = 'MOVE_TO_INBOX'
+  ): Promise<void> {
+    return this.request<void>(`/api/categories/${id}?questAction=${questAction}`, {
       method: 'DELETE',
     });
   }

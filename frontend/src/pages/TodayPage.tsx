@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { useDailyStats, useQuests, useCompleteQuest, useDeleteQuest } from '@/hooks/use-api';
+import {
+  useDailyStats,
+  useQuests,
+  useCompleteQuest,
+  useDeleteQuest,
+  useSkipQuest,
+} from '@/hooks/use-api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { type QuestResponse } from '@/lib/api';
 import { QuestCard } from '@/components/QuestCard';
@@ -31,6 +37,7 @@ export function TodayPage() {
   const { data: quests, isLoading: isLoadingQuests } = useQuests(undefined, 'today');
   const completeQuestMutation = useCompleteQuest();
   const deleteQuestMutation = useDeleteQuest();
+  const skipQuestMutation = useSkipQuest();
 
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
 
@@ -45,6 +52,10 @@ export function TodayPage() {
     if (confirm('Are you sure you want to delete this quest?')) {
       deleteQuestMutation.mutate(id);
     }
+  };
+
+  const handleSkip = (id: string) => {
+    skipQuestMutation.mutate(id);
   };
 
   if (isLoadingStats || isLoadingQuests) {
@@ -103,6 +114,7 @@ export function TodayPage() {
                 onComplete={handleComplete}
                 onEdit={setEditingQuest}
                 onDelete={handleDelete}
+                onSkip={handleSkip}
                 isPending={completeQuestMutation.isPending}
               />
             ))}

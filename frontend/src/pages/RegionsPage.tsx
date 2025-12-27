@@ -1,26 +1,42 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCategoryStats } from '@/hooks/use-api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useCategoryStats, useDeleteCategory } from '@/hooks/use-api';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { CreateCategoryDialog } from '@/components/CreateCategoryDialog';
+import { DeleteRegionDialog } from '@/components/DeleteRegionDialog';
+import { RegionCard } from '@/components/RegionCard';
+import type { CategoryStats } from '@/lib/api';
 
 export function RegionsPage() {
   const navigate = useNavigate();
   const { data: categoryStats, isLoading } = useCategoryStats();
+  const deleteCategory = useDeleteCategory();
+
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<CategoryStats | null>(null);
+  const [deletingCategory, setDeletingCategory] = useState<CategoryStats | null>(null);
+
+  const handleDelete = (questAction: 'MOVE_TO_INBOX' | 'DELETE_ALL') => {
+    if (!deletingCategory) return;
+
+    deleteCategory.mutate(
+      { id: deletingCategory.categoryId, questAction },
+      {
+        onSuccess: () => setDeletingCategory(null),
+      }
+    );
+  };
 
   if (isLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Skeleton className="h-40" />
-          <Skeleton className="h-40" />
-          <Skeleton className="h-40" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
         </div>
       </div>
     );
@@ -40,46 +56,41 @@ export function RegionsPage() {
       </div>
 
       {!categoryStats || categoryStats.length === 0 ? (
-        <div className="rounded-lg border p-8 text-center text-muted-foreground">
+        <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
           No regions discovered yet. Create a category to start exploring!
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {categoryStats.map((stats) => (
-            <Card
+            <RegionCard
               key={stats.categoryId}
-              className="hover:bg-accent/50 transition-colors cursor-pointer"
+              stats={stats}
               onClick={() => navigate(`/inbox?category=${stats.categoryId}`)}
-            >
-              <CardHeader className="pb-2">
-                <div
-                  className="text-3xl mb-2 w-12 h-12 flex items-center justify-center rounded-lg"
-                  style={{ backgroundColor: `${stats.color}20`, color: stats.color }}
-                >
-                  {stats.icon}
-                </div>
-                <CardTitle>{stats.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Progress</span>
-                    <span>{stats.grade}</span>
-                  </div>
-                  <Progress value={stats.progress} className="h-2" />
-                  <p className="text-xs text-muted-foreground pt-1">
-                    {stats.totalQuests === 0
-                      ? 'No quests yet'
-                      : `${stats.completedQuests}/${stats.totalQuests} quests completed`}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+              onEdit={() => setEditingCategory(stats)}
+              onDelete={() => setDeletingCategory(stats)}
+            />
           ))}
         </div>
       )}
 
       <CreateCategoryDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
+
+      <CreateCategoryDialog
+        open={!!editingCategory}
+        onOpenChange={(open) => !open && setEditingCategory(null)}
+        categoryToEdit={editingCategory ?? undefined}
+      />
+
+      {deletingCategory && (
+        <DeleteRegionDialog
+          open={!!deletingCategory}
+          onOpenChange={(open) => !open && setDeletingCategory(null)}
+          regionName={deletingCategory.name}
+          questCount={deletingCategory.totalQuests - deletingCategory.completedQuests}
+          onConfirm={handleDelete}
+          isPending={deleteCategory.isPending}
+        />
+      )}
     </div>
   );
 }

@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreVertical, Edit, Trash } from 'lucide-react';
+import { MoreVertical, Edit, Trash, SkipForward } from 'lucide-react';
 import { DifficultyChip, RecurrenceChip } from '@/components/ui/quest-meta-chip';
 import { XpBadge } from '@/components/ui/xp-badge';
 import { cn } from '@/lib/utils';
@@ -19,6 +19,7 @@ interface QuestCardProps {
   onComplete?: (id: string, checkboxElement?: HTMLElement) => void;
   onEdit?: (quest: QuestResponse) => void;
   onDelete?: (id: string) => void;
+  onSkip?: (id: string) => void;
   isPending?: boolean;
   disabled?: boolean;
   hideCheckbox?: boolean;
@@ -29,6 +30,7 @@ export function QuestCard({
   onComplete,
   onEdit,
   onDelete,
+  onSkip,
   isPending = false,
   disabled = false,
   hideCheckbox = false,
@@ -139,6 +141,12 @@ export function QuestCard({
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
+                {quest.recurrenceInterval !== 'NONE' && quest.status === 'PENDING' && onSkip && (
+                  <DropdownMenuItem onClick={() => onSkip(quest.id)}>
+                    <SkipForward className="mr-2 h-4 w-4" />
+                    Skip today
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   onClick={() => onDelete?.(quest.id)}
                   className="text-destructive focus:text-destructive"

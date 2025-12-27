@@ -124,6 +124,37 @@ export function useCreateCategory() {
   });
 }
 
+export function useUpdateCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: CreateCategoryRequest }) =>
+      api.updateCategory(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['stats', 'categories'] });
+    },
+  });
+}
+
+export function useDeleteCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      questAction,
+    }: {
+      id: string;
+      questAction: 'MOVE_TO_INBOX' | 'DELETE_ALL';
+    }) => api.deleteCategory(id, questAction),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['stats', 'categories'] });
+      queryClient.invalidateQueries({ queryKey: ['quests'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
+    },
+  });
+}
+
 export function useDailyStats() {
   return useQuery({
     queryKey: ['stats', 'daily'],
