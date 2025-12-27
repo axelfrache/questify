@@ -243,6 +243,7 @@ public class QuestService {
     LocalDate today = LocalDate.now();
 
     return allOccurrences.stream()
+        .filter(q -> q.getStatus() != QuestStatus.SKIPPED)
         .filter(
             q -> {
               boolean isToday = q.getScheduledDate().equals(today);

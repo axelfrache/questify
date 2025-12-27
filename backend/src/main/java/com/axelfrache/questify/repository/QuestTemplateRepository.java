@@ -1,5 +1,6 @@
 package com.axelfrache.questify.repository;
 
+import com.axelfrache.questify.model.Category;
 import com.axelfrache.questify.model.QuestTemplate;
 import com.axelfrache.questify.model.User;
 import java.util.List;
@@ -14,4 +15,6 @@ public interface QuestTemplateRepository extends JpaRepository<QuestTemplate, UU
   List<QuestTemplate> findByUserAndActiveTrue(User user);
 
   List<QuestTemplate> findByUserAndRecurrenceRuleIsNotNullAndDeletedFalse(User user);
+
+  List<QuestTemplate> findByCategoryAndDeletedFalse(Category category);
 }

@@ -3,8 +3,10 @@ package com.axelfrache.questify.service;
 import com.axelfrache.questify.dto.CategoryResponse;
 import com.axelfrache.questify.dto.CreateCategoryRequest;
 import com.axelfrache.questify.model.Category;
+import com.axelfrache.questify.model.QuestAction;
 import com.axelfrache.questify.model.User;
 import com.axelfrache.questify.repository.CategoryRepository;
+import com.axelfrache.questify.repository.QuestTemplateRepository;
 import com.axelfrache.questify.repository.UserRepository;
 import java.util.List;
 import java.util.UUID;
@@ -17,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CategoryService {
 
   private final CategoryRepository categoryRepository;
+  private final QuestTemplateRepository questTemplateRepository;
   private final UserRepository userRepository;
 
   @Transactional
@@ -61,10 +64,32 @@ public class CategoryService {
   }
 
   @Transactional
-  public void delete(UUID categoryId) {
+  public void delete(UUID categoryId, QuestAction questAction, UUID userId) {
     var category = findCategoryOrThrow(categoryId);
+    var user = findUserOrThrow(userId);
 
     if (category.isGlobal()) throw new IllegalStateException("Cannot delete global category");
+
+    if (category.getUser() == null || !category.getUser().getId().equals(user.getId())) {
+      throw new IllegalStateException("Cannot delete category that doesn't belong to you");
+    }
+
+    var questTemplates = questTemplateRepository.findByCategoryAndDeletedFalse(category);
+
+    switch (questAction) {
+      case MOVE_TO_INBOX -> {
+        for (var template : questTemplates) {
+          template.setCategory(null);
+        }
+        questTemplateRepository.saveAll(questTemplates);
+      }
+      case DELETE_ALL -> {
+        for (var template : questTemplates) {
+          template.setDeleted(true);
+        }
+        questTemplateRepository.saveAll(questTemplates);
+      }
+    }
 
     categoryRepository.delete(category);
   }

@@ -2,6 +2,7 @@ package com.axelfrache.questify.controller;
 
 import com.axelfrache.questify.dto.CategoryResponse;
 import com.axelfrache.questify.dto.CreateCategoryRequest;
+import com.axelfrache.questify.model.QuestAction;
 import com.axelfrache.questify.repository.UserRepository;
 import com.axelfrache.questify.service.CategoryService;
 import jakarta.validation.Valid;
@@ -43,8 +44,12 @@ public class CategoryController {
   }
 
   @DeleteMapping("/{id}")
-  public ResponseEntity<Void> delete(@PathVariable UUID id) {
-    categoryService.delete(id);
+  public ResponseEntity<Void> delete(
+      @AuthenticationPrincipal UserDetails userDetails,
+      @PathVariable UUID id,
+      @RequestParam(defaultValue = "MOVE_TO_INBOX") QuestAction questAction) {
+    var userId = getUserId(userDetails);
+    categoryService.delete(id, questAction, userId);
     return ResponseEntity.noContent().build();
   }
 
