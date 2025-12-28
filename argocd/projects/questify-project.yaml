@@ -34,4 +34,4 @@ spec:
         - questify-admins
 
   orphanedResources:
-    warn: true
+    warn: false
