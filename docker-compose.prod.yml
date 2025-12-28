@@ -29,7 +29,6 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
-      - SPRING_DATASOURCE_DRIVER=org.postgresql.Driver
       - SPRING_JPA_DDL_AUTO=update
       - H2_CONSOLE_ENABLED=false
       - S3_ENDPOINT=http://minio:9000
