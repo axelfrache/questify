@@ -40,8 +40,8 @@ s3:
 jwt:
   accessExpiration: "900000"
   refreshExpiration: "604800000"
-  secret: "your-256-bit-secret-here-change-in-production"
-  existingSecret: ""
+  secret: ""
+  existingSecret: "questify-backend-jwt"
   secretKey: jwt-secret
 
 resources:

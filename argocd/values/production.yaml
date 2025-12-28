@@ -8,8 +8,6 @@ ingress:
     secretName: questify-tls
 
 postgresql:
-  auth:
-    password: "CHANGE_ME_SECURE_PASSWORD"
   persistence:
     size: 20Gi
   resources:
@@ -21,9 +19,6 @@ postgresql:
       cpu: "1000m"
 
 minio:
-  auth:
-    rootUser: "admin"
-    rootPassword: "CHANGE_ME_SECURE_PASSWORD"
   persistence:
     size: 50Gi
 
@@ -31,8 +26,6 @@ backend:
   image:
     tag: "v1.0.0"
   replicaCount: 2
-  jwt:
-    secret: "CHANGE_ME_256_BIT_SECRET_FOR_JWT_PRODUCTION"
   resources:
     requests:
       memory: "1Gi"

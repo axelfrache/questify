@@ -1,0 +1,13 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: questify-backend-jwt
+  namespace: questify
+spec:
+  encryptedData:
+    jwt-secret: AgCVdWVnkb+FRhUClw20fi5f9as+MML+irwgfYYgyjnPSqNS+BMiPV7diR0p81rP703rNOQifhAifSYnuAcp4/0gDMECYR7so0BvUEs0AOonSvLjVS8GTw9wYBbA02sgnSjDAPzw1ltAlTcTVl0dK8rKL11qjIbevAeVjUfQRGS3ZVS5/knWM+ZKBuN1NK751zWrt3zYwQQhUnhK8WrXIlXq2sGHzXc5SZ1M0CaWUwIyzfHYj9xTJ8GfGBQKIsYRP5JbtNZAtqXez2HieXk1jMC84M8yRIKrgFTkMElDefbrdJzop/jeEc9lRoMsaqKFT9m/C5WYtU/+BRLp2OapEgOMdkFKxkVsZPUE96qheGG4lNssyvaQLiZ7+djk1DXQndRA1xT0/T7lfdZ9Wg10gEe18UXoQiQv/D1ihK1mlWXEFI56BT6NSbecZyWsZb5Z7+XbujA7qLaDeMbd2N9EqaPvMXtpBu9c84TeIpEYG4/uovyJ8fFIvcUknjifrkattztULFob3eljiL34/WnWUDtqg6rAAlbTDhU9+OYgrLN7UlDmiwbxxGiGbYDApnyXmqfevO0ZdGwGT4ftX8CPtvT98x8srOGk1tbCiqW9FeI1DzdEy9e3wPfGWC1+Mwv4KmBWlVMUQrN2FgG3E2BCFrldFTHiZhUCryqkLssrun5fb92lLfxbJpIpW4FzaQ54RuOOHqlnSXtYjrXsWpCva3cPFkxscH8daIxYbQ6Pbg1rCkR9q1I/PcXhcm35FDXgQ4nSrjWtBhsKY5VXhG9E+3D5D+lJiv1Fdq6wTXfcn9nNx4xedeNUE+4VBQ==
+  template:
+    metadata:
+      name: questify-backend-jwt
+      namespace: questify

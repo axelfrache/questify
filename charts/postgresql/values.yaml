@@ -5,9 +5,9 @@ image:
 
 auth:
   database: questify
-  username: questify
-  password: questify
-  existingSecret: ""
+  username: ""
+  password: ""
+  existingSecret: "questify-postgresql"
   secretKeys:
     usernameKey: username
     passwordKey: password

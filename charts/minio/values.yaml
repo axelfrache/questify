@@ -9,9 +9,9 @@ mcImage:
   pullPolicy: IfNotPresent
 
 auth:
-  rootUser: minioadmin
-  rootPassword: minioadmin
-  existingSecret: ""
+  rootUser: ""
+  rootPassword: ""
+  existingSecret: "questify-minio"
   secretKeys:
     rootUserKey: root-user
     rootPasswordKey: root-password
