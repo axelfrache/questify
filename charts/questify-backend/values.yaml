@@ -1,7 +1,7 @@
 image:
   repository: registry.axelfrache.me/questify/backend
   tag: "latest"
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 imagePullSecrets:
   - name: regcred

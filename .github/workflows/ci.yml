@@ -139,9 +139,7 @@ jobs:
         with:
           images: ${{ env.BACKEND_IMAGE }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha,prefix=
+            type=sha,prefix=sha-,format=short
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build Docker image
@@ -179,9 +177,7 @@ jobs:
         with:
           images: ${{ env.FRONTEND_IMAGE }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha,prefix=
+            type=sha,prefix=sha-,format=short
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build Docker image
@@ -249,3 +245,43 @@ jobs:
           echo "**Frontend Image:** \`${{ env.FRONTEND_IMAGE }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Images successfully pushed to Harbor registry." >> $GITHUB_STEP_SUMMARY
+
+  # ============================================
+  # UPDATE MANIFESTS STAGE (GitOps)
+  # ============================================
+  update-manifests:
+    name: Update Helm Values
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
+
+      - name: Update image tags in Helm values
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          echo "Updating image tags to sha-${SHORT_SHA}"
+          
+          # Update frontend values
+          sed -i "s/^  tag: .*/  tag: \"sha-${SHORT_SHA}\"/" charts/questify-frontend/values.yaml
+          
+          # Update backend values  
+          sed -i "s/^  tag: .*/  tag: \"sha-${SHORT_SHA}\"/" charts/questify-backend/values.yaml
+          
+          echo "Updated values:"
+          grep -A1 "^image:" charts/questify-frontend/values.yaml
+          grep -A1 "^image:" charts/questify-backend/values.yaml
+
+      - name: Commit and push changes
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add charts/questify-frontend/values.yaml charts/questify-backend/values.yaml
+          git diff --staged --quiet || git commit -m "chore: update image tags to sha-${SHORT_SHA} [skip ci]"
+          git push
+
