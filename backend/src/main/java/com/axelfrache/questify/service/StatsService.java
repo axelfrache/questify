@@ -185,4 +185,63 @@ public class StatsService {
             })
         .toList();
   }
+
+  @Transactional(readOnly = true)
+  public DailyCompletionRate getDailyCompletionRate(UUID userId, LocalDate date) {
+    var plannedOccurrences = questOccurrenceRepository.findByUserIdAndScheduledDate(userId, date);
+    var plannedCount = plannedOccurrences.size();
+    var completedCount =
+        (int)
+            plannedOccurrences.stream().filter(q -> q.getStatus() == QuestStatus.COMPLETED).count();
+
+    double rate = plannedCount > 0 ? ((double) completedCount / plannedCount) * 100 : 0;
+
+    return new DailyCompletionRate(
+        date, plannedCount, completedCount, Math.round(rate * 10) / 10.0);
+  }
+
+  @Transactional(readOnly = true)
+  public List<RegionActivityStats> getRegionActivityStats(UUID userId) {
+    var user = userRepository.findById(userId).orElseThrow();
+    var categories = categoryRepository.findAllForUser(user);
+    var occurrences = questOccurrenceRepository.findAllByUserId(userId);
+    var today = LocalDate.now();
+    var monthStart = today.withDayOfMonth(1);
+
+    return categories.stream()
+        .map(
+            category -> {
+              var completedThisMonth =
+                  (int)
+                      occurrences.stream()
+                          .filter(q -> q.getStatus() == QuestStatus.COMPLETED)
+                          .filter(q -> q.getCompletedAt() != null)
+                          .filter(
+                              q ->
+                                  q.getQuestTemplate().getCategory() != null
+                                      && q.getQuestTemplate()
+                                          .getCategory()
+                                          .getId()
+                                          .equals(category.getId()))
+                          .filter(
+                              q -> {
+                                var completedDate =
+                                    q.getCompletedAt()
+                                        .atZone(ZoneId.of(user.getTimezone()))
+                                        .toLocalDate();
+                                return !completedDate.isBefore(monthStart)
+                                    && !completedDate.isAfter(today);
+                              })
+                          .count();
+
+              return new RegionActivityStats(
+                  category.getId(),
+                  category.getName(),
+                  category.getIcon(),
+                  category.getColor(),
+                  completedThisMonth);
+            })
+        .sorted((a, b) -> Integer.compare(b.completedThisMonth(), a.completedThisMonth()))
+        .toList();
+  }
 }

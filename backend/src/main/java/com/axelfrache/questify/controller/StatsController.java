@@ -56,6 +56,20 @@ public class StatsController {
     return ResponseEntity.ok(statsService.getCategoryStats(userId));
   }
 
+  @GetMapping("/completion-rate")
+  public ResponseEntity<com.axelfrache.questify.dto.DailyCompletionRate> getCompletionRate(
+      @AuthenticationPrincipal UserDetails userDetails) {
+    var userId = getUserId(userDetails);
+    return ResponseEntity.ok(statsService.getDailyCompletionRate(userId, LocalDate.now()));
+  }
+
+  @GetMapping("/region-activity")
+  public ResponseEntity<java.util.List<com.axelfrache.questify.dto.RegionActivityStats>>
+      getRegionActivity(@AuthenticationPrincipal UserDetails userDetails) {
+    var userId = getUserId(userDetails);
+    return ResponseEntity.ok(statsService.getRegionActivityStats(userId));
+  }
+
   private UUID getUserId(UserDetails userDetails) {
     return userRepository
         .findByEmail(userDetails.getUsername())
