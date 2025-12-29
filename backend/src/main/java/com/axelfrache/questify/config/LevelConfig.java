@@ -20,9 +20,7 @@ public class LevelConfig {
 
   public long totalXpForLevel(int level) {
     var total = 0L;
-    for (var i = 1; i <= level; i++) {
-      total += requiredXpForLevel(i);
-    }
+    for (var i = 1; i <= level; i++) total += requiredXpForLevel(i);
     return total;
   }
 }

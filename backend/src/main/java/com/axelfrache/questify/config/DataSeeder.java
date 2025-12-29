@@ -20,7 +20,7 @@ public class DataSeeder implements CommandLineRunner {
 
   @Override
   public void run(String... args) {
-    // seedGlobalCategories(); // Disabled as per user request
+    // seedGlobalCategories();
     seedAchievements();
   }
 
