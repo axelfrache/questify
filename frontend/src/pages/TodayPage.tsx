@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import {
-  useDailyStats,
   useQuests,
   useCompleteQuest,
   useDeleteQuest,
   useSkipQuest,
+  useCompletionRate,
 } from '@/hooks/use-api';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 import { type QuestResponse } from '@/lib/api';
 import { QuestCard } from '@/components/QuestCard';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import confetti from 'canvas-confetti';
+import { CheckCircle2 } from 'lucide-react';
 
 const fireConfettiFromElement = (element: HTMLElement) => {
   const rect = element.getBoundingClientRect();
@@ -33,7 +35,7 @@ const fireConfettiFromElement = (element: HTMLElement) => {
 };
 
 export function TodayPage() {
-  const { data: stats, isLoading: isLoadingStats } = useDailyStats();
+  const { data: completionRate, isLoading: isLoadingCompletion } = useCompletionRate();
   const { data: quests, isLoading: isLoadingQuests } = useQuests(undefined, 'today');
   const completeQuestMutation = useCompleteQuest();
   const deleteQuestMutation = useDeleteQuest();
@@ -58,7 +60,7 @@ export function TodayPage() {
     skipQuestMutation.mutate(id);
   };
 
-  if (isLoadingStats || isLoadingQuests) {
+  if (isLoadingCompletion || isLoadingQuests) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-24 w-full" />
@@ -73,32 +75,35 @@ export function TodayPage() {
     quests?.filter((q) => q.status !== 'COMPLETED' && q.status !== 'CANCELLED') || [];
   const completedQuests = quests?.filter((q) => q.status === 'COMPLETED').reverse() || [];
 
-  const xpGoal = 100;
-  const currentXp = stats?.xpEarned || 0;
-  const progressPercentage = Math.min((currentXp / xpGoal) * 100, 100);
+  const completionPercent = completionRate?.completionRate || 0;
+  const completed = completionRate?.completedQuests || 0;
+  const planned = completionRate?.plannedQuests || 0;
+
+  const getCompletionColor = (rate: number) => {
+    if (rate >= 100) return 'text-green-500';
+    if (rate >= 75) return 'text-emerald-500';
+    if (rate >= 50) return 'text-primary';
+    return 'text-muted-foreground';
+  };
 
   return (
     <div className="space-y-8">
-      {/* Daily Progress Header */}
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span>Daily Goal</span>
-          <span>
-            {currentXp} / {xpGoal} XP
+      <div className="rounded-lg border bg-card p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
+            <span className="font-medium">Daily Completion</span>
+          </div>
+          <span className={`text-2xl font-bold ${getCompletionColor(completionPercent)}`}>
+            {completionPercent}%
           </span>
         </div>
-        <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-          <div
-            className="h-full bg-primary transition-all duration-500"
-            style={{ width: `${progressPercentage}%` }}
-          />
-        </div>
-        <p className="text-xs text-muted-foreground text-right">
-          {stats?.questsCompleted || 0} quests completed today
+        <Progress value={Math.min(completionPercent, 100)} className="h-2" />
+        <p className="text-sm text-muted-foreground">
+          {completed} of {planned} quests completed
         </p>
       </div>
 
-      {/* Planned Section */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">Planned for Today</h2>
         {plannedQuests.length === 0 ? (
@@ -122,7 +127,6 @@ export function TodayPage() {
         )}
       </div>
 
-      {/* Completed Section */}
       {completedQuests.length > 0 && (
         <div className="space-y-4">
           <h2 className="text-lg font-semibold text-muted-foreground">Completed</h2>

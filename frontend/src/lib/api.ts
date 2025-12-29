@@ -275,6 +275,18 @@ class ApiClient {
     return this.request<CategoryStats[]>('/api/stats/categories');
   }
 
+  async getCompletionRate(): Promise<DailyCompletionRate> {
+    return this.request<DailyCompletionRate>('/api/stats/completion-rate');
+  }
+
+  async getRegionActivity(): Promise<RegionActivityStats[]> {
+    return this.request<RegionActivityStats[]>('/api/stats/region-activity');
+  }
+
+  async getWeeklyCompletionRates(): Promise<DailyCompletionRate[]> {
+    return this.request<DailyCompletionRate[]>('/api/stats/weekly-completion');
+  }
+
   async getUserProfile(id: string): Promise<UserDto> {
     return this.request<UserDto>(`/api/users/${id}`);
   }
@@ -460,6 +472,21 @@ export interface CategoryStats {
   completedQuests: number;
   progress: number;
   grade: string;
+}
+
+export interface DailyCompletionRate {
+  date: string;
+  plannedQuests: number;
+  completedQuests: number;
+  completionRate: number;
+}
+
+export interface RegionActivityStats {
+  categoryId: string;
+  name: string;
+  icon: string;
+  color: string;
+  completedThisMonth: number;
 }
 
 export const api = new ApiClient(API_BASE_URL);

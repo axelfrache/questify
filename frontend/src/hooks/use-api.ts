@@ -189,3 +189,24 @@ export function useCategoryStats() {
     queryFn: () => api.getCategoryStats(),
   });
 }
+
+export function useCompletionRate() {
+  return useQuery({
+    queryKey: ['stats', 'completion-rate'],
+    queryFn: () => api.getCompletionRate(),
+  });
+}
+
+export function useRegionActivity() {
+  return useQuery({
+    queryKey: ['stats', 'region-activity'],
+    queryFn: () => api.getRegionActivity(),
+  });
+}
+
+export function useWeeklyCompletionRates() {
+  return useQuery({
+    queryKey: ['stats', 'weekly-completion'],
+    queryFn: () => api.getWeeklyCompletionRates(),
+  });
+}
