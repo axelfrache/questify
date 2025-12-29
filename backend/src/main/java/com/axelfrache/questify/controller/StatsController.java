@@ -70,6 +70,13 @@ public class StatsController {
     return ResponseEntity.ok(statsService.getRegionActivityStats(userId));
   }
 
+  @GetMapping("/weekly-completion")
+  public ResponseEntity<java.util.List<com.axelfrache.questify.dto.DailyCompletionRate>>
+      getWeeklyCompletionRates(@AuthenticationPrincipal UserDetails userDetails) {
+    var userId = getUserId(userDetails);
+    return ResponseEntity.ok(statsService.getWeeklyCompletionRates(userId));
+  }
+
   private UUID getUserId(UserDetails userDetails) {
     return userRepository
         .findByEmail(userDetails.getUsername())

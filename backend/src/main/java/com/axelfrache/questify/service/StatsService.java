@@ -244,4 +244,17 @@ public class StatsService {
         .sorted((a, b) -> Integer.compare(b.completedThisMonth(), a.completedThisMonth()))
         .toList();
   }
+
+  @Transactional(readOnly = true)
+  public List<DailyCompletionRate> getWeeklyCompletionRates(UUID userId) {
+    var today = LocalDate.now();
+    var weekStart = today.minusDays(6);
+
+    var rates = new ArrayList<DailyCompletionRate>();
+    for (var i = 0; i < 7; i++) {
+      rates.add(getDailyCompletionRate(userId, weekStart.plusDays(i)));
+    }
+
+    return rates;
+  }
 }
