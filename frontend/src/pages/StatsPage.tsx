@@ -207,7 +207,7 @@ export function StatsPage() {
           </CardContent>
         </Card>
 
-        {regionActivity && regionActivity.length > 0 && <RegionRadarChart data={regionActivity} />}
+        {regionActivity && <RegionRadarChart data={regionActivity} />}
       </div>
     </div>
   );

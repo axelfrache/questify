@@ -21,53 +21,61 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function RegionRadarChart({ data }: RegionRadarChartProps) {
-  if (!data || data.length === 0) {
-    return null;
-  }
+  const hasData = data && data.length > 0;
 
-  const chartData = data.map((region) => ({
-    region: region.name,
-    activity: region.completedThisMonth,
-  }));
+  const chartData = hasData
+    ? data.map((region) => ({
+        region: region.name,
+        activity: region.completedThisMonth,
+      }))
+    : [];
 
-  // Calculate dynamic outer radius based on number of regions
-  // More regions = smaller radar to leave room for labels
   const outerRadius = data.length <= 3 ? '60%' : data.length <= 5 ? '55%' : '50%';
 
   return (
-    <Card>
+    <Card className="flex flex-col h-full">
       <CardHeader className="pb-0 pt-4 px-4">
         <CardTitle className="flex items-center gap-2 text-base">
           <Map className="h-4 w-4" />
           By Region
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-2">
-        <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[200px]">
-          <RadarChart
-            data={chartData}
-            outerRadius={outerRadius}
-            margin={{ top: 20, right: 30, bottom: 20, left: 30 }}
+      <CardContent className="p-2 flex-1 flex items-center justify-center min-h-[200px]">
+        {hasData ? (
+          <ChartContainer
+            config={chartConfig}
+            className="mx-auto aspect-square max-h-[200px] w-full"
           >
-            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-            <PolarAngleAxis
-              dataKey="region"
-              tick={({ x, y, payload, textAnchor }) => (
-                <text
-                  x={x}
-                  y={y}
-                  textAnchor={textAnchor}
-                  dominantBaseline="central"
-                  className="fill-muted-foreground text-[10px]"
-                >
-                  {payload.value}
-                </text>
-              )}
-            />
-            <PolarGrid />
-            <Radar dataKey="activity" fill="var(--color-activity)" fillOpacity={0.6} />
-          </RadarChart>
-        </ChartContainer>
+            <RadarChart
+              data={chartData}
+              outerRadius={outerRadius}
+              margin={{ top: 20, right: 30, bottom: 20, left: 30 }}
+            >
+              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+              <PolarAngleAxis
+                dataKey="region"
+                tick={({ x, y, payload, textAnchor }) => (
+                  <text
+                    x={x}
+                    y={y}
+                    textAnchor={textAnchor}
+                    dominantBaseline="central"
+                    className="fill-muted-foreground text-[10px]"
+                  >
+                    {payload.value}
+                  </text>
+                )}
+              />
+              <PolarGrid />
+              <Radar dataKey="activity" fill="var(--color-activity)" fillOpacity={0.6} />
+            </RadarChart>
+          </ChartContainer>
+        ) : (
+          <div className="text-center text-muted-foreground text-sm p-4">
+            <p>No regions created yet.</p>
+            <p className="text-xs mt-1 opacity-70">Create regions to see activity breakdown.</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
