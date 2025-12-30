@@ -30,6 +30,10 @@ export function RegionRadarChart({ data }: RegionRadarChartProps) {
     activity: region.completedThisMonth,
   }));
 
+  // Calculate dynamic outer radius based on number of regions
+  // More regions = smaller radar to leave room for labels
+  const outerRadius = data.length <= 3 ? '60%' : data.length <= 5 ? '55%' : '50%';
+
   return (
     <Card>
       <CardHeader className="pb-0 pt-4 px-4">
@@ -39,10 +43,27 @@ export function RegionRadarChart({ data }: RegionRadarChartProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-2">
-        <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[180px]">
-          <RadarChart data={chartData}>
+        <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[200px]">
+          <RadarChart
+            data={chartData}
+            outerRadius={outerRadius}
+            margin={{ top: 20, right: 30, bottom: 20, left: 30 }}
+          >
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-            <PolarAngleAxis dataKey="region" tick={{ fontSize: 10 }} />
+            <PolarAngleAxis
+              dataKey="region"
+              tick={({ x, y, payload, textAnchor }) => (
+                <text
+                  x={x}
+                  y={y}
+                  textAnchor={textAnchor}
+                  dominantBaseline="central"
+                  className="fill-muted-foreground text-[10px]"
+                >
+                  {payload.value}
+                </text>
+              )}
+            />
             <PolarGrid />
             <Radar dataKey="activity" fill="var(--color-activity)" fillOpacity={0.6} />
           </RadarChart>

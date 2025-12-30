@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ShineBorder } from '@/components/ui/shine-border';
 import { Zap, Star, Info, ChevronRight, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -98,19 +99,28 @@ export function ProgressPage() {
                 return (
                   <div key={grade.name} className="flex items-center flex-1 last:flex-none">
                     <div className="flex flex-col items-center">
-                      <div
-                        className={cn(
-                          'w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all',
-                          isPast && 'bg-primary border-primary text-primary-foreground',
-                          isCurrent &&
-                            'bg-primary/20 border-primary text-primary ring-4 ring-primary/20',
-                          isFuture && 'bg-muted border-muted-foreground/30 text-muted-foreground'
-                        )}
-                      >
-                        {isPast ? (
-                          <Check className="h-5 w-5" />
-                        ) : (
-                          <span className="text-xs font-bold">{grade.minLevel}</span>
+                      <div className="relative">
+                        <div
+                          className={cn(
+                            'w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all',
+                            isPast && 'bg-primary border-primary text-primary-foreground',
+                            isCurrent && 'bg-primary/20 border-primary text-primary',
+                            isFuture && 'bg-muted border-muted-foreground/30 text-muted-foreground'
+                          )}
+                        >
+                          {isPast ? (
+                            <Check className="h-5 w-5" />
+                          ) : (
+                            <span className="text-xs font-bold">{grade.minLevel}</span>
+                          )}
+                        </div>
+                        {isCurrent && (
+                          <ShineBorder
+                            className="rounded-full"
+                            shineColor={['#a855f7', '#6366f1', '#22d3ee']}
+                            borderWidth={2}
+                            duration={8}
+                          />
                         )}
                       </div>
                       <span
