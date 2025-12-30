@@ -47,17 +47,17 @@ export function StatsPage() {
   const today = new Date();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold">Stats</h1>
-          <p className="text-muted-foreground text-sm">Your activity and consistency over time.</p>
+          <p className="text-muted-foreground">Your activity and consistency over time.</p>
         </div>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <button className="p-2 rounded-full hover:bg-muted transition-colors">
-                <Info className="h-4 w-4 text-muted-foreground" />
+                <Info className="h-5 w-5 text-muted-foreground" />
               </button>
             </TooltipTrigger>
             <TooltipContent side="left" className="max-w-xs">
