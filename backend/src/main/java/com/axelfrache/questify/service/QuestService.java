@@ -60,20 +60,20 @@ public class QuestService {
     questTemplateRepository.save(template);
 
     if (recurrenceRule == null) {
-      LocalDate scheduledDate =
-          request.dueDate() != null
-              ? request.dueDate().atZone(ZoneId.systemDefault()).toLocalDate()
-              : LocalDate.now();
+      if (request.dueDate() != null) {
+        LocalDate scheduledDate = request.dueDate().atZone(ZoneId.systemDefault()).toLocalDate();
 
-      var occurrence =
-          QuestOccurrence.builder()
-              .questTemplate(template)
-              .scheduledDate(scheduledDate)
-              .status(QuestStatus.PENDING)
-              .build();
+        var occurrence =
+            QuestOccurrence.builder()
+                .questTemplate(template)
+                .scheduledDate(scheduledDate)
+                .status(QuestStatus.PENDING)
+                .build();
 
-      questOccurrenceRepository.save(occurrence);
-      return toResponse(occurrence);
+        questOccurrenceRepository.save(occurrence);
+        return toResponse(occurrence);
+      }
+      return toResponse(template);
     } else {
       ensureDailyOccurrences(userId);
       return toResponse(template);
@@ -244,13 +244,7 @@ public class QuestService {
 
     return allOccurrences.stream()
         .filter(q -> q.getStatus() != QuestStatus.SKIPPED)
-        .filter(
-            q -> {
-              boolean isToday = q.getScheduledDate().equals(today);
-              boolean isOverdue =
-                  q.getScheduledDate().isBefore(today) && q.getStatus() == QuestStatus.PENDING;
-              return isToday || isOverdue;
-            })
+        .filter(q -> q.getScheduledDate().equals(today))
         .sorted((o1, o2) -> o1.getScheduledDate().compareTo(o2.getScheduledDate()))
         .map(this::toResponse)
         .collect(Collectors.toList());
@@ -259,12 +253,30 @@ public class QuestService {
   @Transactional
   public List<QuestResponse> findInboxQuests(UUID userId) {
     ensureDailyOccurrences(userId);
+    var user = findUserOrThrow(userId);
+
     var allOccurrences = questOccurrenceRepository.findAllByUserId(userId);
-    return allOccurrences.stream()
-        .filter(q -> q.getStatus() == QuestStatus.PENDING)
-        .sorted((o1, o2) -> o2.getScheduledDate().compareTo(o1.getScheduledDate()))
-        .map(this::toResponse)
-        .collect(Collectors.toList());
+    var occurrenceResponses =
+        allOccurrences.stream()
+            .filter(q -> q.getStatus() == QuestStatus.PENDING)
+            .sorted((o1, o2) -> o2.getScheduledDate().compareTo(o1.getScheduledDate()))
+            .map(this::toResponse)
+            .collect(Collectors.toList());
+
+    var templatesWithOccurrences =
+        allOccurrences.stream().map(o -> o.getQuestTemplate().getId()).collect(Collectors.toSet());
+
+    var floatingTemplates =
+        questTemplateRepository.findByUserAndActiveTrueAndDeletedFalse(user).stream()
+            .filter(t -> t.getRecurrenceRule() == null)
+            .filter(t -> !templatesWithOccurrences.contains(t.getId()))
+            .map(this::toResponse)
+            .toList();
+
+    var result = new java.util.ArrayList<QuestResponse>();
+    result.addAll(floatingTemplates);
+    result.addAll(occurrenceResponses);
+    return result;
   }
 
   @Transactional(readOnly = true)
@@ -283,13 +295,11 @@ public class QuestService {
         if (template.getRecurrenceRule() == null) continue;
 
         if (shouldGenerateOccurrence(template, date)) {
-          // Check if real occurrence exists
           var existingOccurrence =
               questOccurrenceRepository.findByQuestTemplateAndScheduledDate(template, date);
           if (existingOccurrence.isPresent()) {
             upcomingQuests.add(toResponse(existingOccurrence.get()));
           } else {
-            // Create ghost response
             upcomingQuests.add(toGhostResponse(template, date));
           }
         }
@@ -462,7 +472,7 @@ public class QuestService {
     }
 
     return new QuestResponse(
-        template.getId(), // Using template ID for ghost
+        template.getId(),
         template.getTitle(),
         template.getDescription(),
         template.getDifficulty(),

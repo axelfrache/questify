@@ -56,7 +56,7 @@ class QuestServiceTest {
   }
 
   @Test
-  void create_shouldCreateOneTimeQuest_whenNoRecurrence() {
+  void create_shouldCreateTemplateOnly_whenNoRecurrenceAndNoDueDate() {
     var request =
         new CreateQuestRequest(
             "Test Quest", "Description", Difficulty.MEDIUM, 50, null, null, null);
@@ -68,7 +68,7 @@ class QuestServiceTest {
     assertEquals("Test Quest", response.title());
     assertEquals(RecurrenceType.NONE, response.recurrenceInterval());
     verify(questTemplateRepository).save(any(QuestTemplate.class));
-    verify(questOccurrenceRepository).save(any(QuestOccurrence.class));
+    verify(questOccurrenceRepository, never()).save(any(QuestOccurrence.class));
   }
 
   @Test
@@ -93,6 +93,23 @@ class QuestServiceTest {
     when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
     assertThrows(IllegalArgumentException.class, () -> questService.create(userId, request));
+  }
+
+  @Test
+  void create_shouldCreateOccurrence_whenDueDateProvided() {
+    var dueDate = Instant.now().plusSeconds(86400);
+    var request =
+        new CreateQuestRequest(
+            "Scheduled Quest", "Description", Difficulty.MEDIUM, 50, null, dueDate, null);
+    when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+
+    var response = questService.create(userId, request);
+
+    assertNotNull(response);
+    assertEquals("Scheduled Quest", response.title());
+    assertNotNull(response.dueDate());
+    verify(questTemplateRepository).save(any(QuestTemplate.class));
+    verify(questOccurrenceRepository).save(any(QuestOccurrence.class));
   }
 
   @Test

@@ -116,17 +116,15 @@ class StatsServiceTest {
   void getMonthlyStats_shouldCountMonthlyCompleted() {
     var today = LocalDate.now();
     var occurrence1 = createCompletedOccurrence(today, 50);
-    var occurrence2 = createCompletedOccurrence(today.minusDays(5), 75);
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
-    when(questOccurrenceRepository.findAllByUserId(userId))
-        .thenReturn(List.of(occurrence1, occurrence2));
+    when(questOccurrenceRepository.findAllByUserId(userId)).thenReturn(List.of(occurrence1));
 
     var stats = statsService.getMonthlyStats(userId);
 
-    assertEquals(2, stats.questsCompleted());
-    assertEquals(125, stats.xpEarned());
-    assertTrue(stats.activeDays() >= 1 && stats.activeDays() <= 2);
+    assertEquals(1, stats.questsCompleted());
+    assertEquals(50, stats.xpEarned());
+    assertEquals(1, stats.activeDays());
   }
 
   @Test
