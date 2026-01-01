@@ -94,9 +94,16 @@ export function CreateQuestDialog({
   }, [open, questToEdit, reset, setValue]);
 
   const onSubmit = (data: CreateQuestRequest) => {
+    let dueDateISO: string | undefined;
+    if (date && recurrence === 'NONE') {
+      const dateAtNoon = new Date(date);
+      dateAtNoon.setHours(12, 0, 0, 0);
+      dueDateISO = dateAtNoon.toISOString();
+    }
+
     const payload = {
       ...data,
-      dueDate: date && recurrence === 'NONE' ? date.toISOString() : undefined,
+      dueDate: dueDateISO,
     };
 
     if (questToEdit) {

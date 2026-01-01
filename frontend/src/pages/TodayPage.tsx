@@ -12,7 +12,7 @@ import { type QuestResponse } from '@/lib/api';
 import { QuestCard } from '@/components/QuestCard';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import confetti from 'canvas-confetti';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Sun } from 'lucide-react';
 
 const fireConfettiFromElement = (element: HTMLElement) => {
   const rect = element.getBoundingClientRect();
@@ -75,9 +75,11 @@ export function TodayPage() {
     quests?.filter((q) => q.status !== 'COMPLETED' && q.status !== 'CANCELLED') || [];
   const completedQuests = quests?.filter((q) => q.status === 'COMPLETED').reverse() || [];
 
-  const completionPercent = completionRate?.completionRate || 0;
-  const completed = completionRate?.completedQuests || 0;
   const planned = completionRate?.plannedQuests || 0;
+  const completed = completionRate?.completedQuests || 0;
+  const completionPercent = completionRate?.completionRate || 0;
+
+  const hasPlannedQuests = planned > 0;
 
   const getCompletionColor = (rate: number) => {
     if (rate >= 100) return 'text-green-500';
@@ -88,29 +90,37 @@ export function TodayPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-lg border bg-card p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
-            <span className="font-medium">Daily Completion</span>
+      {/* Completion tracker - only show when there are planned quests */}
+      {hasPlannedQuests ? (
+        <div className="rounded-lg border bg-card p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
+              <span className="font-medium">Daily Completion</span>
+            </div>
+            <span className={`text-2xl font-bold ${getCompletionColor(completionPercent)}`}>
+              {completionPercent}%
+            </span>
           </div>
-          <span className={`text-2xl font-bold ${getCompletionColor(completionPercent)}`}>
-            {completionPercent}%
-          </span>
+          <Progress value={Math.min(completionPercent, 100)} className="h-2" />
+          <p className="text-sm text-muted-foreground">
+            {completed} of {planned} quests completed
+          </p>
         </div>
-        <Progress value={Math.min(completionPercent, 100)} className="h-2" />
-        <p className="text-sm text-muted-foreground">
-          {completed} of {planned} quests completed
-        </p>
-      </div>
+      ) : (
+        <div className="rounded-lg border border-dashed bg-card/50 p-6 text-center">
+          <Sun className="h-10 w-10 text-amber-500/60 mx-auto mb-3" />
+          <p className="text-lg font-medium text-muted-foreground">Nothing required today</p>
+          <p className="text-sm text-muted-foreground/70 mt-1">
+            Enjoy your day, or check the inbox for optional tasks.
+          </p>
+        </div>
+      )}
 
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Planned for Today</h2>
-        {plannedQuests.length === 0 ? (
-          <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
-            No quests scheduled for today. Check your inbox or add a new one!
-          </div>
-        ) : (
+      {/* Active quests for today */}
+      {plannedQuests.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Today's Quests</h2>
           <div className="space-y-3">
             {plannedQuests.map((quest) => (
               <QuestCard
@@ -124,9 +134,10 @@ export function TodayPage() {
               />
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
+      {/* Completed quests */}
       {completedQuests.length > 0 && (
         <div className="space-y-4">
           <h2 className="text-lg font-semibold text-muted-foreground">Completed</h2>
@@ -151,15 +162,15 @@ export function TodayPage() {
         questToEdit={
           editingQuest
             ? {
-                id: editingQuest.id,
-                title: editingQuest.title,
-                description: editingQuest.description,
-                difficulty: editingQuest.difficulty,
-                categoryId: editingQuest.category?.id,
-                dueDate: editingQuest.dueDate,
-                recurrenceInterval: editingQuest.recurrenceInterval,
-                baseXpReward: editingQuest.baseXpReward,
-              }
+              id: editingQuest.id,
+              title: editingQuest.title,
+              description: editingQuest.description,
+              difficulty: editingQuest.difficulty,
+              categoryId: editingQuest.category?.id,
+              dueDate: editingQuest.dueDate,
+              recurrenceInterval: editingQuest.recurrenceInterval,
+              baseXpReward: editingQuest.baseXpReward,
+            }
             : undefined
         }
       />
