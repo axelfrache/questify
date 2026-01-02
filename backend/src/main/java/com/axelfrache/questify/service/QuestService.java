@@ -11,7 +11,6 @@ import com.axelfrache.questify.repository.QuestTemplateRepository;
 import com.axelfrache.questify.repository.UserRepository;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -41,8 +40,16 @@ public class QuestService {
     RecurrenceRule recurrenceRule = null;
     if (request.recurrenceInterval() != null
         && request.recurrenceInterval() != RecurrenceType.NONE) {
+      var daysOfWeek =
+          request.recurrenceDays() != null
+              ? request.recurrenceDays().stream().map(d -> java.time.DayOfWeek.of(d)).toList()
+              : null;
       recurrenceRule =
-          RecurrenceRule.builder().type(request.recurrenceInterval()).interval(1).build();
+          RecurrenceRule.builder()
+              .type(request.recurrenceInterval())
+              .interval(1)
+              .daysOfWeek(daysOfWeek)
+              .build();
     }
 
     var template =
@@ -61,7 +68,7 @@ public class QuestService {
 
     if (recurrenceRule == null) {
       if (request.dueDate() != null) {
-        LocalDate scheduledDate = request.dueDate().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate scheduledDate = request.dueDate().atZone(user.getZoneId()).toLocalDate();
 
         var occurrence =
             QuestOccurrence.builder()
@@ -91,12 +98,34 @@ public class QuestService {
           throw new IllegalStateException(
               "Cannot update the due date of a completed or cancelled quest occurrence");
         }
-        occurrence.setScheduledDate(request.dueDate().atZone(ZoneId.systemDefault()).toLocalDate());
+        var userZone = occurrence.getQuestTemplate().getUser().getZoneId();
+        occurrence.setScheduledDate(request.dueDate().atZone(userZone).toLocalDate());
       }
 
       var template = occurrence.getQuestTemplate();
       updateTemplateFields(template, request);
       questTemplateRepository.save(template);
+
+      if (request.recurrenceDays() != null && template.getRecurrenceRule() != null) {
+        var selectedDays = template.getRecurrenceRule().getDaysOfWeek();
+        if (selectedDays != null && !selectedDays.isEmpty()) {
+          var allOccurrences = questOccurrenceRepository.findByQuestTemplate(template);
+          var occurrencesToDelete =
+              allOccurrences.stream()
+                  .filter(o -> o.getStatus() == QuestStatus.PENDING)
+                  .filter(o -> !selectedDays.contains(o.getScheduledDate().getDayOfWeek()))
+                  .toList();
+
+          boolean currentOccurrenceDeleted =
+              occurrencesToDelete.stream().anyMatch(o -> o.getId().equals(occurrence.getId()));
+
+          questOccurrenceRepository.deleteAll(occurrencesToDelete);
+
+          if (currentOccurrenceDeleted) {
+            return toResponse(template);
+          }
+        }
+      }
 
       questOccurrenceRepository.save(occurrence);
       return toResponse(occurrence);
@@ -132,8 +161,19 @@ public class QuestService {
           rule = RecurrenceRule.builder().interval(1).build();
         }
         rule.setType(request.recurrenceInterval());
+
+        if (request.recurrenceDays() != null) {
+          var daysOfWeek =
+              request.recurrenceDays().stream().map(d -> java.time.DayOfWeek.of(d)).toList();
+          rule.setDaysOfWeek(daysOfWeek);
+        }
+
         template.setRecurrenceRule(rule);
       }
+    } else if (request.recurrenceDays() != null && template.getRecurrenceRule() != null) {
+      var daysOfWeek =
+          request.recurrenceDays().stream().map(d -> java.time.DayOfWeek.of(d)).toList();
+      template.getRecurrenceRule().setDaysOfWeek(daysOfWeek);
     }
   }
 
@@ -221,7 +261,7 @@ public class QuestService {
       }
       case MONTHLY ->
           date.getDayOfMonth()
-              == template.getCreatedAt().atZone(ZoneId.systemDefault()).getDayOfMonth();
+              == template.getCreatedAt().atZone(template.getUser().getZoneId()).getDayOfMonth();
       case CUSTOM -> true;
       case NONE -> false;
     };
@@ -422,7 +462,8 @@ public class QuestService {
 
     if (occurrence != null) {
       id = occurrence.getId();
-      dueDate = occurrence.getScheduledDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
+      dueDate =
+          occurrence.getScheduledDate().atStartOfDay(template.getUser().getZoneId()).toInstant();
       status = occurrence.getStatus();
       completedAt = occurrence.getCompletedAt();
     }
@@ -430,9 +471,14 @@ public class QuestService {
     int totalXp =
         (int) Math.round(template.getBaseXpReward() * template.getDifficulty().getMultiplier());
 
+    List<Integer> recurrenceDays = null;
     RecurrenceType recurrenceType = RecurrenceType.NONE;
     if (template.getRecurrenceRule() != null) {
       recurrenceType = template.getRecurrenceRule().getType();
+      if (template.getRecurrenceRule().getDaysOfWeek() != null) {
+        recurrenceDays =
+            template.getRecurrenceRule().getDaysOfWeek().stream().map(d -> d.getValue()).toList();
+      }
     }
 
     return new QuestResponse(
@@ -448,7 +494,8 @@ public class QuestService {
         completedAt,
         template.getCreatedAt(),
         template.getUpdatedAt(),
-        recurrenceType);
+        recurrenceType,
+        recurrenceDays);
   }
 
   private QuestResponse toGhostResponse(QuestTemplate template, LocalDate scheduledDate) {
@@ -462,13 +509,18 @@ public class QuestService {
                 template.getCategory().isGlobal())
             : null;
 
-    Instant dueDate = scheduledDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
+    Instant dueDate = scheduledDate.atStartOfDay(template.getUser().getZoneId()).toInstant();
     int totalXp =
         (int) Math.round(template.getBaseXpReward() * template.getDifficulty().getMultiplier());
 
+    List<Integer> recurrenceDays = null;
     RecurrenceType recurrenceType = RecurrenceType.NONE;
     if (template.getRecurrenceRule() != null) {
       recurrenceType = template.getRecurrenceRule().getType();
+      if (template.getRecurrenceRule().getDaysOfWeek() != null) {
+        recurrenceDays =
+            template.getRecurrenceRule().getDaysOfWeek().stream().map(d -> d.getValue()).toList();
+      }
     }
 
     return new QuestResponse(
@@ -484,6 +536,7 @@ public class QuestService {
         null,
         template.getCreatedAt(),
         template.getUpdatedAt(),
-        recurrenceType);
+        recurrenceType,
+        recurrenceDays);
   }
 }

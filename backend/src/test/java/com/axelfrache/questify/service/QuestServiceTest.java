@@ -59,7 +59,7 @@ class QuestServiceTest {
   void create_shouldCreateTemplateOnly_whenNoRecurrenceAndNoDueDate() {
     var request =
         new CreateQuestRequest(
-            "Test Quest", "Description", Difficulty.MEDIUM, 50, null, null, null);
+            "Test Quest", "Description", Difficulty.MEDIUM, 50, null, null, null, null);
     when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
 
     var response = questService.create(userId, request);
@@ -75,7 +75,14 @@ class QuestServiceTest {
   void create_shouldCreateRecurringTemplate_whenDailyRecurrence() {
     var request =
         new CreateQuestRequest(
-            "Daily Quest", "Description", Difficulty.EASY, 25, null, null, RecurrenceType.DAILY);
+            "Daily Quest",
+            "Description",
+            Difficulty.EASY,
+            25,
+            null,
+            null,
+            RecurrenceType.DAILY,
+            null);
     when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
     when(questTemplateRepository.findByUserAndActiveTrueAndDeletedFalse(testUser))
         .thenReturn(List.of());
@@ -89,7 +96,7 @@ class QuestServiceTest {
 
   @Test
   void create_shouldThrow_whenUserNotFound() {
-    var request = new CreateQuestRequest("Test", null, null, null, null, null, null);
+    var request = new CreateQuestRequest("Test", null, null, null, null, null, null, null);
     when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
     assertThrows(IllegalArgumentException.class, () -> questService.create(userId, request));
@@ -100,7 +107,7 @@ class QuestServiceTest {
     var dueDate = Instant.now().plusSeconds(86400);
     var request =
         new CreateQuestRequest(
-            "Scheduled Quest", "Description", Difficulty.MEDIUM, 50, null, dueDate, null);
+            "Scheduled Quest", "Description", Difficulty.MEDIUM, 50, null, dueDate, null, null);
     when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
 
     var response = questService.create(userId, request);
@@ -114,7 +121,7 @@ class QuestServiceTest {
 
   @Test
   void create_shouldUseDefaultDifficulty_whenNotProvided() {
-    var request = new CreateQuestRequest("Test", null, null, null, null, null, null);
+    var request = new CreateQuestRequest("Test", null, null, null, null, null, null, null);
     when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
 
     var response = questService.create(userId, request);
@@ -242,7 +249,7 @@ class QuestServiceTest {
     var occurrence = createOccurrence(template, QuestStatus.PENDING, LocalDate.now());
     occurrence.setId(occurrenceId);
 
-    var request = new UpdateQuestRequest("New Title", null, null, null, null, null);
+    var request = new UpdateQuestRequest("New Title", null, null, null, null, null, null);
 
     when(questOccurrenceRepository.findById(occurrenceId)).thenReturn(Optional.of(occurrence));
 
@@ -260,7 +267,8 @@ class QuestServiceTest {
     occurrence.setId(occurrenceId);
 
     var request =
-        new UpdateQuestRequest(null, null, null, null, Instant.now().plusSeconds(86400), null);
+        new UpdateQuestRequest(
+            null, null, null, null, Instant.now().plusSeconds(86400), null, null);
 
     when(questOccurrenceRepository.findById(occurrenceId)).thenReturn(Optional.of(occurrence));
 

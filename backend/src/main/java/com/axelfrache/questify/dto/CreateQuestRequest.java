@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record CreateQuestRequest(
@@ -15,4 +16,5 @@ public record CreateQuestRequest(
     @Positive Integer baseXpReward,
     UUID categoryId,
     Instant dueDate,
-    RecurrenceType recurrenceInterval) {}
+    RecurrenceType recurrenceInterval,
+    List<Integer> recurrenceDays) {}

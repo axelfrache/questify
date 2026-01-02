@@ -4,6 +4,7 @@ import com.axelfrache.questify.model.Difficulty;
 import com.axelfrache.questify.model.RecurrenceType;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
+import java.util.List;
 
 public record UpdateQuestRequest(
     @Size(min = 1, max = 200) String title,
@@ -11,4 +12,5 @@ public record UpdateQuestRequest(
     Difficulty difficulty,
     Integer baseXpReward,
     Instant dueDate,
-    RecurrenceType recurrenceInterval) {}
+    RecurrenceType recurrenceInterval,
+    List<Integer> recurrenceDays) {}

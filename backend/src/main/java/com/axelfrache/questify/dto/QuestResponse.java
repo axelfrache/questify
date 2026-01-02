@@ -4,6 +4,7 @@ import com.axelfrache.questify.model.Difficulty;
 import com.axelfrache.questify.model.QuestStatus;
 import com.axelfrache.questify.model.RecurrenceType;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record QuestResponse(
@@ -19,4 +20,5 @@ public record QuestResponse(
     Instant completedAt,
     Instant createdAt,
     Instant updatedAt,
-    RecurrenceType recurrenceInterval) {}
+    RecurrenceType recurrenceInterval,
+    List<Integer> recurrenceDays) {}
