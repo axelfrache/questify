@@ -77,6 +77,16 @@ public class StatsController {
     return ResponseEntity.ok(statsService.getWeeklyCompletionRates(userId));
   }
 
+  @GetMapping("/monthly-completion")
+  public ResponseEntity<java.util.List<com.axelfrache.questify.dto.DailyCompletionRate>>
+      getMonthlyCompletionRates(
+          @AuthenticationPrincipal UserDetails userDetails,
+          @org.springframework.web.bind.annotation.RequestParam int year,
+          @org.springframework.web.bind.annotation.RequestParam int month) {
+    var userId = getUserId(userDetails);
+    return ResponseEntity.ok(statsService.getMonthlyCompletionRates(userId, year, month));
+  }
+
   private UUID getUserId(UserDetails userDetails) {
     return userRepository
         .findByEmail(userDetails.getUsername())

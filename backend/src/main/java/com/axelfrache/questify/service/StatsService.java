@@ -257,4 +257,17 @@ public class StatsService {
 
     return rates;
   }
+
+  @Transactional(readOnly = true)
+  public List<DailyCompletionRate> getMonthlyCompletionRates(UUID userId, int year, int month) {
+    var firstDay = LocalDate.of(year, month, 1);
+    var lastDay = firstDay.withDayOfMonth(firstDay.lengthOfMonth());
+
+    var rates = new ArrayList<DailyCompletionRate>();
+    for (var date = firstDay; !date.isAfter(lastDay); date = date.plusDays(1)) {
+      rates.add(getDailyCompletionRate(userId, date));
+    }
+
+    return rates;
+  }
 }
