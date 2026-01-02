@@ -1,5 +1,5 @@
 image:
-  repository: registry.axelfrache.me/questify/frontend
+  repository: registry.axelfrache.com/questify/frontend
   tag: "latest"
   pullPolicy: Always
 

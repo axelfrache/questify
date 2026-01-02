@@ -1,5 +1,5 @@
 global:
-  imageRegistry: "registry.axelfrache.me"
+  imageRegistry: "registry.axelfrache.com"
 
 ingress:
   host: app.getquestify.com
