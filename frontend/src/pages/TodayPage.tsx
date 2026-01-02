@@ -162,15 +162,16 @@ export function TodayPage() {
         questToEdit={
           editingQuest
             ? {
-              id: editingQuest.id,
-              title: editingQuest.title,
-              description: editingQuest.description,
-              difficulty: editingQuest.difficulty,
-              categoryId: editingQuest.category?.id,
-              dueDate: editingQuest.dueDate,
-              recurrenceInterval: editingQuest.recurrenceInterval,
-              baseXpReward: editingQuest.baseXpReward,
-            }
+                id: editingQuest.id,
+                title: editingQuest.title,
+                description: editingQuest.description,
+                difficulty: editingQuest.difficulty,
+                categoryId: editingQuest.category?.id,
+                dueDate: editingQuest.dueDate,
+                recurrenceInterval: editingQuest.recurrenceInterval,
+                recurrenceDays: editingQuest.recurrenceDays,
+                baseXpReward: editingQuest.baseXpReward,
+              }
             : undefined
         }
       />

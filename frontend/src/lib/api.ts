@@ -372,6 +372,7 @@ export interface QuestResponse {
   totalXpReward: number;
   createdAt: string;
   recurrenceInterval: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
+  recurrenceDays?: number[];
 }
 
 export interface CreateQuestRequest {
@@ -381,6 +382,7 @@ export interface CreateQuestRequest {
   categoryId?: string;
   dueDate?: string;
   recurrenceInterval?: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
+  recurrenceDays?: number[];
   baseXpReward?: number;
 }
 
@@ -392,6 +394,7 @@ export interface UpdateQuestRequest {
   categoryId?: string;
   dueDate?: string;
   recurrenceInterval?: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
+  recurrenceDays?: number[];
   baseXpReward?: number;
 }
 

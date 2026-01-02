@@ -138,6 +138,7 @@ export function InboxPage() {
                 categoryId: editingQuest.category?.id,
                 dueDate: editingQuest.dueDate,
                 recurrenceInterval: editingQuest.recurrenceInterval,
+                recurrenceDays: editingQuest.recurrenceDays,
                 baseXpReward: editingQuest.baseXpReward,
               }
             : undefined

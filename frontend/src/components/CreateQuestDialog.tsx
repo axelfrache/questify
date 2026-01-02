@@ -32,6 +32,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { DIFFICULTY_CONFIG } from '@/lib/quest-config';
+import { WeekdayPicker } from '@/components/ui/weekday-picker';
 
 interface CreateQuestDialogProps {
   open: boolean;
@@ -50,6 +51,7 @@ export function CreateQuestDialog({
   const createQuestMutation = useCreateQuest();
   const updateQuestMutation = useUpdateQuest();
   const [date, setDate] = useState<Date>();
+  const [selectedDays, setSelectedDays] = useState<number[]>([]);
 
   const {
     register,
@@ -83,12 +85,14 @@ export function CreateQuestDialog({
         } else {
           setDate(undefined);
         }
+        setSelectedDays(questToEdit.recurrenceDays || []);
       } else {
         reset({
           difficulty: 'EASY',
           recurrenceInterval: 'NONE',
         });
         setDate(undefined);
+        setSelectedDays([]);
       }
     }
   }, [open, questToEdit, reset, setValue]);
@@ -104,6 +108,7 @@ export function CreateQuestDialog({
     const payload = {
       ...data,
       dueDate: dueDateISO,
+      recurrenceDays: recurrence === 'WEEKLY' ? selectedDays : undefined,
     };
 
     if (questToEdit) {
@@ -135,7 +140,8 @@ export function CreateQuestDialog({
   };
 
   const isPending = createQuestMutation.isPending || updateQuestMutation.isPending;
-  const isDisabled = !title?.trim() || isPending;
+  const isWeeklyWithNoDays = recurrence === 'WEEKLY' && selectedDays.length === 0;
+  const isDisabled = !title?.trim() || isPending || isWeeklyWithNoDays;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -245,6 +251,16 @@ export function CreateQuestDialog({
                     </SelectContent>
                   </Select>
                 </div>
+
+                {recurrence === 'WEEKLY' && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Repeat on</Label>
+                    <WeekdayPicker selectedDays={selectedDays} onDaysChange={setSelectedDays} />
+                    {selectedDays.length === 0 && (
+                      <p className="text-xs text-muted-foreground">Select at least one day</p>
+                    )}
+                  </div>
+                )}
 
                 {recurrence === 'NONE' && (
                   <div className="space-y-1.5">
