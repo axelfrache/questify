@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { RegionRadarChart } from '@/components/ui/region-radar-chart';
-import { Zap, Calendar, TrendingUp, Info } from 'lucide-react';
+import { MonthlyActivityGraph } from '@/components/ui/monthly-activity-graph';
+import { Calendar, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function StatsPage() {
@@ -23,11 +24,11 @@ export function StatsPage() {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-32" />
         <div className="grid gap-4 md:grid-cols-2">
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
         </div>
-        <Skeleton className="h-40" />
       </div>
     );
   }
@@ -47,7 +48,7 @@ export function StatsPage() {
   const today = new Date();
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold">Stats</h1>
@@ -69,47 +70,29 @@ export function StatsPage() {
         </TooltipProvider>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-blue-500/10">
-                <Calendar className="h-5 w-5 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">This Week</p>
-                <p className="text-xl font-bold">{weeklyStats?.questsCompleted || 0} quests</p>
-                <p className="text-xs text-muted-foreground">+{weeklyStats?.xpEarned || 0} XP</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-violet-500/10">
-                <TrendingUp className="h-5 w-5 text-violet-500" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">This Month</p>
-                <p className="text-xl font-bold">{monthlyStats?.questsCompleted || 0} quests</p>
-                <p className="text-xs text-muted-foreground">+{monthlyStats?.xpEarned || 0} XP</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Calendar className="h-4 w-4" />
-            Weekly Consistency
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Calendar className="h-4 w-4" />
+              Weekly Consistency
+            </CardTitle>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span>
+                <span className="font-medium text-foreground">
+                  {weeklyStats?.questsCompleted || 0}
+                </span>{' '}
+                quests
+              </span>
+              <span>
+                <span className="font-medium text-foreground">+{weeklyStats?.xpEarned || 0}</span>{' '}
+                XP
+              </span>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="pb-4">
-          <div className="flex items-end gap-2 h-28">
+          <div className="flex items-end gap-2 h-24">
             {weeklyCompletion?.map((day, index) => {
               const dayDate = new Date(day.date);
               const isFuture = dayDate > today;
@@ -121,7 +104,7 @@ export function StatsPage() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="flex-1 flex flex-col items-center gap-1">
-                        <div className="w-full flex items-end justify-center h-20">
+                        <div className="w-full flex items-end justify-center h-16">
                           <div
                             className={cn(
                               'w-full max-w-8 rounded-t transition-all',
@@ -161,51 +144,29 @@ export function StatsPage() {
               );
             })}
           </div>
-          <div className="mt-3 pt-3 border-t flex items-center justify-between text-xs text-muted-foreground">
-            <span>Completion rate per day</span>
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-sm bg-green-500" />
-                100%
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-sm bg-primary/60" />
-                Partial
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-sm bg-muted/50" />
-                None
-              </span>
-            </div>
+          <div className="mt-2 pt-2 border-t flex items-center justify-end gap-3 text-[10px] text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-sm bg-green-500" />
+              100%
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-sm bg-primary/60" />
+              Partial
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-sm bg-muted/50" />
+              None
+            </span>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Zap className="h-4 w-4" />
-              This Month
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pb-4">
-            <div className="grid gap-4 grid-cols-3">
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">XP Earned</span>
-                <span className="text-lg font-bold">{monthlyStats?.xpEarned || 0}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">Active Days</span>
-                <span className="text-lg font-bold">{monthlyStats?.activeDays || 0}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">Quests</span>
-                <span className="text-lg font-bold">{monthlyStats?.questsCompleted || 0}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 lg:grid-cols-2 items-start">
+        <MonthlyActivityGraph
+          xpEarned={monthlyStats?.xpEarned || 0}
+          activeDays={monthlyStats?.activeDays || 0}
+          questsCompleted={monthlyStats?.questsCompleted || 0}
+        />
 
         {regionActivity && <RegionRadarChart data={regionActivity} />}
       </div>

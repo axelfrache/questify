@@ -287,6 +287,12 @@ class ApiClient {
     return this.request<DailyCompletionRate[]>('/api/stats/weekly-completion');
   }
 
+  async getMonthlyCompletionRates(year: number, month: number): Promise<DailyCompletionRate[]> {
+    return this.request<DailyCompletionRate[]>(
+      `/api/stats/monthly-completion?year=${year}&month=${month}`
+    );
+  }
+
   async getUserProfile(id: string): Promise<UserDto> {
     return this.request<UserDto>(`/api/users/${id}`);
   }

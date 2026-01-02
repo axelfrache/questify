@@ -210,3 +210,10 @@ export function useWeeklyCompletionRates() {
     queryFn: () => api.getWeeklyCompletionRates(),
   });
 }
+
+export function useMonthlyCompletionRates(year: number, month: number) {
+  return useQuery({
+    queryKey: ['stats', 'monthly-completion', year, month],
+    queryFn: () => api.getMonthlyCompletionRates(year, month),
+  });
+}
