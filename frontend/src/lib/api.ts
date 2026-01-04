@@ -184,6 +184,10 @@ class ApiClient {
     return this.request<QuestResponse>(`/api/quests/${id}`);
   }
 
+  async getSubquests(parentId: string): Promise<QuestResponse[]> {
+    return this.request<QuestResponse[]>(`/api/quests/${parentId}/subquests`);
+  }
+
   async createQuest(data: CreateQuestRequest): Promise<QuestResponse> {
     return this.request<QuestResponse>('/api/quests', {
       method: 'POST',
@@ -368,6 +372,7 @@ class ApiClient {
 
 export interface QuestResponse {
   id: string;
+  templateId: string;
   title: string;
   description?: string;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD' | 'EPIC';
@@ -379,6 +384,10 @@ export interface QuestResponse {
   createdAt: string;
   recurrenceInterval: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
   recurrenceDays?: number[];
+  parentId?: string;
+  parentTitle?: string;
+  subquestCount: number;
+  completedSubquestCount: number;
 }
 
 export interface CreateQuestRequest {
@@ -390,6 +399,7 @@ export interface CreateQuestRequest {
   recurrenceInterval?: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
   recurrenceDays?: number[];
   baseXpReward?: number;
+  parentId?: string;
 }
 
 export interface UpdateQuestRequest {

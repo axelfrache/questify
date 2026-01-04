@@ -44,6 +44,7 @@ export function InboxPage() {
   const deleteQuestMutation = useDeleteQuest();
 
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
+  const [parentQuest, setParentQuest] = useState<QuestResponse | null>(null);
 
   const handleComplete = (id: string, checkboxElement?: HTMLElement) => {
     if (checkboxElement) {
@@ -56,6 +57,10 @@ export function InboxPage() {
     if (confirm('Are you sure you want to delete this quest?')) {
       deleteQuestMutation.mutate(id);
     }
+  };
+
+  const handleAddSubquest = (quest: QuestResponse) => {
+    setParentQuest(quest);
   };
 
   const clearFilter = () => {
@@ -119,12 +124,15 @@ export function InboxPage() {
               onComplete={handleComplete}
               onEdit={setEditingQuest}
               onDelete={handleDelete}
+              onAddSubquest={handleAddSubquest}
               isPending={completeQuestMutation.isPending}
+              showInlineSubquests
             />
           ))}
         </div>
       )}
 
+      {/* Edit quest dialog */}
       <CreateQuestDialog
         open={!!editingQuest}
         onOpenChange={(open) => !open && setEditingQuest(null)}
@@ -143,6 +151,14 @@ export function InboxPage() {
               }
             : undefined
         }
+      />
+
+      {/* Create subquest dialog */}
+      <CreateQuestDialog
+        open={!!parentQuest}
+        onOpenChange={(open) => !open && setParentQuest(null)}
+        parentId={parentQuest?.templateId}
+        parentTitle={parentQuest?.title}
       />
     </div>
   );

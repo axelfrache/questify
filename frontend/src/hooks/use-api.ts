@@ -24,12 +24,21 @@ export function useQuest(id: string) {
   });
 }
 
+export function useSubquests(parentId: string, enabled = true) {
+  return useQuery({
+    queryKey: ['subquests', parentId],
+    queryFn: () => api.getSubquests(parentId),
+    enabled: !!parentId && enabled,
+  });
+}
+
 export function useCreateQuest() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateQuestRequest) => api.createQuest(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quests'] });
+      queryClient.invalidateQueries({ queryKey: ['subquests'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
       queryClient.invalidateQueries({ queryKey: ['category-stats'] });
     },
@@ -43,6 +52,7 @@ export function useUpdateQuest() {
       api.updateQuest(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quests'] });
+      queryClient.invalidateQueries({ queryKey: ['subquests'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
       queryClient.invalidateQueries({ queryKey: ['category-stats'] });
     },
@@ -55,6 +65,7 @@ export function useCompleteQuest() {
     mutationFn: (id: string) => api.completeQuest(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quests'] });
+      queryClient.invalidateQueries({ queryKey: ['subquests'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
       queryClient.invalidateQueries({ queryKey: ['category-stats'] });
     },
@@ -100,6 +111,7 @@ export function useDeleteQuest() {
     mutationFn: (id: string) => api.deleteQuest(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quests'] });
+      queryClient.invalidateQueries({ queryKey: ['subquests'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
       queryClient.invalidateQueries({ queryKey: ['category-stats'] });
     },

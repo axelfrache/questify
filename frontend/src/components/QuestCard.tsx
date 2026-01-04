@@ -8,9 +8,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreVertical, Edit, Trash, SkipForward } from 'lucide-react';
+import { MoreVertical, Edit, Trash, SkipForward, Plus } from 'lucide-react';
 import { DifficultyChip, RecurrenceChip } from '@/components/ui/quest-meta-chip';
 import { XpBadge } from '@/components/ui/xp-badge';
+import { InlineSubquests } from '@/components/InlineSubquests';
 import { cn } from '@/lib/utils';
 import type { QuestResponse } from '@/lib/api';
 
@@ -20,9 +21,11 @@ interface QuestCardProps {
   onEdit?: (quest: QuestResponse) => void;
   onDelete?: (id: string) => void;
   onSkip?: (id: string) => void;
+  onAddSubquest?: (parentQuest: QuestResponse) => void;
   isPending?: boolean;
   disabled?: boolean;
   hideCheckbox?: boolean;
+  showInlineSubquests?: boolean;
 }
 
 export function QuestCard({
@@ -31,9 +34,11 @@ export function QuestCard({
   onEdit,
   onDelete,
   onSkip,
+  onAddSubquest,
   isPending = false,
   disabled = false,
   hideCheckbox = false,
+  showInlineSubquests = false,
 }: QuestCardProps) {
   const [showXpAnimation, setShowXpAnimation] = useState(false);
 
@@ -113,6 +118,17 @@ export function QuestCard({
             <div className="flex flex-wrap items-center gap-1.5 pt-1">
               <RecurrenceChip recurrence={quest.recurrenceInterval} faded={isCompleted} />
               <DifficultyChip difficulty={quest.difficulty} faded={isCompleted} />
+              {/* Parent context for subquests */}
+              {quest.parentTitle && (
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-medium rounded bg-primary/10 text-primary',
+                    isCompleted && 'opacity-60'
+                  )}
+                >
+                  Part of: {quest.parentTitle}
+                </span>
+              )}
             </div>
           </div>
 
@@ -147,6 +163,13 @@ export function QuestCard({
                     Skip today
                   </DropdownMenuItem>
                 )}
+                {/* Add subquest option - only for root quests (not subquests themselves) */}
+                {!quest.parentId && onAddSubquest && (
+                  <DropdownMenuItem onClick={() => onAddSubquest(quest)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add subquest
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   onClick={() => onDelete?.(quest.id)}
                   className="text-destructive focus:text-destructive"
@@ -158,6 +181,16 @@ export function QuestCard({
             </DropdownMenu>
           </div>
         </div>
+
+        {/* Inline subquests - shown when showInlineSubquests is true */}
+        {showInlineSubquests && quest.subquestCount > 0 && (
+          <InlineSubquests
+            parentQuest={quest}
+            onComplete={onComplete}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        )}
       </CardContent>
     </Card>
   );

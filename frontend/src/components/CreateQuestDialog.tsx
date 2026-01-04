@@ -39,6 +39,8 @@ interface CreateQuestDialogProps {
   onOpenChange: (open: boolean) => void;
   onQuestCreated?: () => void;
   questToEdit?: CreateQuestRequest & { id: string };
+  parentId?: string;
+  parentTitle?: string;
 }
 
 export function CreateQuestDialog({
@@ -46,6 +48,8 @@ export function CreateQuestDialog({
   onOpenChange,
   onQuestCreated,
   questToEdit,
+  parentId,
+  parentTitle,
 }: CreateQuestDialogProps) {
   const { data: categories } = useCategories();
   const createQuestMutation = useCreateQuest();
@@ -109,6 +113,7 @@ export function CreateQuestDialog({
       ...data,
       dueDate: dueDateISO,
       recurrenceDays: recurrence === 'WEEKLY' ? selectedDays : undefined,
+      parentId: parentId,
     };
 
     if (questToEdit) {
@@ -133,10 +138,17 @@ export function CreateQuestDialog({
 
   const getButtonText = () => {
     if (questToEdit) return 'Update Quest';
+    if (parentId) return 'Create Subquest';
     if (recurrence === 'DAILY') return 'Create Daily Quest';
     if (recurrence === 'WEEKLY') return 'Create Weekly Quest';
     if (recurrence === 'MONTHLY') return 'Create Monthly Quest';
     return 'Create Quest';
+  };
+
+  const getDialogTitle = () => {
+    if (questToEdit) return 'Edit Quest';
+    if (parentId) return `Add Subquest to "${parentTitle}"`;
+    return 'Create New Quest';
   };
 
   const isPending = createQuestMutation.isPending || updateQuestMutation.isPending;
@@ -147,9 +159,13 @@ export function CreateQuestDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{questToEdit ? 'Edit Quest' : 'New Quest'}</DialogTitle>
+          <DialogTitle>{getDialogTitle()}</DialogTitle>
           <DialogDescription>
-            {questToEdit ? 'Update your quest details.' : 'What do you want to accomplish?'}
+            {questToEdit
+              ? 'Update your quest details.'
+              : parentId
+                ? 'This subquest will appear independently in Today.'
+                : 'What do you want to accomplish?'}
           </DialogDescription>
         </DialogHeader>
 
@@ -229,40 +245,46 @@ export function CreateQuestDialog({
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Recurrence</Label>
-                  <Select
-                    onValueChange={(value) =>
-                      setValue(
-                        'recurrenceInterval',
-                        value as CreateQuestRequest['recurrenceInterval']
-                      )
-                    }
-                    value={recurrence || 'NONE'}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="NONE">One-time</SelectItem>
-                      <SelectItem value="DAILY">Daily</SelectItem>
-                      <SelectItem value="WEEKLY">Weekly</SelectItem>
-                      <SelectItem value="MONTHLY">Monthly</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Hide recurrence for subquests */}
+                {!parentId && (
+                  <>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Recurrence</Label>
+                      <Select
+                        onValueChange={(value) =>
+                          setValue(
+                            'recurrenceInterval',
+                            value as CreateQuestRequest['recurrenceInterval']
+                          )
+                        }
+                        value={recurrence || 'NONE'}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="NONE">One-time</SelectItem>
+                          <SelectItem value="DAILY">Daily</SelectItem>
+                          <SelectItem value="WEEKLY">Weekly</SelectItem>
+                          <SelectItem value="MONTHLY">Monthly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                {recurrence === 'WEEKLY' && (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Repeat on</Label>
-                    <WeekdayPicker selectedDays={selectedDays} onDaysChange={setSelectedDays} />
-                    {selectedDays.length === 0 && (
-                      <p className="text-xs text-muted-foreground">Select at least one day</p>
+                    {recurrence === 'WEEKLY' && (
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-muted-foreground">Repeat on</Label>
+                        <WeekdayPicker selectedDays={selectedDays} onDaysChange={setSelectedDays} />
+                        {selectedDays.length === 0 && (
+                          <p className="text-xs text-muted-foreground">Select at least one day</p>
+                        )}
+                      </div>
                     )}
-                  </div>
+                  </>
                 )}
 
-                {recurrence === 'NONE' && (
+                {/* Due date picker - for one-time quests or subquests */}
+                {(recurrence === 'NONE' || parentId) && (
                   <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Due Date</Label>
                     <Popover>
