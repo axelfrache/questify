@@ -91,6 +91,11 @@ public class QuestController {
     return ResponseEntity.noContent().build();
   }
 
+  @GetMapping("/{id}/subquests")
+  public ResponseEntity<List<QuestResponse>> findSubquests(@PathVariable UUID id) {
+    return ResponseEntity.ok(questService.findSubquests(id));
+  }
+
   private UUID getUserId(UserDetails userDetails) {
     return userRepository
         .findByEmail(userDetails.getUsername())

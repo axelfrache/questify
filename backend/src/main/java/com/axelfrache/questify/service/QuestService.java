@@ -52,6 +52,15 @@ public class QuestService {
               .build();
     }
 
+    QuestTemplate parent = null;
+    if (request.parentId() != null) {
+      parent = findTemplateOrThrow(request.parentId());
+      if (parent.getParent() != null) {
+        throw new IllegalArgumentException("Subquests cannot have children (max depth = 1)");
+      }
+      recurrenceRule = null;
+    }
+
     var template =
         QuestTemplate.builder()
             .title(request.title())
@@ -61,26 +70,31 @@ public class QuestService {
             .category(category)
             .user(user)
             .recurrenceRule(recurrenceRule)
+            .parent(parent)
             .active(true)
             .build();
 
     questTemplateRepository.save(template);
 
     if (recurrenceRule == null) {
-      if (request.dueDate() != null) {
-        LocalDate scheduledDate = request.dueDate().atZone(user.getZoneId()).toLocalDate();
-
-        var occurrence =
-            QuestOccurrence.builder()
-                .questTemplate(template)
-                .scheduledDate(scheduledDate)
-                .status(QuestStatus.PENDING)
-                .build();
-
-        questOccurrenceRepository.save(occurrence);
-        return toResponse(occurrence);
+      LocalDate scheduledDate;
+      boolean hasDueDate = request.dueDate() != null;
+      if (hasDueDate) {
+        scheduledDate = request.dueDate().atZone(user.getZoneId()).toLocalDate();
+      } else {
+        scheduledDate = LocalDate.now();
       }
-      return toResponse(template);
+
+      var occurrence =
+          QuestOccurrence.builder()
+              .questTemplate(template)
+              .scheduledDate(scheduledDate)
+              .status(QuestStatus.PENDING)
+              .hasDueDate(hasDueDate)
+              .build();
+
+      questOccurrenceRepository.save(occurrence);
+      return toResponse(occurrence);
     } else {
       ensureDailyOccurrences(userId);
       return toResponse(template);
@@ -299,6 +313,7 @@ public class QuestService {
     var occurrenceResponses =
         allOccurrences.stream()
             .filter(q -> q.getStatus() == QuestStatus.PENDING)
+            .filter(q -> q.getQuestTemplate().getParent() == null)
             .sorted((o1, o2) -> o2.getScheduledDate().compareTo(o1.getScheduledDate()))
             .map(this::toResponse)
             .collect(Collectors.toList());
@@ -310,6 +325,7 @@ public class QuestService {
         questTemplateRepository.findByUserAndActiveTrueAndDeletedFalse(user).stream()
             .filter(t -> t.getRecurrenceRule() == null)
             .filter(t -> !templatesWithOccurrences.contains(t.getId()))
+            .filter(t -> t.getParent() == null)
             .map(this::toResponse)
             .toList();
 
@@ -436,6 +452,27 @@ public class QuestService {
     return toResponse(template);
   }
 
+  @Transactional(readOnly = true)
+  public List<QuestResponse> findSubquests(UUID parentId) {
+    var parent = findTemplateOrThrow(parentId);
+    return parent.getSubquests().stream()
+        .filter(sq -> !sq.isDeleted() && sq.isActive())
+        .map(
+            sq -> {
+              var latestOccurrence =
+                  sq.getOccurrences() != null && !sq.getOccurrences().isEmpty()
+                      ? sq.getOccurrences().stream()
+                          .max((a, b) -> a.getScheduledDate().compareTo(b.getScheduledDate()))
+                          .orElse(null)
+                      : null;
+              if (latestOccurrence != null) {
+                return toResponse(latestOccurrence);
+              }
+              return toResponse(sq);
+            })
+        .toList();
+  }
+
   private QuestResponse toResponse(QuestTemplate template) {
     return toResponse(template, null);
   }
@@ -462,8 +499,10 @@ public class QuestService {
 
     if (occurrence != null) {
       id = occurrence.getId();
-      dueDate =
-          occurrence.getScheduledDate().atStartOfDay(template.getUser().getZoneId()).toInstant();
+      if (occurrence.isHasDueDate()) {
+        dueDate =
+            occurrence.getScheduledDate().atStartOfDay(template.getUser().getZoneId()).toInstant();
+      }
       status = occurrence.getStatus();
       completedAt = occurrence.getCompletedAt();
     }
@@ -481,8 +520,37 @@ public class QuestService {
       }
     }
 
+    UUID parentId = template.getParent() != null ? template.getParent().getId() : null;
+    String parentTitle = template.getParent() != null ? template.getParent().getTitle() : null;
+
+    int subquestCount = 0;
+    int completedSubquestCount = 0;
+    if (template.getSubquests() != null && !template.getSubquests().isEmpty()) {
+      var activeSubquests =
+          template.getSubquests().stream().filter(sq -> !sq.isDeleted() && sq.isActive()).toList();
+      subquestCount = activeSubquests.size();
+      completedSubquestCount =
+          (int)
+              activeSubquests.stream()
+                  .filter(
+                      sq -> {
+                        var latestOccurrence =
+                            sq.getOccurrences() != null && !sq.getOccurrences().isEmpty()
+                                ? sq.getOccurrences().stream()
+                                    .max(
+                                        (a, b) ->
+                                            a.getScheduledDate().compareTo(b.getScheduledDate()))
+                                    .orElse(null)
+                                : null;
+                        return latestOccurrence != null
+                            && latestOccurrence.getStatus() == QuestStatus.COMPLETED;
+                      })
+                  .count();
+    }
+
     return new QuestResponse(
         id,
+        template.getId(),
         template.getTitle(),
         template.getDescription(),
         template.getDifficulty(),
@@ -495,7 +563,11 @@ public class QuestService {
         template.getCreatedAt(),
         template.getUpdatedAt(),
         recurrenceType,
-        recurrenceDays);
+        recurrenceDays,
+        parentId,
+        parentTitle,
+        subquestCount,
+        completedSubquestCount);
   }
 
   private QuestResponse toGhostResponse(QuestTemplate template, LocalDate scheduledDate) {
@@ -523,7 +595,11 @@ public class QuestService {
       }
     }
 
+    UUID parentId = template.getParent() != null ? template.getParent().getId() : null;
+    String parentTitle = template.getParent() != null ? template.getParent().getTitle() : null;
+
     return new QuestResponse(
+        template.getId(),
         template.getId(),
         template.getTitle(),
         template.getDescription(),
@@ -537,6 +613,10 @@ public class QuestService {
         template.getCreatedAt(),
         template.getUpdatedAt(),
         recurrenceType,
-        recurrenceDays);
+        recurrenceDays,
+        parentId,
+        parentTitle,
+        0,
+        0);
   }
 }

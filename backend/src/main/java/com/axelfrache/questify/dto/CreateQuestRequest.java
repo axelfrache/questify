@@ -17,4 +17,5 @@ public record CreateQuestRequest(
     UUID categoryId,
     Instant dueDate,
     RecurrenceType recurrenceInterval,
-    List<Integer> recurrenceDays) {}
+    List<Integer> recurrenceDays,
+    UUID parentId) {}

@@ -59,7 +59,7 @@ class QuestServiceTest {
   void create_shouldCreateTemplateOnly_whenNoRecurrenceAndNoDueDate() {
     var request =
         new CreateQuestRequest(
-            "Test Quest", "Description", Difficulty.MEDIUM, 50, null, null, null, null);
+            "Test Quest", "Description", Difficulty.MEDIUM, 50, null, null, null, null, null);
     when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
 
     var response = questService.create(userId, request);
@@ -82,6 +82,7 @@ class QuestServiceTest {
             null,
             null,
             RecurrenceType.DAILY,
+            null,
             null);
     when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
     when(questTemplateRepository.findByUserAndActiveTrueAndDeletedFalse(testUser))
@@ -96,7 +97,7 @@ class QuestServiceTest {
 
   @Test
   void create_shouldThrow_whenUserNotFound() {
-    var request = new CreateQuestRequest("Test", null, null, null, null, null, null, null);
+    var request = new CreateQuestRequest("Test", null, null, null, null, null, null, null, null);
     when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
     assertThrows(IllegalArgumentException.class, () -> questService.create(userId, request));
@@ -107,7 +108,15 @@ class QuestServiceTest {
     var dueDate = Instant.now().plusSeconds(86400);
     var request =
         new CreateQuestRequest(
-            "Scheduled Quest", "Description", Difficulty.MEDIUM, 50, null, dueDate, null, null);
+            "Scheduled Quest",
+            "Description",
+            Difficulty.MEDIUM,
+            50,
+            null,
+            dueDate,
+            null,
+            null,
+            null);
     when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
 
     var response = questService.create(userId, request);
@@ -121,7 +130,7 @@ class QuestServiceTest {
 
   @Test
   void create_shouldUseDefaultDifficulty_whenNotProvided() {
-    var request = new CreateQuestRequest("Test", null, null, null, null, null, null, null);
+    var request = new CreateQuestRequest("Test", null, null, null, null, null, null, null, null);
     when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
 
     var response = questService.create(userId, request);

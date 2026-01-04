@@ -9,6 +9,7 @@ import java.util.UUID;
 
 public record QuestResponse(
     UUID id,
+    UUID templateId,
     String title,
     String description,
     Difficulty difficulty,
@@ -21,4 +22,8 @@ public record QuestResponse(
     Instant createdAt,
     Instant updatedAt,
     RecurrenceType recurrenceInterval,
-    List<Integer> recurrenceDays) {}
+    List<Integer> recurrenceDays,
+    UUID parentId,
+    String parentTitle,
+    int subquestCount,
+    int completedSubquestCount) {}

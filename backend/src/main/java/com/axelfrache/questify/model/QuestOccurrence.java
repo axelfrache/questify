@@ -37,6 +37,10 @@ public class QuestOccurrence {
 
   private Instant completedAt;
 
+  @Builder.Default
+  @Column(nullable = false)
+  private boolean hasDueDate = false;
+
   private int xpEarned;
 
   @CreationTimestamp

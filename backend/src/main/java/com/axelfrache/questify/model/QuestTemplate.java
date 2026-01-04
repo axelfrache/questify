@@ -62,6 +62,14 @@ public class QuestTemplate {
   @OneToMany(mappedBy = "questTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
   private java.util.List<QuestOccurrence> occurrences;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "parent_id")
+  private QuestTemplate parent;
+
+  @OneToMany(mappedBy = "parent")
+  @Builder.Default
+  private java.util.List<QuestTemplate> subquests = new java.util.ArrayList<>();
+
   @UpdateTimestamp
   @Column(nullable = false)
   private Instant updatedAt;
