@@ -56,7 +56,7 @@ class QuestServiceTest {
   }
 
   @Test
-  void create_shouldCreateTemplateOnly_whenNoRecurrenceAndNoDueDate() {
+  void create_shouldCreateTemplateAndOccurrence_whenNoRecurrenceAndNoDueDate() {
     var request =
         new CreateQuestRequest(
             "Test Quest", "Description", Difficulty.MEDIUM, 50, null, null, null, null, null);
@@ -68,7 +68,7 @@ class QuestServiceTest {
     assertEquals("Test Quest", response.title());
     assertEquals(RecurrenceType.NONE, response.recurrenceInterval());
     verify(questTemplateRepository).save(any(QuestTemplate.class));
-    verify(questOccurrenceRepository, never()).save(any(QuestOccurrence.class));
+    verify(questOccurrenceRepository).save(any(QuestOccurrence.class));
   }
 
   @Test
