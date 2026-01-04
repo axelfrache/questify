@@ -305,7 +305,7 @@ class QuestServiceTest {
     occurrences.add(completedOccurrence);
     template.setOccurrences(occurrences);
 
-    when(questOccurrenceRepository.existsById(templateId)).thenReturn(false);
+    when(questOccurrenceRepository.findById(templateId)).thenReturn(Optional.empty());
     when(questTemplateRepository.findById(templateId)).thenReturn(Optional.of(template));
 
     questService.delete(templateId);
@@ -313,18 +313,35 @@ class QuestServiceTest {
     assertTrue(template.isDeleted());
     assertFalse(template.isActive());
     verify(questTemplateRepository).save(template);
-    verify(questOccurrenceRepository).deleteAll(List.of(pendingOccurrence));
+    verify(questOccurrenceRepository).deleteAll(occurrences);
   }
 
   @Test
-  void delete_shouldDeleteOccurrence_whenOccurrenceId() {
+  void delete_shouldDeleteOccurrenceAndTemplate_whenOccurrenceIdOfNonRecurringQuest() {
     var occurrenceId = UUID.randomUUID();
-    when(questOccurrenceRepository.existsById(occurrenceId)).thenReturn(true);
+    var template = new QuestTemplate();
+    template.setId(UUID.randomUUID());
+    template.setActive(true);
+    template.setDeleted(false);
+    template.setRecurrenceRule(null);
+
+    var occurrence = new QuestOccurrence();
+    occurrence.setId(occurrenceId);
+    occurrence.setQuestTemplate(template);
+    occurrence.setStatus(QuestStatus.PENDING);
+
+    var occurrences = new ArrayList<QuestOccurrence>();
+    occurrences.add(occurrence);
+    template.setOccurrences(occurrences);
+
+    when(questOccurrenceRepository.findById(occurrenceId)).thenReturn(Optional.of(occurrence));
 
     questService.delete(occurrenceId);
 
-    verify(questOccurrenceRepository).deleteById(occurrenceId);
-    verify(questTemplateRepository, never()).save(any());
+    verify(questOccurrenceRepository).delete(occurrence);
+    verify(questOccurrenceRepository).deleteAll(occurrences);
+    verify(questTemplateRepository).save(template);
+    assertTrue(template.isDeleted());
   }
 
   @Test

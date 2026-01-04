@@ -400,20 +400,36 @@ public class QuestService {
 
   @Transactional
   public void delete(UUID id) {
-    if (questOccurrenceRepository.existsById(id)) {
-      questOccurrenceRepository.deleteById(id);
+    var occurrenceOpt = questOccurrenceRepository.findById(id);
+    if (occurrenceOpt.isPresent()) {
+      var occurrence = occurrenceOpt.get();
+      var template = occurrence.getQuestTemplate();
+
+      questOccurrenceRepository.delete(occurrence);
+
+      if (template.getRecurrenceRule() == null) {
+        deleteTemplate(template);
+      }
     } else {
       var template = findTemplateOrThrow(id);
-      template.setDeleted(true);
-      template.setActive(false);
-      questTemplateRepository.save(template);
-
-      var pendingOccurrences =
-          template.getOccurrences().stream()
-              .filter(o -> o.getStatus() == QuestStatus.PENDING)
-              .toList();
-      questOccurrenceRepository.deleteAll(pendingOccurrences);
+      deleteTemplate(template);
     }
+  }
+
+  private void deleteTemplate(QuestTemplate template) {
+    if (template.getSubquests() != null) {
+      for (var subquest : template.getSubquests()) {
+        if (!subquest.isDeleted()) {
+          deleteTemplate(subquest);
+        }
+      }
+    }
+
+    template.setDeleted(true);
+    template.setActive(false);
+    questTemplateRepository.save(template);
+
+    questOccurrenceRepository.deleteAll(template.getOccurrences());
   }
 
   private User findUserOrThrow(UUID userId) {
