@@ -353,7 +353,7 @@ class QuestServiceTest {
     when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
     when(questTemplateRepository.findByUserAndActiveTrueAndDeletedFalse(testUser))
         .thenReturn(List.of());
-    when(questOccurrenceRepository.findAllByUserId(userId))
+    when(questOccurrenceRepository.findAllByUserIdWithSubquests(userId))
         .thenReturn(List.of(pendingOccurrence, skippedOccurrence));
 
     var quests = questService.findTodayQuests(userId);
