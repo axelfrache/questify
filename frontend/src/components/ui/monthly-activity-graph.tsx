@@ -110,12 +110,12 @@ export function MonthlyActivityGraph({
             Loading...
           </div>
         ) : (
-          <div className="flex">
-            <div className="flex-[4] flex items-center justify-center py-2">
-              <div className="inline-grid grid-cols-7 gap-1">
+          <div className="flex gap-4">
+            <div className="flex-1 flex items-center justify-center py-2">
+              <div className="grid grid-cols-7 gap-[3px] sm:gap-1">
                 {weeks.flat().map((day, index) => {
                   if (day === null) {
-                    return <div key={index} className="w-5 h-5" />;
+                    return <div key={index} className="w-4 h-4 sm:w-5 sm:h-5" />;
                   }
 
                   const dayData = monthlyData?.[day - 1];
@@ -133,7 +133,7 @@ export function MonthlyActivityGraph({
                         <TooltipTrigger asChild>
                           <div
                             className={cn(
-                              'w-5 h-5 rounded-[3px] cursor-default transition-all',
+                              'w-4 h-4 sm:w-5 sm:h-5 rounded-[3px] cursor-default transition-all',
                               'hover:ring-1 hover:ring-foreground/30',
                               isFuture ? 'bg-muted/15' : getCompletionColor(rate, plannedQuests),
                               isToday && 'ring-2 ring-primary/60'

@@ -63,10 +63,11 @@ export function QuestCard({
         'border-l-[3px]',
         isCompleted && 'opacity-60',
         disabled && 'opacity-40 cursor-not-allowed',
-        !isCompleted && !disabled && 'hover:scale-[1.01] hover:shadow-md'
+        !isCompleted && !disabled && 'hover:scale-[1.01] hover:shadow-md',
+        !hasCategoryColor && 'bg-muted/30 border-l-muted-foreground/30'
       )}
       style={{
-        borderLeftColor: hasCategoryColor ? quest.category!.color : 'transparent',
+        borderLeftColor: hasCategoryColor ? quest.category!.color : undefined,
       }}
     >
       <CardContent className="p-4">

@@ -1,4 +1,4 @@
-import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from 'recharts';
+import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ChartContainer,
@@ -66,8 +66,19 @@ export function RegionRadarChart({ data }: RegionRadarChartProps) {
                   </text>
                 )}
               />
+              <PolarRadiusAxis
+                domain={[0, Math.max(...chartData.map((d) => d.activity), 1)]}
+                tick={false}
+                axisLine={false}
+              />
               <PolarGrid />
-              <Radar dataKey="activity" fill="var(--color-activity)" fillOpacity={0.6} />
+              <Radar
+                dataKey="activity"
+                fill="var(--color-activity)"
+                fillOpacity={0.6}
+                stroke="var(--color-activity)"
+                strokeWidth={2}
+              />
             </RadarChart>
           </ChartContainer>
         ) : (

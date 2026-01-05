@@ -132,6 +132,7 @@ export function useCreateCategory() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       queryClient.invalidateQueries({ queryKey: ['stats', 'categories'] });
+      queryClient.invalidateQueries({ queryKey: ['stats', 'region-activity'] });
     },
   });
 }
@@ -144,6 +145,7 @@ export function useUpdateCategory() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       queryClient.invalidateQueries({ queryKey: ['stats', 'categories'] });
+      queryClient.invalidateQueries({ queryKey: ['stats', 'region-activity'] });
     },
   });
 }
@@ -161,6 +163,7 @@ export function useDeleteCategory() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       queryClient.invalidateQueries({ queryKey: ['stats', 'categories'] });
+      queryClient.invalidateQueries({ queryKey: ['stats', 'region-activity'] });
       queryClient.invalidateQueries({ queryKey: ['quests'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
     },

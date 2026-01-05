@@ -161,7 +161,7 @@ export function StatsPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2 items-start">
+      <div className="grid gap-4 lg:grid-cols-2 items-stretch">
         <MonthlyActivityGraph
           xpEarned={monthlyStats?.xpEarned || 0}
           activeDays={monthlyStats?.activeDays || 0}
