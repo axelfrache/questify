@@ -258,7 +258,7 @@ class QuestServiceTest {
     var occurrence = createOccurrence(template, QuestStatus.PENDING, LocalDate.now());
     occurrence.setId(occurrenceId);
 
-    var request = new UpdateQuestRequest("New Title", null, null, null, null, null, null);
+    var request = new UpdateQuestRequest("New Title", null, null, null, null, null, null, null);
 
     when(questOccurrenceRepository.findById(occurrenceId)).thenReturn(Optional.of(occurrence));
 
@@ -277,7 +277,7 @@ class QuestServiceTest {
 
     var request =
         new UpdateQuestRequest(
-            null, null, null, null, Instant.now().plusSeconds(86400), null, null);
+            null, null, null, null, null, Instant.now().plusSeconds(86400), null, null);
 
     when(questOccurrenceRepository.findById(occurrenceId)).thenReturn(Optional.of(occurrence));
 

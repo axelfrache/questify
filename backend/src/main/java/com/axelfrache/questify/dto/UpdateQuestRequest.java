@@ -5,12 +5,14 @@ import com.axelfrache.questify.model.RecurrenceType;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 public record UpdateQuestRequest(
     @Size(min = 1, max = 200) String title,
     @Size(max = 2000) String description,
     Difficulty difficulty,
     Integer baseXpReward,
+    UUID categoryId,
     Instant dueDate,
     RecurrenceType recurrenceInterval,
     List<Integer> recurrenceDays) {}

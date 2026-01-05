@@ -165,6 +165,10 @@ public class QuestService {
     if (request.baseXpReward() != null) {
       template.setBaseXpReward(request.baseXpReward());
     }
+    if (request.categoryId() != null) {
+      var category = categoryRepository.findById(request.categoryId()).orElse(null);
+      template.setCategory(category);
+    }
 
     if (request.recurrenceInterval() != null) {
       if (request.recurrenceInterval() == RecurrenceType.NONE) {
