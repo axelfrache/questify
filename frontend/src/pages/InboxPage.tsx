@@ -171,6 +171,7 @@ export function InboxPage() {
         onOpenChange={(open) => !open && setParentQuest(null)}
         parentId={parentQuest?.templateId}
         parentTitle={parentQuest?.title}
+        parentRecurrence={parentQuest?.recurrenceInterval}
       />
     </div>
   );

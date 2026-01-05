@@ -17,6 +17,7 @@ import {
   MilestonesPage,
   ProfilePage,
   SettingsPage,
+  HistoryPage,
 } from '@/pages';
 
 const queryClient = new QueryClient({
@@ -53,6 +54,7 @@ function App() {
                 <Route path="/habits" element={<HabitsPage />} /> {/* Added Habits route */}
                 <Route path="/progress" element={<ProgressPage />} />
                 <Route path="/stats" element={<StatsPage />} />
+                <Route path="/history" element={<HistoryPage />} />
                 <Route path="/milestones" element={<MilestonesPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/settings" element={<SettingsPage />} />

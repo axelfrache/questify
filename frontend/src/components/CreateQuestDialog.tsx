@@ -41,6 +41,7 @@ interface CreateQuestDialogProps {
   questToEdit?: CreateQuestRequest & { id: string };
   parentId?: string;
   parentTitle?: string;
+  parentRecurrence?: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
 }
 
 export function CreateQuestDialog({
@@ -50,6 +51,7 @@ export function CreateQuestDialog({
   questToEdit,
   parentId,
   parentTitle,
+  parentRecurrence,
 }: CreateQuestDialogProps) {
   const { data: categories } = useCategories();
   const createQuestMutation = useCreateQuest();
@@ -245,8 +247,7 @@ export function CreateQuestDialog({
                   />
                 </div>
 
-                {/* Hide recurrence for subquests */}
-                {!parentId && (
+                {!parentId || (parentId && parentRecurrence === 'NONE') ? (
                   <>
                     <div className="space-y-1.5">
                       <Label className="text-xs text-muted-foreground">Recurrence</Label>
@@ -281,9 +282,15 @@ export function CreateQuestDialog({
                       </div>
                     )}
                   </>
+                ) : (
+                  <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
+                    <p>
+                      Recurrence is disabled because the parent quest is recurring. This subquest
+                      will repeat with every occurrence of the parent.
+                    </p>
+                  </div>
                 )}
 
-                {/* Due date picker - for one-time quests or subquests */}
                 {(recurrence === 'NONE' || parentId) && (
                   <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Due Date</Label>

@@ -11,6 +11,7 @@ import {
   TrendingUp,
   BarChart3,
   Trophy,
+  History,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -42,6 +43,7 @@ const navItems = [
 const insightItems = [
   { title: 'Progress', url: '/progress', icon: TrendingUp },
   { title: 'Stats', url: '/stats', icon: BarChart3 },
+  { title: 'History', url: '/history', icon: History },
   { title: 'Milestones', url: '/milestones', icon: Trophy },
 ];
 

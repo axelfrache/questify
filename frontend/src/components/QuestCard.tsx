@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +46,14 @@ export function QuestCard({
   const isCompleted = quest.status === 'COMPLETED';
   const hasCategoryColor = !!quest.category?.color;
 
+  const isProject =
+    quest.recurrenceInterval === 'NONE' && quest.subquestCount > 0 && !quest.parentId;
+
+  const completionPercentage =
+    quest.subquestCount > 0
+      ? Math.round((quest.completedSubquestCount / quest.subquestCount) * 100)
+      : 0;
+
   const handleCheckboxClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (isCompleted || disabled) return;
 
@@ -72,7 +81,7 @@ export function QuestCard({
     >
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
-          {!hideCheckbox && (
+          {!hideCheckbox && !isProject && (
             <div className="pt-0.5">
               <Checkbox
                 checked={isCompleted}
@@ -88,7 +97,6 @@ export function QuestCard({
 
           {/* Main content */}
           <div className="flex-1 min-w-0 space-y-1.5">
-            {/* Title + Category Icon */}
             <div className="flex items-center gap-2">
               {quest.category?.icon && (
                 <span className="text-sm flex-shrink-0">{quest.category.icon}</span>
@@ -101,9 +109,13 @@ export function QuestCard({
               >
                 {quest.title}
               </h3>
+              {isProject && (
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border px-1 rounded">
+                  Project
+                </span>
+              )}
             </div>
 
-            {/* Description (if present) */}
             {quest.description && (
               <p
                 className={cn(
@@ -115,11 +127,19 @@ export function QuestCard({
               </p>
             )}
 
-            {/* Metadata chips */}
+            {isProject && (
+              <div className="space-y-1 pt-1">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Progress</span>
+                  <span>{completionPercentage}%</span>
+                </div>
+                <Progress value={completionPercentage} className="h-1.5" />
+              </div>
+            )}
+
             <div className="flex flex-wrap items-center gap-1.5 pt-1">
               <RecurrenceChip recurrence={quest.recurrenceInterval} faded={isCompleted} />
               <DifficultyChip difficulty={quest.difficulty} faded={isCompleted} />
-              {/* Parent context for subquests */}
               {quest.parentTitle && (
                 <span
                   className={cn(

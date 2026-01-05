@@ -142,6 +142,10 @@ class ApiClient {
     return response.json();
   }
 
+  async get<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint);
+  }
+
   async login(data: LoginRequest): Promise<AuthResponse> {
     return this.request<AuthResponse>('/api/auth/login', {
       method: 'POST',
