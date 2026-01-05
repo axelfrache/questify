@@ -29,6 +29,7 @@ class QuestServiceTest {
   private UserRepository userRepository;
   private CategoryRepository categoryRepository;
   private ProgressionService progressionService;
+  private com.axelfrache.questify.repository.QuestHistoryRepository questHistoryRepository;
 
   private User testUser;
   private UUID userId;
@@ -40,6 +41,7 @@ class QuestServiceTest {
     userRepository = mock(UserRepository.class);
     categoryRepository = mock(CategoryRepository.class);
     progressionService = mock(ProgressionService.class);
+    questHistoryRepository = mock(com.axelfrache.questify.repository.QuestHistoryRepository.class);
 
     questService =
         new QuestService(
@@ -47,7 +49,8 @@ class QuestServiceTest {
             questOccurrenceRepository,
             userRepository,
             categoryRepository,
-            progressionService);
+            progressionService,
+            questHistoryRepository);
 
     userId = UUID.randomUUID();
     testUser = new User();
@@ -156,6 +159,31 @@ class QuestServiceTest {
     assertNotNull(occurrence.getCompletedAt());
     verify(progressionService).awardXp(eq(userId), anyInt(), anyString());
     verify(questOccurrenceRepository).save(occurrence);
+    verify(questHistoryRepository).save(any(QuestHistory.class));
+  }
+
+  @Test
+  void complete_shouldSaveToHistory_whenCompleted() {
+    var occurrenceId = UUID.randomUUID();
+    var template = createTemplate();
+    var occurrence = createOccurrence(template, QuestStatus.PENDING, LocalDate.now());
+    occurrence.setId(occurrenceId);
+
+    when(questOccurrenceRepository.findById(occurrenceId)).thenReturn(Optional.of(occurrence));
+    when(progressionService.awardXp(any(), anyInt(), anyString()))
+        .thenReturn(
+            new ProgressionResult(0, 50, 1, 1, Grade.INITIATE, Grade.INITIATE, false, false));
+
+    questService.complete(occurrenceId);
+
+    verify(questHistoryRepository)
+        .save(
+            argThat(
+                history ->
+                    history.getUserId().equals(userId)
+                        && history.getOriginalQuestId().equals(template.getId())
+                        && history.getTitle().equals(template.getTitle())
+                        && history.getXpEarned() > 0));
   }
 
   @Test

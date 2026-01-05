@@ -27,6 +27,7 @@ public class QuestService {
   private final UserRepository userRepository;
   private final CategoryRepository categoryRepository;
   private final ProgressionService progressionService;
+  private final com.axelfrache.questify.repository.QuestHistoryRepository questHistoryRepository;
 
   @Transactional
   public QuestResponse create(UUID userId, CreateQuestRequest request) {
@@ -58,7 +59,11 @@ public class QuestService {
       if (parent.getParent() != null) {
         throw new IllegalArgumentException("Subquests cannot have children (max depth = 1)");
       }
-      recurrenceRule = null;
+
+      if (parent.getRecurrenceRule() != null && recurrenceRule != null) {
+        throw new IllegalArgumentException(
+            "Subquests of a recurring quest cannot have their own recurrence (Checklist Mode)");
+      }
     }
 
     var template =
@@ -174,6 +179,21 @@ public class QuestService {
       if (request.recurrenceInterval() == RecurrenceType.NONE) {
         template.setRecurrenceRule(null);
       } else {
+        if (template.getParent() != null && template.getParent().getRecurrenceRule() != null) {
+          throw new IllegalArgumentException(
+              "Cannot add recurrence to a subquest of a recurring parent (Checklist Mode)");
+        }
+
+        if (template.getSubquests() != null && !template.getSubquests().isEmpty()) {
+          boolean hasRecurringSubquests =
+              template.getSubquests().stream()
+                  .anyMatch(sq -> sq.getRecurrenceRule() != null && !sq.isDeleted());
+          if (hasRecurringSubquests) {
+            throw new IllegalArgumentException(
+                "Cannot set recurrence on a parent with recurring subquests. Remove subquest recurrence first.");
+          }
+        }
+
         RecurrenceRule rule = template.getRecurrenceRule();
         if (rule == null) {
           rule = RecurrenceRule.builder().interval(1).build();
@@ -223,7 +243,33 @@ public class QuestService {
         totalXp,
         "Quest: " + occurrence.getQuestTemplate().getTitle());
 
+    saveToHistory(occurrence, totalXp);
+
     return toResponse(occurrence);
+  }
+
+  private void saveToHistory(QuestOccurrence occurrence, int xpEarned) {
+    var template = occurrence.getQuestTemplate();
+    var history =
+        QuestHistory.builder()
+            .userId(template.getUser().getId())
+            .originalQuestId(template.getId())
+            .title(template.getTitle())
+            .description(template.getDescription())
+            .difficulty(template.getDifficulty())
+            .xpEarned(xpEarned)
+            .completedAt(occurrence.getCompletedAt())
+            .categoryName(template.getCategory() != null ? template.getCategory().getName() : null)
+            .categoryIcon(template.getCategory() != null ? template.getCategory().getIcon() : null)
+            .categoryColor(
+                template.getCategory() != null ? template.getCategory().getColor() : null)
+            .recurrenceType(
+                template.getRecurrenceRule() != null
+                    ? template.getRecurrenceRule().getType()
+                    : RecurrenceType.NONE)
+            .parentTitle(template.getParent() != null ? template.getParent().getTitle() : null)
+            .build();
+    questHistoryRepository.save(history);
   }
 
   @Transactional
@@ -262,6 +308,23 @@ public class QuestService {
                   .status(QuestStatus.PENDING)
                   .build();
           questOccurrenceRepository.save(occurrence);
+
+          if (template.getSubquests() != null) {
+            for (var subquest : template.getSubquests()) {
+              if (subquest.isActive() && !subquest.isDeleted()) {
+                if (!questOccurrenceRepository.existsByQuestTemplateAndScheduledDate(
+                    subquest, today)) {
+                  var subOccurrence =
+                      QuestOccurrence.builder()
+                          .questTemplate(subquest)
+                          .scheduledDate(today)
+                          .status(QuestStatus.PENDING)
+                          .build();
+                  questOccurrenceRepository.save(subOccurrence);
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -303,6 +366,11 @@ public class QuestService {
     return allOccurrences.stream()
         .filter(q -> q.getStatus() != QuestStatus.SKIPPED)
         .filter(q -> q.getScheduledDate().equals(today))
+        .filter(
+            q ->
+                !(q.getQuestTemplate().getSubquests() != null
+                    && !q.getQuestTemplate().getSubquests().isEmpty()
+                    && q.getQuestTemplate().getRecurrenceRule() == null))
         .sorted((o1, o2) -> o1.getScheduledDate().compareTo(o2.getScheduledDate()))
         .map(this::toResponse)
         .collect(Collectors.toList());
