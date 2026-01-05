@@ -27,6 +27,13 @@ public interface QuestOccurrenceRepository extends JpaRepository<QuestOccurrence
   @Query("SELECT qo FROM QuestOccurrence qo WHERE qo.questTemplate.user.id = :userId")
   List<QuestOccurrence> findAllByUserId(@Param("userId") UUID userId);
 
+  @Query(
+      "SELECT DISTINCT qo FROM QuestOccurrence qo "
+          + "LEFT JOIN FETCH qo.questTemplate qt "
+          + "LEFT JOIN FETCH qt.subquests sq "
+          + "WHERE qt.user.id = :userId")
+  List<QuestOccurrence> findAllByUserIdWithSubquests(@Param("userId") UUID userId);
+
   Optional<QuestOccurrence> findTopByQuestTemplateOrderByScheduledDateDesc(
       QuestTemplate questTemplate);
 

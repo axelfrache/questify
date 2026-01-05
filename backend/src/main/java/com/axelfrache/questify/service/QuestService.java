@@ -297,7 +297,7 @@ public class QuestService {
   public List<QuestResponse> findTodayQuests(UUID userId) {
     ensureDailyOccurrences(userId);
 
-    var allOccurrences = questOccurrenceRepository.findAllByUserId(userId);
+    var allOccurrences = questOccurrenceRepository.findAllByUserIdWithSubquests(userId);
     LocalDate today = LocalDate.now();
 
     return allOccurrences.stream()
@@ -313,7 +313,7 @@ public class QuestService {
     ensureDailyOccurrences(userId);
     var user = findUserOrThrow(userId);
 
-    var allOccurrences = questOccurrenceRepository.findAllByUserId(userId);
+    var allOccurrences = questOccurrenceRepository.findAllByUserIdWithSubquests(userId);
     var occurrenceResponses =
         allOccurrences.stream()
             .filter(q -> q.getStatus() == QuestStatus.PENDING)
