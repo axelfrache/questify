@@ -38,8 +38,8 @@ export function StatsPage() {
   };
 
   const getCompletionColor = (rate: number) => {
-    if (rate >= 100) return 'bg-green-500';
-    if (rate >= 75) return 'bg-emerald-500';
+    if (rate >= 100) return 'bg-success';
+    if (rate >= 75) return 'bg-success-muted';
     if (rate >= 50) return 'bg-primary';
     if (rate > 0) return 'bg-primary/60';
     return 'bg-muted';
@@ -146,7 +146,7 @@ export function StatsPage() {
           </div>
           <div className="mt-2 pt-2 border-t flex items-center justify-end gap-3 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-sm bg-green-500" />
+              <span className="w-2 h-2 rounded-sm bg-success" />
               100%
             </span>
             <span className="flex items-center gap-1">

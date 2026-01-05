@@ -11,26 +11,26 @@ export const DIFFICULTY_CONFIG: Record<DifficultyLevel, DifficultyConfig> = {
   EASY: {
     label: 'Easy',
     xp: 50,
-    textColor: 'text-emerald-500',
-    bgColor: 'bg-emerald-500/10',
+    textColor: 'text-difficulty-easy',
+    bgColor: 'bg-[var(--difficulty-easy-bg)]',
   },
   MEDIUM: {
     label: 'Medium',
     xp: 75,
-    textColor: 'text-blue-500',
-    bgColor: 'bg-blue-500/10',
+    textColor: 'text-difficulty-medium',
+    bgColor: 'bg-[var(--difficulty-medium-bg)]',
   },
   HARD: {
     label: 'Hard',
     xp: 100,
-    textColor: 'text-orange-500',
-    bgColor: 'bg-orange-500/10',
+    textColor: 'text-difficulty-hard',
+    bgColor: 'bg-[var(--difficulty-hard-bg)]',
   },
   EPIC: {
     label: 'Epic',
     xp: 150,
-    textColor: 'text-violet-500',
-    bgColor: 'bg-violet-500/10',
+    textColor: 'text-difficulty-epic',
+    bgColor: 'bg-[var(--difficulty-epic-bg)]',
   },
 };
 

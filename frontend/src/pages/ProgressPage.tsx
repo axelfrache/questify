@@ -114,7 +114,7 @@ export function ProgressPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Star className="h-5 w-5 text-amber-500" />
+            <Star className="h-5 w-5 text-secondary" />
             Grade Journey
           </CardTitle>
         </CardHeader>
@@ -227,8 +227,8 @@ export function ProgressPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <div className="p-2 rounded-full bg-violet-500/10">
-                <Star className="h-5 w-5 text-violet-500" />
+              <div className="p-2 rounded-full bg-secondary/10">
+                <Star className="h-5 w-5 text-secondary" />
               </div>
               Current Grade
             </CardTitle>
@@ -295,7 +295,7 @@ export function ProgressPage() {
                     className="h-2"
                   />
                 </div>
-                {currentLevel >= nextGrade.minLevel && <Check className="h-5 w-5 text-green-500" />}
+                {currentLevel >= nextGrade.minLevel && <Check className="h-5 w-5 text-success" />}
               </div>
 
               <div className="flex items-center gap-4">

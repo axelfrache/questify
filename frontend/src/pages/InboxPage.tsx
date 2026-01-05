@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { useQuests, useCategories, useCompleteQuest, useDeleteQuest } from '@/hooks/use-api';
-import { Button } from '@/components/ui/button';
+import { useInboxFilters } from '@/hooks/useInboxFilters';
+import { useInboxSort } from '@/hooks/useInboxSort';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { X } from 'lucide-react';
+import { InboxToolbar } from '@/components/InboxToolbar';
 import { QuestCard } from '@/components/QuestCard';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import { type QuestResponse } from '@/lib/api';
@@ -31,9 +31,6 @@ const fireConfettiFromElement = (element: HTMLElement) => {
 };
 
 export function InboxPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const categoryId = searchParams.get('category');
-
   const {
     data: quests,
     isLoading: isLoadingQuests,
@@ -45,6 +42,23 @@ export function InboxPage() {
 
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
   const [parentQuest, setParentQuest] = useState<QuestResponse | null>(null);
+
+  const {
+    filters,
+    setSearch,
+    toggleDifficulty,
+    toggleRegion,
+    toggleRecurrence,
+    setStructure,
+    clearAllFilters,
+    filterQuests,
+    activeFilterCount,
+    hasActiveFilters,
+    getActiveFilterLabels,
+    removeFilter,
+  } = useInboxFilters(categories || []);
+
+  const { sortOption, setSortOption, sortQuests, sortLabels } = useInboxSort();
 
   const handleComplete = (id: string, checkboxElement?: HTMLElement) => {
     if (checkboxElement) {
@@ -63,22 +77,15 @@ export function InboxPage() {
     setParentQuest(quest);
   };
 
-  const clearFilter = () => {
-    setSearchParams({});
-  };
-
   const pendingQuests = quests?.filter((q) => q.status === 'PENDING') || [];
-
-  const filteredQuests = categoryId
-    ? pendingQuests.filter((q) => q.category?.id === categoryId)
-    : pendingQuests;
-
-  const currentCategory = categoryId ? categories?.find((c) => c.id === categoryId) : null;
+  const filteredQuests = filterQuests(pendingQuests);
+  const sortedQuests = sortQuests(filteredQuests);
 
   if (isLoadingQuests || isLoadingCategories) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-10 w-full" />
         <Skeleton className="h-24 w-full" />
         <Skeleton className="h-24 w-full" />
         <Skeleton className="h-24 w-full" />
@@ -88,20 +95,27 @@ export function InboxPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Inbox</h1>
-          <p className="text-muted-foreground">
-            {currentCategory ? `Quests in ${currentCategory.name}` : 'Quest Board'}
-          </p>
-        </div>
-        {currentCategory && (
-          <Button variant="outline" size="sm" onClick={clearFilter} className="gap-2">
-            <X className="h-4 w-4" />
-            Clear Filter
-          </Button>
-        )}
+      <div>
+        <h1 className="text-2xl font-bold">Inbox</h1>
+        <p className="text-muted-foreground">Quest Board</p>
       </div>
+
+      <InboxToolbar
+        filters={filters}
+        categories={categories || []}
+        onSearchChange={setSearch}
+        onToggleDifficulty={toggleDifficulty}
+        onToggleRegion={toggleRegion}
+        onToggleRecurrence={toggleRecurrence}
+        onSetStructure={setStructure}
+        onClearAllFilters={clearAllFilters}
+        onRemoveFilter={removeFilter}
+        activeFilterCount={activeFilterCount}
+        activeFilterLabels={getActiveFilterLabels()}
+        sortOption={sortOption}
+        sortLabels={sortLabels}
+        onSortChange={setSortOption}
+      />
 
       {errorQuests && (
         <Alert variant="destructive">
@@ -109,15 +123,15 @@ export function InboxPage() {
         </Alert>
       )}
 
-      {filteredQuests.length === 0 ? (
+      {sortedQuests.length === 0 ? (
         <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
-          {categoryId
-            ? `No quests found in ${currentCategory?.name || 'this category'}.`
+          {hasActiveFilters
+            ? 'No quests match your search or filters.'
             : 'No quests found. Start your journey by adding a new quest!'}
         </div>
       ) : (
         <div className="space-y-3">
-          {filteredQuests.map((quest) => (
+          {sortedQuests.map((quest) => (
             <QuestCard
               key={quest.id}
               quest={quest}
@@ -132,7 +146,6 @@ export function InboxPage() {
         </div>
       )}
 
-      {/* Edit quest dialog */}
       <CreateQuestDialog
         open={!!editingQuest}
         onOpenChange={(open) => !open && setEditingQuest(null)}
@@ -153,7 +166,6 @@ export function InboxPage() {
         }
       />
 
-      {/* Create subquest dialog */}
       <CreateQuestDialog
         open={!!parentQuest}
         onOpenChange={(open) => !open && setParentQuest(null)}
