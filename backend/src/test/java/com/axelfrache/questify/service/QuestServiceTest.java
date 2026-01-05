@@ -59,7 +59,7 @@ class QuestServiceTest {
   }
 
   @Test
-  void create_shouldCreateTemplateAndOccurrence_whenNoRecurrenceAndNoDueDate() {
+  void create_shouldCreateTemplateOnly_whenNoRecurrenceAndNoDueDate() {
     var request =
         new CreateQuestRequest(
             "Test Quest", "Description", Difficulty.MEDIUM, 50, null, null, null, null, null);
@@ -71,7 +71,7 @@ class QuestServiceTest {
     assertEquals("Test Quest", response.title());
     assertEquals(RecurrenceType.NONE, response.recurrenceInterval());
     verify(questTemplateRepository).save(any(QuestTemplate.class));
-    verify(questOccurrenceRepository).save(any(QuestOccurrence.class));
+    verify(questOccurrenceRepository, never()).save(any(QuestOccurrence.class));
   }
 
   @Test
@@ -433,6 +433,52 @@ class QuestServiceTest {
 
     assertNotNull(response);
     assertEquals(templateId, response.id());
+  }
+
+  @Test
+  void delete_shouldDeleteProjectAndSubquests() {
+    var projectId = UUID.randomUUID();
+    var subquestId = UUID.randomUUID();
+    var projectTemplate = new QuestTemplate();
+    projectTemplate.setId(projectId);
+    projectTemplate.setTitle("Project");
+    projectTemplate.setSubquests(new ArrayList<>());
+
+    var subquestTemplate = new QuestTemplate();
+    subquestTemplate.setId(subquestId);
+    subquestTemplate.setTitle("Subquest");
+    subquestTemplate.setParent(projectTemplate);
+    projectTemplate.getSubquests().add(subquestTemplate);
+
+    when(questOccurrenceRepository.findById(projectId)).thenReturn(Optional.empty());
+    when(questTemplateRepository.findById(projectId)).thenReturn(Optional.of(projectTemplate));
+
+    questService.delete(projectId);
+
+    verify(questTemplateRepository).save(projectTemplate);
+    verify(questTemplateRepository).save(subquestTemplate);
+    assertTrue(projectTemplate.isDeleted());
+    assertTrue(subquestTemplate.isDeleted());
+  }
+
+  @Test
+  void update_shouldCreateOccurrence_whenDueDateAddedToFloatingQuest() {
+    var templateId = UUID.randomUUID();
+    var template = createTemplate();
+    template.setId(templateId);
+    var dueDate = Instant.now().plusSeconds(86400); // Tomorrow
+    var request = new UpdateQuestRequest(null, null, null, null, null, dueDate, null, null);
+
+    when(questOccurrenceRepository.findById(templateId)).thenReturn(Optional.empty());
+    when(questTemplateRepository.findById(templateId)).thenReturn(Optional.of(template));
+    when(questOccurrenceRepository.findByQuestTemplateAndScheduledDate(any(), any()))
+        .thenReturn(Optional.empty());
+
+    var response = questService.update(templateId, request);
+
+    verify(questOccurrenceRepository).save(any(QuestOccurrence.class));
+    assertNotNull(response);
+    assertTrue(response.id() != templateId); // Should return occurrence ID
   }
 
   private QuestTemplate createTemplate() {
