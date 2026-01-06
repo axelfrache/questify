@@ -68,6 +68,7 @@ export function useCompleteQuest() {
       queryClient.invalidateQueries({ queryKey: ['subquests'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
       queryClient.invalidateQueries({ queryKey: ['category-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['history'] });
     },
   });
 }
