@@ -236,7 +236,21 @@ public class QuestService {
 
   @Transactional
   public QuestResponse complete(UUID id) {
-    var occurrence = findOccurrenceOrThrow(id);
+    var occurrence = questOccurrenceRepository.findById(id).orElse(null);
+
+    if (occurrence == null) {
+      var template =
+          questTemplateRepository
+              .findById(id)
+              .orElseThrow(() -> new IllegalArgumentException("Quest not found: " + id));
+
+      occurrence = new QuestOccurrence();
+      occurrence.setQuestTemplate(template);
+      occurrence.setScheduledDate(LocalDate.now());
+      occurrence.setStatus(QuestStatus.PENDING);
+      occurrence.setHasDueDate(false);
+      occurrence = questOccurrenceRepository.save(occurrence);
+    }
 
     if (occurrence.getStatus() != QuestStatus.PENDING)
       throw new IllegalStateException("Quest is already completed or cancelled");
@@ -491,35 +505,24 @@ public class QuestService {
 
   @Transactional
   public void delete(UUID id) {
-    System.out.println("Deleting quest with ID: " + id);
     var occurrenceOpt = questOccurrenceRepository.findById(id);
     if (occurrenceOpt.isPresent()) {
-      System.out.println("Found occurrence for ID: " + id);
       var occurrence = occurrenceOpt.get();
       var template = occurrence.getQuestTemplate();
 
       questOccurrenceRepository.delete(occurrence);
-      System.out.println("Deleted occurrence");
 
       if (template.getRecurrenceRule() == null) {
-        System.out.println("Template is not recurring, deleting template");
         deleteTemplate(template);
-      } else {
-        System.out.println("Template is recurring, NOT deleting template");
       }
     } else {
-      System.out.println("No occurrence found, looking for template");
       var template = findTemplateOrThrow(id);
-      System.out.println("Found template: " + template.getTitle());
       deleteTemplate(template);
     }
   }
 
   private void deleteTemplate(QuestTemplate template) {
-    System.out.println(
-        "Deleting template: " + template.getTitle() + " (ID: " + template.getId() + ")");
     if (template.getSubquests() != null) {
-      System.out.println("Template has " + template.getSubquests().size() + " subquests");
       for (var subquest : template.getSubquests()) {
         if (!subquest.isDeleted()) {
           deleteTemplate(subquest);
@@ -530,10 +533,8 @@ public class QuestService {
     template.setDeleted(true);
     template.setActive(false);
     questTemplateRepository.save(template);
-    System.out.println("Marked template as deleted");
 
     if (template.getOccurrences() != null && !template.getOccurrences().isEmpty()) {
-      System.out.println("Deleting " + template.getOccurrences().size() + " occurrences");
       questOccurrenceRepository.deleteAll(template.getOccurrences());
     }
   }
