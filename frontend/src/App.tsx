@@ -54,7 +54,6 @@ function App() {
                 <Route path="/progress" element={<ProgressPage />} />
                 <Route path="/stats" element={<StatsPage />} />
                 <Route path="/history" element={<HistoryPage />} />
-
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>
