@@ -14,7 +14,6 @@ import {
   UpcomingPage,
   ProgressPage,
   StatsPage,
-  MilestonesPage,
   ProfilePage,
   SettingsPage,
   HistoryPage,
@@ -55,7 +54,7 @@ function App() {
                 <Route path="/progress" element={<ProgressPage />} />
                 <Route path="/stats" element={<StatsPage />} />
                 <Route path="/history" element={<HistoryPage />} />
-                <Route path="/milestones" element={<MilestonesPage />} />
+
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>

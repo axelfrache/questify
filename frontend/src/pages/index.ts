@@ -3,7 +3,7 @@ export * from './TodayPage';
 export * from './UpcomingPage';
 export * from './ProgressPage';
 export * from './StatsPage';
-export * from './MilestonesPage';
+
 export * from './ProfilePage';
 export * from './SettingsPage';
 export * from './HistoryPage';
