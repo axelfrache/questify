@@ -3,14 +3,10 @@
 Thanks for your interest in contributing to Questify!  
 This guide explains how to contribute efficiently and consistently.
 
----
-
 ## Code of Conduct
 
 Be respectful, constructive, and kind.
 Questify aims to be a welcoming and collaborative space for everyone.
-
----
 
 ## What You Can Contribute
 
@@ -21,8 +17,6 @@ We welcome contributions such as:
 - Documentation improvements
 
 For **new features or architectural changes**, please open an issue first to discuss the approach.
-
----
 
 ## Getting Started
 
@@ -40,8 +34,6 @@ For **new features or architectural changes**, please open an issue first to dis
    ```bash
    git checkout -b feature/your-feature-name
    ```
-
----
 
 ## Development Setup
 
@@ -70,8 +62,6 @@ cd frontend && npm install && npm run dev
 docker compose up -d --build
 ```
 
----
-
 ## Code Quality (Mandatory)
 
 CI will fail if formatting or linting is incorrect.
@@ -89,8 +79,6 @@ cd backend && ./mvnw spotless:apply && ./mvnw verify
 # Frontend
 cd frontend && npm run format && npm run lint && npm run build
 ```
-
----
 
 ## Commit Conventions
 
@@ -110,8 +98,6 @@ docs: improve contributing guide
 chore(deps): update Spring Boot
 ```
 
----
-
 ## Pull Request Process
 
 1. Rebase on latest `main`
@@ -127,13 +113,9 @@ PR description should include:
 - How to test
 - Screenshots for UI changes
 
----
-
 ## Need Help?
 
 - Check existing issues: https://github.com/axelfrache/questify/issues
 - Open an issue for bugs or feature proposals
-
----
 
 Thanks for contributing to Questify 🐢✨
