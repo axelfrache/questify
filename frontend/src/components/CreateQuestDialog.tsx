@@ -209,7 +209,7 @@ export function CreateQuestDialog({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Category</Label>
+              <Label className="text-xs text-muted-foreground">Region</Label>
               <Select
                 onValueChange={(value) => setValue('categoryId', value)}
                 defaultValue={questToEdit?.categoryId}
