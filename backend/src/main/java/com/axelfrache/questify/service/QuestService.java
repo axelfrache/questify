@@ -448,12 +448,14 @@ public class QuestService {
     LocalDate today = LocalDate.now(user.getZoneId());
     LocalDate endDate = today.plusDays(7);
 
+    final int maxResults = 100;
     List<QuestResponse> upcomingQuests = new java.util.ArrayList<>();
 
     for (LocalDate date = today.plusDays(1);
-        date.isBefore(endDate.plusDays(1));
+        date.isBefore(endDate.plusDays(1)) && upcomingQuests.size() < maxResults;
         date = date.plusDays(1)) {
       for (var template : templates) {
+        if (upcomingQuests.size() >= maxResults) break;
         if (template.getRecurrenceRule() == null) continue;
 
         if (shouldGenerateOccurrence(template, date)) {
