@@ -44,6 +44,9 @@ jwt:
   existingSecret: "questify-backend-jwt"
   secretKey: jwt-secret
 
+cors:
+  allowedOrigins: "https://app.getquestify.com,https://getquestify.com"
+
 resources:
   requests:
     memory: "256Mi"
