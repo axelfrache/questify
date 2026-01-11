@@ -104,8 +104,8 @@ public class QuestService {
   }
 
   @Transactional
-  public QuestResponse update(UUID id, UpdateQuestRequest request) {
-    var occurrenceOpt = questOccurrenceRepository.findById(id);
+  public QuestResponse update(UUID id, UUID userId, UpdateQuestRequest request) {
+    var occurrenceOpt = questOccurrenceRepository.findByIdAndUserId(id, userId);
     if (occurrenceOpt.isPresent()) {
       var occurrence = occurrenceOpt.get();
 
@@ -147,7 +147,7 @@ public class QuestService {
       return toResponse(occurrence);
     }
 
-    var template = findTemplateOrThrow(id);
+    var template = findTemplateByIdAndUserOrThrow(id, userId);
     updateTemplateFields(template, request);
     questTemplateRepository.save(template);
 
@@ -235,14 +235,11 @@ public class QuestService {
   }
 
   @Transactional
-  public QuestResponse complete(UUID id) {
-    var occurrence = questOccurrenceRepository.findById(id).orElse(null);
+  public QuestResponse complete(UUID id, UUID userId) {
+    var occurrence = questOccurrenceRepository.findByIdAndUserId(id, userId).orElse(null);
 
     if (occurrence == null) {
-      var template =
-          questTemplateRepository
-              .findById(id)
-              .orElseThrow(() -> new IllegalArgumentException("Quest not found: " + id));
+      var template = findTemplateByIdAndUserOrThrow(id, userId);
 
       occurrence = new QuestOccurrence();
       occurrence.setQuestTemplate(template);
@@ -306,8 +303,8 @@ public class QuestService {
   }
 
   @Transactional
-  public QuestResponse cancel(UUID id) {
-    var occurrenceOpt = questOccurrenceRepository.findById(id);
+  public QuestResponse cancel(UUID id, UUID userId) {
+    var occurrenceOpt = questOccurrenceRepository.findByIdAndUserId(id, userId);
     if (occurrenceOpt.isPresent()) {
       var occurrence = occurrenceOpt.get();
       if (occurrence.getStatus() != QuestStatus.PENDING)
@@ -317,7 +314,7 @@ public class QuestService {
       return toResponse(occurrence);
     }
 
-    var template = findTemplateOrThrow(id);
+    var template = findTemplateByIdAndUserOrThrow(id, userId);
     template.setActive(false);
     questTemplateRepository.save(template);
     return toResponse(template);
@@ -471,8 +468,8 @@ public class QuestService {
   }
 
   @Transactional
-  public QuestResponse skip(UUID id) {
-    var occurrence = findOccurrenceOrThrow(id);
+  public QuestResponse skip(UUID id, UUID userId) {
+    var occurrence = findOccurrenceByIdAndUserOrThrow(id, userId);
 
     if (occurrence.getStatus() != QuestStatus.PENDING)
       throw new IllegalStateException("Quest is already completed, cancelled or skipped");
@@ -495,17 +492,17 @@ public class QuestService {
   }
 
   @Transactional(readOnly = true)
-  public QuestResponse findById(UUID id) {
-    var occurrenceOpt = questOccurrenceRepository.findById(id);
+  public QuestResponse findById(UUID id, UUID userId) {
+    var occurrenceOpt = questOccurrenceRepository.findByIdAndUserId(id, userId);
     if (occurrenceOpt.isPresent()) {
       return toResponse(occurrenceOpt.get());
     }
-    return toResponse(findTemplateOrThrow(id));
+    return toResponse(findTemplateByIdAndUserOrThrow(id, userId));
   }
 
   @Transactional
-  public void delete(UUID id) {
-    var occurrenceOpt = questOccurrenceRepository.findById(id);
+  public void delete(UUID id, UUID userId) {
+    var occurrenceOpt = questOccurrenceRepository.findByIdAndUserId(id, userId);
     if (occurrenceOpt.isPresent()) {
       var occurrence = occurrenceOpt.get();
       var template = occurrence.getQuestTemplate();
@@ -516,7 +513,7 @@ public class QuestService {
         deleteTemplate(template);
       }
     } else {
-      var template = findTemplateOrThrow(id);
+      var template = findTemplateByIdAndUserOrThrow(id, userId);
       deleteTemplate(template);
     }
   }
@@ -557,6 +554,18 @@ public class QuestService {
         .orElseThrow(() -> new IllegalArgumentException("Quest occurrence not found: " + id));
   }
 
+  private QuestOccurrence findOccurrenceByIdAndUserOrThrow(UUID id, UUID userId) {
+    return questOccurrenceRepository
+        .findByIdAndUserId(id, userId)
+        .orElseThrow(() -> new IllegalArgumentException("Quest occurrence not found: " + id));
+  }
+
+  private QuestTemplate findTemplateByIdAndUserOrThrow(UUID id, UUID userId) {
+    return questTemplateRepository
+        .findByIdAndUserId(id, userId)
+        .orElseThrow(() -> new IllegalArgumentException("Quest not found: " + id));
+  }
+
   @Transactional(readOnly = true)
   public List<QuestResponse> findRecurringTemplates(UUID userId) {
     var user = findUserOrThrow(userId);
@@ -568,16 +577,16 @@ public class QuestService {
   }
 
   @Transactional
-  public QuestResponse toggleActive(UUID id) {
-    var template = findTemplateOrThrow(id);
+  public QuestResponse toggleActive(UUID id, UUID userId) {
+    var template = findTemplateByIdAndUserOrThrow(id, userId);
     template.setActive(!template.isActive());
     questTemplateRepository.save(template);
     return toResponse(template);
   }
 
   @Transactional(readOnly = true)
-  public List<QuestResponse> findSubquests(UUID parentId) {
-    var parent = findTemplateOrThrow(parentId);
+  public List<QuestResponse> findSubquests(UUID parentId, UUID userId) {
+    var parent = findTemplateByIdAndUserOrThrow(parentId, userId);
     return parent.getSubquests().stream()
         .filter(sq -> !sq.isDeleted() && sq.isActive())
         .map(

@@ -4,7 +4,7 @@ import com.axelfrache.questify.dto.CreateQuestRequest;
 import com.axelfrache.questify.dto.QuestResponse;
 import com.axelfrache.questify.dto.UpdateQuestRequest;
 import com.axelfrache.questify.model.QuestStatus;
-import com.axelfrache.questify.repository.UserRepository;
+import com.axelfrache.questify.security.SecurityUtils;
 import com.axelfrache.questify.service.QuestService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -21,13 +21,13 @@ import org.springframework.web.bind.annotation.*;
 public class QuestController {
 
   private final QuestService questService;
-  private final UserRepository userRepository;
+  private final SecurityUtils securityUtils;
 
   @PostMapping
   public ResponseEntity<QuestResponse> create(
       @AuthenticationPrincipal UserDetails userDetails,
       @Valid @RequestBody CreateQuestRequest request) {
-    var userId = getUserId(userDetails);
+    var userId = securityUtils.getCurrentUserId(userDetails);
     return ResponseEntity.ok(questService.create(userId, request));
   }
 
@@ -36,7 +36,7 @@ public class QuestController {
       @AuthenticationPrincipal UserDetails userDetails,
       @RequestParam(required = false) QuestStatus status,
       @RequestParam(required = false) String view) {
-    var userId = getUserId(userDetails);
+    var userId = securityUtils.getCurrentUserId(userDetails);
 
     if ("today".equalsIgnoreCase(view)) {
       return ResponseEntity.ok(questService.findTodayQuests(userId));
@@ -60,46 +60,54 @@ public class QuestController {
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<QuestResponse> findById(@PathVariable UUID id) {
-    return ResponseEntity.ok(questService.findById(id));
+  public ResponseEntity<QuestResponse> findById(
+      @AuthenticationPrincipal UserDetails userDetails, @PathVariable UUID id) {
+    var userId = securityUtils.getCurrentUserId(userDetails);
+    return ResponseEntity.ok(questService.findById(id, userId));
   }
 
   @PutMapping("/{id}")
   public ResponseEntity<QuestResponse> update(
-      @PathVariable UUID id, @Valid @RequestBody UpdateQuestRequest request) {
-    return ResponseEntity.ok(questService.update(id, request));
+      @AuthenticationPrincipal UserDetails userDetails,
+      @PathVariable UUID id,
+      @Valid @RequestBody UpdateQuestRequest request) {
+    var userId = securityUtils.getCurrentUserId(userDetails);
+    return ResponseEntity.ok(questService.update(id, userId, request));
   }
 
   @PostMapping("/{id}/complete")
-  public ResponseEntity<QuestResponse> complete(@PathVariable UUID id) {
-    return ResponseEntity.ok(questService.complete(id));
+  public ResponseEntity<QuestResponse> complete(
+      @AuthenticationPrincipal UserDetails userDetails, @PathVariable UUID id) {
+    var userId = securityUtils.getCurrentUserId(userDetails);
+    return ResponseEntity.ok(questService.complete(id, userId));
   }
 
   @PostMapping("/{id}/cancel")
-  public ResponseEntity<QuestResponse> cancel(@PathVariable UUID id) {
-    return ResponseEntity.ok(questService.cancel(id));
+  public ResponseEntity<QuestResponse> cancel(
+      @AuthenticationPrincipal UserDetails userDetails, @PathVariable UUID id) {
+    var userId = securityUtils.getCurrentUserId(userDetails);
+    return ResponseEntity.ok(questService.cancel(id, userId));
   }
 
   @PostMapping("/{id}/toggle-active")
-  public ResponseEntity<QuestResponse> toggleActive(@PathVariable UUID id) {
-    return ResponseEntity.ok(questService.toggleActive(id));
+  public ResponseEntity<QuestResponse> toggleActive(
+      @AuthenticationPrincipal UserDetails userDetails, @PathVariable UUID id) {
+    var userId = securityUtils.getCurrentUserId(userDetails);
+    return ResponseEntity.ok(questService.toggleActive(id, userId));
   }
 
   @DeleteMapping("/{id}")
-  public ResponseEntity<Void> delete(@PathVariable UUID id) {
-    questService.delete(id);
+  public ResponseEntity<Void> delete(
+      @AuthenticationPrincipal UserDetails userDetails, @PathVariable UUID id) {
+    var userId = securityUtils.getCurrentUserId(userDetails);
+    questService.delete(id, userId);
     return ResponseEntity.noContent().build();
   }
 
   @GetMapping("/{id}/subquests")
-  public ResponseEntity<List<QuestResponse>> findSubquests(@PathVariable UUID id) {
-    return ResponseEntity.ok(questService.findSubquests(id));
-  }
-
-  private UUID getUserId(UserDetails userDetails) {
-    return userRepository
-        .findByEmail(userDetails.getUsername())
-        .orElseThrow(() -> new IllegalArgumentException("User not found"))
-        .getId();
+  public ResponseEntity<List<QuestResponse>> findSubquests(
+      @AuthenticationPrincipal UserDetails userDetails, @PathVariable UUID id) {
+    var userId = securityUtils.getCurrentUserId(userDetails);
+    return ResponseEntity.ok(questService.findSubquests(id, userId));
   }
 }

@@ -42,4 +42,8 @@ public interface QuestOccurrenceRepository extends JpaRepository<QuestOccurrence
 
   java.util.Optional<QuestOccurrence> findByQuestTemplateAndScheduledDate(
       QuestTemplate template, LocalDate scheduledDate);
+
+  @Query(
+      "SELECT qo FROM QuestOccurrence qo WHERE qo.id = :id AND qo.questTemplate.user.id = :userId")
+  Optional<QuestOccurrence> findByIdAndUserId(@Param("id") UUID id, @Param("userId") UUID userId);
 }
