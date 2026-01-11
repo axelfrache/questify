@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@lombok.extern.slf4j.Slf4j
 public class AuthService {
 
   private final UserRepository userRepository;
@@ -48,13 +49,19 @@ public class AuthService {
 
     userRepository.save(user);
 
+    log.info("User registered: email={}", user.getEmail());
     return createAuthResponse(user);
   }
 
   @Transactional
   public AuthResponse login(LoginRequest request) {
-    authenticationManager.authenticate(
-        new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+    try {
+      authenticationManager.authenticate(
+          new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+    } catch (Exception e) {
+      log.warn("Login failed: email={}", request.email());
+      throw e;
+    }
 
     var user =
         userRepository
@@ -63,6 +70,7 @@ public class AuthService {
 
     refreshTokenRepository.revokeAllByUser(user);
 
+    log.info("Login successful: email={}", request.email());
     return createAuthResponse(user);
   }
 
