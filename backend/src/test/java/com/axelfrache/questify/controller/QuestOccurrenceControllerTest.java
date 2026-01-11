@@ -1,61 +1,69 @@
 package com.axelfrache.questify.controller;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
 import com.axelfrache.questify.dto.QuestResponse;
-import com.axelfrache.questify.security.JwtAuthenticationFilter;
-import com.axelfrache.questify.security.JwtService;
-import com.axelfrache.questify.security.UserDetailsServiceImpl;
+import com.axelfrache.questify.security.SecurityUtils;
 import com.axelfrache.questify.service.QuestService;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.userdetails.UserDetails;
 
 class QuestOccurrenceControllerTest {
 
-  private MockMvc mockMvc;
+  private static final UUID USER_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
+  private static final UUID QUEST_ID = UUID.fromString("33333333-3333-3333-3333-333333333333");
+
+  private QuestOccurrenceController controller;
   private QuestService questService;
-  private JwtService jwtService;
-  private UserDetailsServiceImpl userDetailsService;
+  private SecurityUtils securityUtils;
+  private UserDetails userDetails;
 
   @BeforeEach
   void setUp() {
     questService = mock(QuestService.class);
-    jwtService = mock(JwtService.class);
-    userDetailsService = mock(UserDetailsServiceImpl.class);
+    securityUtils = mock(SecurityUtils.class);
+    userDetails = mock(UserDetails.class);
 
-    var jwtFilter = new JwtAuthenticationFilter(jwtService, userDetailsService);
-    var controller = new QuestOccurrenceController(questService);
+    when(securityUtils.getCurrentUserId(userDetails)).thenReturn(USER_ID);
 
-    mockMvc = MockMvcBuilders.standaloneSetup(controller).addFilters(jwtFilter).build();
+    controller = new QuestOccurrenceController(questService, securityUtils);
   }
 
   @Test
-  void complete_shouldReturnOk_whenTokenIsValid() throws Exception {
-    var id = UUID.randomUUID();
-    var token = "valid-token";
-    var username = "user@example.com";
-    var userDetails =
-        User.builder().username(username).password("password").authorities("ROLE_USER").build();
+  void complete_shouldCallServiceWithCorrectParameters() {
+    var expectedResponse =
+        new QuestResponse(
+            QUEST_ID, null, null, null, null, 0, 0, null, null, null, null, null, null, null, null,
+            null, null, 0, 0);
 
-    when(jwtService.extractUsername(token)).thenReturn(username);
-    when(userDetailsService.loadUserByUsername(username)).thenReturn(userDetails);
-    when(jwtService.isTokenValid(token, userDetails)).thenReturn(true);
-    when(questService.complete(id))
-        .thenReturn(
-            new QuestResponse(
-                id, null, null, null, null, 0, 0, null, null, null, null, null, null, null, null,
-                null, null, 0, 0));
+    when(questService.complete(QUEST_ID, USER_ID)).thenReturn(expectedResponse);
 
-    mockMvc
-        .perform(
-            post("/api/occurrences/" + id + "/complete").header("Authorization", "Bearer " + token))
-        .andExpect(status().isOk());
+    var response = controller.complete(userDetails, QUEST_ID);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(expectedResponse, response.getBody());
+    verify(questService).complete(QUEST_ID, USER_ID);
+    verify(securityUtils).getCurrentUserId(userDetails);
+  }
+
+  @Test
+  void skip_shouldCallServiceWithCorrectParameters() {
+    var expectedResponse =
+        new QuestResponse(
+            QUEST_ID, null, null, null, null, 0, 0, null, null, null, null, null, null, null, null,
+            null, null, 0, 0);
+
+    when(questService.skip(QUEST_ID, USER_ID)).thenReturn(expectedResponse);
+
+    var response = controller.skip(userDetails, QUEST_ID);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(expectedResponse, response.getBody());
+    verify(questService).skip(QUEST_ID, USER_ID);
+    verify(securityUtils).getCurrentUserId(userDetails);
   }
 }

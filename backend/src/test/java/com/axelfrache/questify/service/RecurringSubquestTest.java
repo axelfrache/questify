@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 
 class RecurringSubquestTest {
 
+  private static final UUID USER_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
+
   private QuestService questService;
   private QuestTemplateRepository questTemplateRepository;
   private QuestOccurrenceRepository questOccurrenceRepository;
@@ -30,7 +32,6 @@ class RecurringSubquestTest {
   private com.axelfrache.questify.repository.QuestHistoryRepository questHistoryRepository;
 
   private User testUser;
-  private UUID userId;
 
   @BeforeEach
   void setUp() {
@@ -50,9 +51,8 @@ class RecurringSubquestTest {
             progressionService,
             questHistoryRepository);
 
-    userId = UUID.randomUUID();
     testUser = new User();
-    testUser.setId(userId);
+    testUser.setId(USER_ID);
     testUser.setTimezone("UTC");
   }
 
@@ -63,7 +63,7 @@ class RecurringSubquestTest {
     parent.setId(parentId);
     parent.setRecurrenceRule(RecurrenceRule.builder().type(RecurrenceType.DAILY).build());
 
-    when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
     when(questTemplateRepository.findById(parentId)).thenReturn(Optional.of(parent));
 
     var request =
@@ -78,7 +78,7 @@ class RecurringSubquestTest {
             null,
             parentId);
 
-    assertThrows(IllegalArgumentException.class, () -> questService.create(userId, request));
+    assertThrows(IllegalArgumentException.class, () -> questService.create(USER_ID, request));
   }
 
   @Test
@@ -93,12 +93,16 @@ class RecurringSubquestTest {
     subquest.setId(subquestId);
     subquest.setParent(parent);
 
-    when(questTemplateRepository.findById(subquestId)).thenReturn(Optional.of(subquest));
+    when(questOccurrenceRepository.findByIdAndUserId(subquestId, USER_ID))
+        .thenReturn(Optional.empty());
+    when(questTemplateRepository.findByIdAndUserId(subquestId, USER_ID))
+        .thenReturn(Optional.of(subquest));
 
     var request =
         new UpdateQuestRequest(null, null, null, null, null, null, RecurrenceType.DAILY, null);
 
-    assertThrows(IllegalArgumentException.class, () -> questService.update(subquestId, request));
+    assertThrows(
+        IllegalArgumentException.class, () -> questService.update(subquestId, USER_ID, request));
   }
 
   @Test
@@ -115,13 +119,16 @@ class RecurringSubquestTest {
 
     parent.setSubquests(List.of(subquest));
 
-    when(questTemplateRepository.findById(parentId)).thenReturn(Optional.of(parent));
+    when(questOccurrenceRepository.findByIdAndUserId(parentId, USER_ID))
+        .thenReturn(Optional.empty());
+    when(questTemplateRepository.findByIdAndUserId(parentId, USER_ID))
+        .thenReturn(Optional.of(parent));
 
     var request =
-        new UpdateQuestRequest(
-            null, null, null, null, null, null, RecurrenceType.DAILY, null); // Trying to set parent
+        new UpdateQuestRequest(null, null, null, null, null, null, RecurrenceType.DAILY, null);
 
-    assertThrows(IllegalArgumentException.class, () -> questService.update(parentId, request));
+    assertThrows(
+        IllegalArgumentException.class, () -> questService.update(parentId, USER_ID, request));
   }
 
   @Test
@@ -136,7 +143,7 @@ class RecurringSubquestTest {
 
     parent.setSubquests(List.of(subquest));
 
-    when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
     when(questTemplateRepository.findByUserAndActiveTrueAndDeletedFalse(testUser))
         .thenReturn(List.of(parent));
 
@@ -147,7 +154,7 @@ class RecurringSubquestTest {
             eq(subquest), any(LocalDate.class)))
         .thenReturn(false);
 
-    questService.ensureDailyOccurrences(userId);
+    questService.ensureDailyOccurrences(USER_ID);
 
     verify(questOccurrenceRepository).save(argThat(o -> o.getQuestTemplate().equals(parent)));
     verify(questOccurrenceRepository).save(argThat(o -> o.getQuestTemplate().equals(subquest)));
@@ -169,13 +176,13 @@ class RecurringSubquestTest {
             .status(QuestStatus.PENDING)
             .build();
 
-    when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
-    when(questOccurrenceRepository.findAllByUserIdWithSubquests(userId))
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
+    when(questOccurrenceRepository.findAllByUserIdWithSubquests(USER_ID))
         .thenReturn(List.of(projectOccurrence));
 
     when(questOccurrenceRepository.save(any())).thenAnswer(i -> i.getArguments()[0]);
 
-    var results = questService.findTodayQuests(userId);
+    var results = questService.findTodayQuests(USER_ID);
 
     assertTrue(results.isEmpty(), "Should exclude project from today's quests");
   }
