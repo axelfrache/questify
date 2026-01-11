@@ -69,11 +69,11 @@ public class SecurityConfig {
 
               if (isDevProfile) {
                 auth.requestMatchers(
-                    "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/h2-console/**")
+                        "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/h2-console/**")
                     .permitAll();
               } else {
                 auth.requestMatchers(
-                    "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/h2-console/**")
+                        "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/h2-console/**")
                     .denyAll();
               }
 
@@ -87,10 +87,8 @@ public class SecurityConfig {
         .headers(
             headers -> {
               headers.frameOptions(frame -> frame.sameOrigin());
-              headers.xssProtection(xss -> {
-              });
-              headers.contentTypeOptions(contentType -> {
-              });
+              headers.xssProtection(xss -> {});
+              headers.contentTypeOptions(contentType -> {});
             })
         .build();
   }

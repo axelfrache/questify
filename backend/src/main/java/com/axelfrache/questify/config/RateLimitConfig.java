@@ -14,14 +14,14 @@ import org.springframework.context.annotation.Configuration;
 @Setter
 public class RateLimitConfig {
 
-    private int loginIpPerMinute = 10;
-    private int loginEmailPerMinute = 5;
-    private int registerIpPerMinute = 3;
-    private int refreshIpPerMinute = 30;
+  private int loginIpPerMinute = 10;
+  private int loginEmailPerMinute = 5;
+  private int registerIpPerMinute = 3;
+  private int refreshIpPerMinute = 30;
 
-    @Bean
-    @ConditionalOnMissingBean
-    public ObjectMapper objectMapper() {
-        return new ObjectMapper();
-    }
+  @Bean
+  @ConditionalOnMissingBean
+  public ObjectMapper objectMapper() {
+    return new ObjectMapper();
+  }
 }
