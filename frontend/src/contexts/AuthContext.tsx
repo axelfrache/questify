@@ -27,12 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const clearAuthState = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('username');
-    localStorage.removeItem('profilePictureUrl');
+    api.clearTokens();
     setUser(null);
   };
 
@@ -40,34 +35,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     api.setOnUnauthorized(() => {
       clearAuthState();
     });
-
-    const accessToken = localStorage.getItem('accessToken');
-    const userId = localStorage.getItem('userId');
-    const userEmail = localStorage.getItem('userEmail');
-    const username = localStorage.getItem('username');
-    const profilePictureUrl = localStorage.getItem('profilePictureUrl');
-    if (accessToken && userEmail && username && userId) {
-      setUser({
-        id: userId,
-        email: userEmail,
-        username,
-        profilePictureUrl: profilePictureUrl || null,
-      });
-    }
     setIsLoading(false);
   }, []);
 
   const handleAuthResponse = (response: AuthResponse, email: string) => {
-    localStorage.setItem('accessToken', response.accessToken);
-    localStorage.setItem('refreshToken', response.refreshToken);
-    localStorage.setItem('userId', response.userId);
-    localStorage.setItem('userEmail', email);
-    localStorage.setItem('username', response.username);
-    if (response.profilePictureUrl) {
-      localStorage.setItem('profilePictureUrl', response.profilePictureUrl);
-    } else {
-      localStorage.removeItem('profilePictureUrl');
-    }
     setUser({
       id: response.userId,
       email,
@@ -87,23 +58,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (refreshToken) {
-      try {
-        await api.logout(refreshToken);
-      } catch {
-        // Ignore logout errors
-      }
-    }
+    await api.logout();
     clearAuthState();
   };
 
   const updateProfilePicture = (url: string | null) => {
-    if (url) {
-      localStorage.setItem('profilePictureUrl', url);
-    } else {
-      localStorage.removeItem('profilePictureUrl');
-    }
     setUser((prev) => (prev ? { ...prev, profilePictureUrl: url } : null));
   };
 

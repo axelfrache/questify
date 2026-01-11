@@ -29,6 +29,8 @@ class ApiClient {
   private onUnauthorized: (() => void) | null = null;
   private isRefreshing = false;
   private refreshPromise: Promise<AuthResponse> | null = null;
+  private accessToken: string | null = null;
+  private refreshToken: string | null = null;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
@@ -38,18 +40,22 @@ class ApiClient {
     this.onUnauthorized = callback;
   }
 
-  private clearTokens() {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('username');
-    localStorage.removeItem('profilePictureUrl');
+  setTokens(accessToken: string, refreshToken: string) {
+    this.accessToken = accessToken;
+    this.refreshToken = refreshToken;
+  }
+
+  getAccessToken(): string | null {
+    return this.accessToken;
+  }
+
+  clearTokens() {
+    this.accessToken = null;
+    this.refreshToken = null;
   }
 
   private async tryRefreshToken(): Promise<boolean> {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (!refreshToken) {
+    if (!this.refreshToken) {
       return false;
     }
 
@@ -64,12 +70,10 @@ class ApiClient {
 
     this.isRefreshing = true;
     try {
-      this.refreshPromise = this.refreshTokenRequest(refreshToken);
+      this.refreshPromise = this.refreshTokenRequest(this.refreshToken);
       const response = await this.refreshPromise;
-
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
-
+      this.accessToken = response.accessToken;
+      this.refreshToken = response.refreshToken;
       return true;
     } catch {
       this.clearTokens();
@@ -85,6 +89,7 @@ class ApiClient {
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ refreshToken }),
     });
 
@@ -101,17 +106,17 @@ class ApiClient {
       'Content-Type': 'application/json',
     };
 
-    const accessToken = localStorage.getItem('accessToken');
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
+    if (this.accessToken) {
+      headers['Authorization'] = `Bearer ${this.accessToken}`;
     }
 
     const response = await fetch(url, {
       ...options,
       headers,
+      credentials: 'include',
     });
 
-    if ((response.status === 401 || response.status === 403) && retry) {
+    if (response.status === 401 && retry) {
       const refreshed = await this.tryRefreshToken();
       if (refreshed) {
         return this.request<T>(endpoint, options, false);
@@ -127,9 +132,27 @@ class ApiClient {
       }
     }
 
-    if (!response.ok) {
+    if (response.status === 403) {
       const error: ApiError = {
-        message: await response.text(),
+        message: 'Access denied.',
+        status: response.status,
+      };
+      throw error;
+    }
+
+    if (!response.ok) {
+      let message = 'An error occurred';
+      try {
+        const errorData = await response.json();
+        message = errorData.message || message;
+      } catch {
+        const text = await response.text();
+        if (text && text.length < 200) {
+          message = text;
+        }
+      }
+      const error: ApiError = {
+        message,
         status: response.status,
       };
       throw error;
@@ -147,31 +170,49 @@ class ApiClient {
   }
 
   async login(data: LoginRequest): Promise<AuthResponse> {
-    return this.request<AuthResponse>('/api/auth/login', {
+    const response = await this.request<AuthResponse>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    this.setTokens(response.accessToken, response.refreshToken);
+    return response;
   }
 
   async register(data: RegisterRequest): Promise<AuthResponse> {
-    return this.request<AuthResponse>('/api/auth/register', {
+    const response = await this.request<AuthResponse>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    this.setTokens(response.accessToken, response.refreshToken);
+    return response;
   }
 
-  async refresh(refreshToken: string): Promise<AuthResponse> {
-    return this.request<AuthResponse>('/api/auth/refresh', {
-      method: 'POST',
-      body: JSON.stringify({ refreshToken }),
-    });
+  async refresh(): Promise<AuthResponse | null> {
+    if (!this.refreshToken) {
+      return null;
+    }
+    try {
+      const response = await this.refreshTokenRequest(this.refreshToken);
+      this.setTokens(response.accessToken, response.refreshToken);
+      return response;
+    } catch {
+      this.clearTokens();
+      return null;
+    }
   }
 
-  async logout(refreshToken: string): Promise<void> {
-    await this.request<void>('/api/auth/logout', {
-      method: 'POST',
-      body: JSON.stringify({ refreshToken }),
-    });
+  async logout(): Promise<void> {
+    if (this.refreshToken) {
+      try {
+        await this.request<void>('/api/auth/logout', {
+          method: 'POST',
+          body: JSON.stringify({ refreshToken: this.refreshToken }),
+        });
+      } catch {
+        // Ignore logout errors
+      }
+    }
+    this.clearTokens();
   }
 
   async getQuests(
@@ -314,20 +355,20 @@ class ApiClient {
     formData.append('file', file);
 
     const url = `${this.baseUrl}/api/users/${id}/profile-picture`;
-    const accessToken = localStorage.getItem('accessToken');
     const headers: Record<string, string> = {};
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
+    if (this.accessToken) {
+      headers['Authorization'] = `Bearer ${this.accessToken}`;
     }
 
     const response = await fetch(url, {
       method: 'POST',
       headers,
+      credentials: 'include',
       body: formData,
     });
 
     if (!response.ok) {
-      throw { message: await response.text(), status: response.status };
+      throw { message: 'Failed to upload profile picture', status: response.status };
     }
 
     return response.json();
@@ -354,22 +395,29 @@ class ApiClient {
     data: { currentPassword: string; newPassword: string }
   ): Promise<void> {
     const url = `${this.baseUrl}/api/users/${id}/password`;
-    const accessToken = localStorage.getItem('accessToken');
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
+    if (this.accessToken) {
+      headers['Authorization'] = `Bearer ${this.accessToken}`;
     }
 
     const response = await fetch(url, {
       method: 'POST',
       headers,
+      credentials: 'include',
       body: JSON.stringify(data),
     });
 
     if (!response.ok) {
-      throw { message: await response.text(), status: response.status };
+      let message = 'Failed to change password';
+      try {
+        const errorData = await response.json();
+        message = errorData.message || message;
+      } catch {
+        // ignore
+      }
+      throw { message, status: response.status };
     }
   }
 }
@@ -477,13 +525,6 @@ export interface UserDto {
   email: string;
   timezone: string;
   profilePictureUrl: string | null;
-}
-
-export interface UserProgressionDto {
-  level: number;
-  currentXp: number;
-  xpToNextLevel: number;
-  grade: string;
 }
 
 export interface CategoryStats {
