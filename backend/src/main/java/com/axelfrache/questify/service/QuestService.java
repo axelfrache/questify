@@ -155,7 +155,6 @@ public class QuestService {
       var userZone = template.getUser().getZoneId();
       var scheduledDate = request.dueDate().atZone(userZone).toLocalDate();
 
-      // Check if an occurrence already exists for this date to avoid duplicates
       var existingOccurrence =
           questOccurrenceRepository.findByQuestTemplateAndScheduledDate(template, scheduledDate);
       if (existingOccurrence.isPresent()) {
@@ -322,7 +321,11 @@ public class QuestService {
 
   @Transactional
   public void ensureDailyOccurrences(UUID userId) {
-    var user = findUserOrThrow(userId);
+    ensureDailyOccurrences(findUserOrThrow(userId));
+  }
+
+  @Transactional
+  public void ensureDailyOccurrences(User user) {
     var templates = questTemplateRepository.findByUserAndActiveTrueAndDeletedFalse(user);
     LocalDate today = LocalDate.now(user.getZoneId());
 
@@ -388,10 +391,10 @@ public class QuestService {
 
   @Transactional
   public List<QuestResponse> findTodayQuests(UUID userId) {
-    ensureDailyOccurrences(userId);
+    var user = findUserOrThrow(userId);
+    ensureDailyOccurrences(user);
 
     var allOccurrences = questOccurrenceRepository.findAllByUserIdWithSubquests(userId);
-    var user = findUserOrThrow(userId);
     LocalDate today = LocalDate.now(user.getZoneId());
 
     return allOccurrences.stream()
@@ -409,8 +412,8 @@ public class QuestService {
 
   @Transactional
   public List<QuestResponse> findInboxQuests(UUID userId) {
-    ensureDailyOccurrences(userId);
     var user = findUserOrThrow(userId);
+    ensureDailyOccurrences(user);
 
     var allOccurrences = questOccurrenceRepository.findAllByUserIdWithSubquests(userId);
     var occurrenceResponses =
