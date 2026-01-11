@@ -243,7 +243,7 @@ public class QuestService {
 
       occurrence = new QuestOccurrence();
       occurrence.setQuestTemplate(template);
-      occurrence.setScheduledDate(LocalDate.now());
+      occurrence.setScheduledDate(LocalDate.now(template.getUser().getZoneId()));
       occurrence.setStatus(QuestStatus.PENDING);
       occurrence.setHasDueDate(false);
       occurrence = questOccurrenceRepository.save(occurrence);
@@ -252,7 +252,7 @@ public class QuestService {
     if (occurrence.getStatus() != QuestStatus.PENDING)
       throw new IllegalStateException("Quest is already completed or cancelled");
 
-    LocalDate today = LocalDate.now();
+    LocalDate today = LocalDate.now(occurrence.getQuestTemplate().getUser().getZoneId());
     boolean isRecurring = occurrence.getQuestTemplate().getRecurrenceRule() != null;
     if (isRecurring && occurrence.getScheduledDate().isAfter(today)) {
       throw new IllegalStateException("Cannot complete a future recurring quest occurrence");
@@ -324,7 +324,7 @@ public class QuestService {
   public void ensureDailyOccurrences(UUID userId) {
     var user = findUserOrThrow(userId);
     var templates = questTemplateRepository.findByUserAndActiveTrueAndDeletedFalse(user);
-    LocalDate today = LocalDate.now();
+    LocalDate today = LocalDate.now(user.getZoneId());
 
     for (var template : templates) {
       if (template.getRecurrenceRule() == null) continue;
@@ -391,7 +391,8 @@ public class QuestService {
     ensureDailyOccurrences(userId);
 
     var allOccurrences = questOccurrenceRepository.findAllByUserIdWithSubquests(userId);
-    LocalDate today = LocalDate.now();
+    var user = findUserOrThrow(userId);
+    LocalDate today = LocalDate.now(user.getZoneId());
 
     return allOccurrences.stream()
         .filter(q -> q.getStatus() != QuestStatus.SKIPPED)
@@ -441,7 +442,7 @@ public class QuestService {
   public List<QuestResponse> findUpcomingQuests(UUID userId) {
     var user = findUserOrThrow(userId);
     var templates = questTemplateRepository.findByUserAndActiveTrueAndDeletedFalse(user);
-    LocalDate today = LocalDate.now();
+    LocalDate today = LocalDate.now(user.getZoneId());
     LocalDate endDate = today.plusDays(7);
 
     List<QuestResponse> upcomingQuests = new java.util.ArrayList<>();
@@ -474,7 +475,7 @@ public class QuestService {
     if (occurrence.getStatus() != QuestStatus.PENDING)
       throw new IllegalStateException("Quest is already completed, cancelled or skipped");
 
-    LocalDate today = LocalDate.now();
+    LocalDate today = LocalDate.now(occurrence.getQuestTemplate().getUser().getZoneId());
     if (occurrence.getScheduledDate().isAfter(today)) {
       throw new IllegalStateException("Cannot skip a future quest occurrence");
     }
