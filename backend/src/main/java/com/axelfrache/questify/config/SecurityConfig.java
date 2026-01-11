@@ -1,6 +1,7 @@
 package com.axelfrache.questify.config;
 
 import com.axelfrache.questify.security.JwtAuthenticationFilter;
+import com.axelfrache.questify.security.RateLimitFilter;
 import jakarta.annotation.PostConstruct;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final RateLimitFilter rateLimitFilter;
   private final UserDetailsService userDetailsService;
   private final Environment environment;
 
@@ -67,11 +69,11 @@ public class SecurityConfig {
 
               if (isDevProfile) {
                 auth.requestMatchers(
-                        "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/h2-console/**")
+                    "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/h2-console/**")
                     .permitAll();
               } else {
                 auth.requestMatchers(
-                        "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/h2-console/**")
+                    "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/h2-console/**")
                     .denyAll();
               }
 
@@ -80,12 +82,15 @@ public class SecurityConfig {
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authenticationProvider(authenticationProvider())
+        .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .headers(
             headers -> {
               headers.frameOptions(frame -> frame.sameOrigin());
-              headers.xssProtection(xss -> {});
-              headers.contentTypeOptions(contentType -> {});
+              headers.xssProtection(xss -> {
+              });
+              headers.contentTypeOptions(contentType -> {
+              });
             })
         .build();
   }

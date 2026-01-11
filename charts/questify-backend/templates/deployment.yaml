@@ -95,9 +95,16 @@ spec:
               value: {{ .Values.jwt.accessExpiration | quote }}
             - name: JWT_REFRESH_EXPIRATION
               value: {{ .Values.jwt.refreshExpiration | quote }}
-            # CORS configuration
             - name: CORS_ALLOWED_ORIGINS
               value: {{ .Values.cors.allowedOrigins | quote }}
+            - name: LOGIN_RATE_LIMIT_IP
+              value: {{ .Values.rateLimit.loginIpPerMinute | quote }}
+            - name: LOGIN_RATE_LIMIT_EMAIL
+              value: {{ .Values.rateLimit.loginEmailPerMinute | quote }}
+            - name: REGISTER_RATE_LIMIT_IP
+              value: {{ .Values.rateLimit.registerIpPerMinute | quote }}
+            - name: REFRESH_RATE_LIMIT_IP
+              value: {{ .Values.rateLimit.refreshIpPerMinute | quote }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             httpGet:

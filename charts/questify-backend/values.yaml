@@ -47,6 +47,12 @@ jwt:
 cors:
   allowedOrigins: "https://app.getquestify.com,https://getquestify.com"
 
+rateLimit:
+  loginIpPerMinute: 10
+  loginEmailPerMinute: 5
+  registerIpPerMinute: 3
+  refreshIpPerMinute: 30
+
 resources:
   requests:
     memory: "256Mi"
