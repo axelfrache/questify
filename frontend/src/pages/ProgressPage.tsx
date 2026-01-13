@@ -143,7 +143,7 @@ export function ProgressPage() {
                                   isPast && 'bg-primary border-primary text-primary-foreground',
                                   isCurrent && 'bg-primary/20 border-primary text-primary',
                                   isFuture &&
-                                  'bg-muted border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/50'
+                                    'bg-muted border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/50'
                                 )}
                               >
                                 {isPast || (isCurrent && currentLevel >= grade.minLevel) ? (
@@ -174,7 +174,7 @@ export function ProgressPage() {
                               'h-0.5 flex-1 rounded-full transition-all',
                               index < currentGradeIndex && 'bg-primary',
                               index === currentGradeIndex &&
-                              'bg-gradient-to-r from-primary to-muted',
+                                'bg-gradient-to-r from-primary to-muted',
                               index > currentGradeIndex && 'bg-muted'
                             )}
                           />
