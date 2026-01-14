@@ -27,15 +27,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const clearAuthState = () => {
-    api.clearTokens();
     setUser(null);
   };
 
   useEffect(() => {
+    const initAuth = async () => {
+      try {
+        const userDto = await api.getCurrentUser();
+        setUser({
+          id: userDto.id,
+          email: userDto.email,
+          username: userDto.username,
+          profilePictureUrl: userDto.profilePictureUrl,
+        });
+      } catch {
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     api.setOnUnauthorized(() => {
       clearAuthState();
     });
-    setIsLoading(false);
+
+    initAuth();
   }, []);
 
   const handleAuthResponse = (response: AuthResponse, email: string) => {

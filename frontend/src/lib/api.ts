@@ -29,8 +29,6 @@ class ApiClient {
   private onUnauthorized: (() => void) | null = null;
   private isRefreshing = false;
   private refreshPromise: Promise<AuthResponse> | null = null;
-  private accessToken: string | null = null;
-  private refreshToken: string | null = null;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
@@ -40,25 +38,9 @@ class ApiClient {
     this.onUnauthorized = callback;
   }
 
-  setTokens(accessToken: string, refreshToken: string) {
-    this.accessToken = accessToken;
-    this.refreshToken = refreshToken;
-  }
-
-  getAccessToken(): string | null {
-    return this.accessToken;
-  }
-
-  clearTokens() {
-    this.accessToken = null;
-    this.refreshToken = null;
-  }
+  // Tokens are now managed via HttpOnly cookies
 
   private async tryRefreshToken(): Promise<boolean> {
-    if (!this.refreshToken) {
-      return false;
-    }
-
     if (this.isRefreshing && this.refreshPromise) {
       try {
         await this.refreshPromise;
@@ -70,13 +52,10 @@ class ApiClient {
 
     this.isRefreshing = true;
     try {
-      this.refreshPromise = this.refreshTokenRequest(this.refreshToken);
-      const response = await this.refreshPromise;
-      this.accessToken = response.accessToken;
-      this.refreshToken = response.refreshToken;
+      this.refreshPromise = this.refreshTokenRequest();
+      await this.refreshPromise;
       return true;
     } catch {
-      this.clearTokens();
       return false;
     } finally {
       this.isRefreshing = false;
@@ -84,13 +63,12 @@ class ApiClient {
     }
   }
 
-  private async refreshTokenRequest(refreshToken: string): Promise<AuthResponse> {
-    const url = `${this.baseUrl}/api/auth/refresh`;
+  private async refreshTokenRequest(): Promise<AuthResponse> {
+    const url = `${this.baseUrl}/api/auth/refresh-cookie`;
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ refreshToken }),
     });
 
     if (!response.ok) {
@@ -105,10 +83,6 @@ class ApiClient {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
-
-    if (this.accessToken) {
-      headers['Authorization'] = `Bearer ${this.accessToken}`;
-    }
 
     const response = await fetch(url, {
       ...options,
@@ -170,49 +144,39 @@ class ApiClient {
   }
 
   async login(data: LoginRequest): Promise<AuthResponse> {
-    const response = await this.request<AuthResponse>('/api/auth/login', {
+    return this.request<AuthResponse>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    this.setTokens(response.accessToken, response.refreshToken);
-    return response;
   }
 
   async register(data: RegisterRequest): Promise<AuthResponse> {
-    const response = await this.request<AuthResponse>('/api/auth/register', {
+    return this.request<AuthResponse>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    this.setTokens(response.accessToken, response.refreshToken);
-    return response;
   }
 
   async refresh(): Promise<AuthResponse | null> {
-    if (!this.refreshToken) {
-      return null;
-    }
     try {
-      const response = await this.refreshTokenRequest(this.refreshToken);
-      this.setTokens(response.accessToken, response.refreshToken);
-      return response;
+      return await this.refreshTokenRequest();
     } catch {
-      this.clearTokens();
       return null;
     }
   }
 
   async logout(): Promise<void> {
-    if (this.refreshToken) {
-      try {
-        await this.request<void>('/api/auth/logout', {
-          method: 'POST',
-          body: JSON.stringify({ refreshToken: this.refreshToken }),
-        });
-      } catch {
-        // Ignore logout errors
-      }
+    try {
+      await this.request<void>('/api/auth/logout', {
+        method: 'POST',
+      });
+    } catch {
+      // Ignore logout errors
     }
-    this.clearTokens();
+  }
+
+  async getCurrentUser(): Promise<UserDto> {
+    return this.request<UserDto>('/api/auth/me');
   }
 
   async getQuests(
@@ -356,9 +320,6 @@ class ApiClient {
 
     const url = `${this.baseUrl}/api/users/${id}/profile-picture`;
     const headers: Record<string, string> = {};
-    if (this.accessToken) {
-      headers['Authorization'] = `Bearer ${this.accessToken}`;
-    }
 
     const response = await fetch(url, {
       method: 'POST',
@@ -398,9 +359,6 @@ class ApiClient {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
-    if (this.accessToken) {
-      headers['Authorization'] = `Bearer ${this.accessToken}`;
-    }
 
     const response = await fetch(url, {
       method: 'POST',
@@ -525,6 +483,8 @@ export interface UserDto {
   email: string;
   timezone: string;
   profilePictureUrl: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CategoryStats {
