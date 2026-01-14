@@ -38,8 +38,6 @@ class ApiClient {
     this.onUnauthorized = callback;
   }
 
-  // Tokens are now managed via HttpOnly cookies
-
   private async tryRefreshToken(): Promise<boolean> {
     if (this.isRefreshing && this.refreshPromise) {
       try {
@@ -373,7 +371,7 @@ class ApiClient {
         const errorData = await response.json();
         message = errorData.message || message;
       } catch {
-        // ignore
+        // Ignore JSON parse error
       }
       throw { message, status: response.status };
     }

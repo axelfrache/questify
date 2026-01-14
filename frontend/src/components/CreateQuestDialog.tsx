@@ -83,7 +83,7 @@ export function CreateQuestDialog({
         setValue('title', questToEdit.title);
         setValue('description', questToEdit.description);
         setValue('difficulty', questToEdit.difficulty);
-        setValue('categoryId', questToEdit.categoryId);
+        setValue('categoryId', questToEdit.categoryId || (questToEdit as any).category?.id);
         setValue('recurrenceInterval', questToEdit.recurrenceInterval);
         setValue('baseXpReward', questToEdit.baseXpReward);
         if (questToEdit.dueDate) {
@@ -212,7 +212,7 @@ export function CreateQuestDialog({
               <Label className="text-xs text-muted-foreground">Region</Label>
               <Select
                 onValueChange={(value) => setValue('categoryId', value)}
-                defaultValue={questToEdit?.categoryId}
+                value={watch('categoryId')}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select..." />
