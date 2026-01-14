@@ -83,7 +83,10 @@ export function CreateQuestDialog({
         setValue('title', questToEdit.title);
         setValue('description', questToEdit.description);
         setValue('difficulty', questToEdit.difficulty);
-        setValue('categoryId', questToEdit.categoryId || (questToEdit as any).category?.id);
+        setValue(
+          'categoryId',
+          questToEdit.categoryId || (questToEdit as { category?: { id: string } }).category?.id
+        );
         setValue('recurrenceInterval', questToEdit.recurrenceInterval);
         setValue('baseXpReward', questToEdit.baseXpReward);
         if (questToEdit.dueDate) {
