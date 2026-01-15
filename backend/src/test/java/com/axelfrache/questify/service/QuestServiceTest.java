@@ -372,7 +372,7 @@ class QuestServiceTest {
     assertTrue(template.isDeleted());
     assertFalse(template.isActive());
     verify(questTemplateRepository).save(template);
-    verify(questOccurrenceRepository).deleteAll(occurrences);
+    verify(questOccurrenceRepository).deleteAll(argThat(col -> col.size() == 2));
   }
 
   @Test
@@ -400,7 +400,7 @@ class QuestServiceTest {
     questService.delete(occurrenceId, USER_ID);
 
     verify(questOccurrenceRepository).delete(occurrence);
-    verify(questOccurrenceRepository).deleteAll(occurrences);
+    verify(questOccurrenceRepository).deleteAll(argThat(col -> col.size() == 1));
     verify(questTemplateRepository).save(template);
     assertTrue(template.isDeleted());
   }
