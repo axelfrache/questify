@@ -15,7 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
-import { Upload, Trash2, Loader2, Save, Globe, Lock } from 'lucide-react';
+import { Upload, Trash2, Loader2, Save, Globe, Lock, AlertTriangle } from 'lucide-react';
+import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
 
 function PasswordChangeForm({ userId }: { userId?: string }) {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -126,7 +127,7 @@ const COMMON_TIMEZONES = [
 
 export function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const { user, updateProfilePicture } = useAuth();
+  const { user, updateProfilePicture, logout } = useAuth();
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -134,6 +135,7 @@ export function SettingsPage() {
   const [timezone, setTimezone] = useState('UTC');
   const [profileError, setProfileError] = useState<string | null>(null);
   const [profileSuccess, setProfileSuccess] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -408,7 +410,38 @@ export function SettingsPage() {
             </Card>
           </div>
         </section>
+
+        <section>
+          <h2 className="text-lg font-semibold mb-4 text-destructive">Danger Zone</h2>
+          <Card className="border-destructive/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="h-5 w-5" />
+                Delete Account
+              </CardTitle>
+              <CardDescription>
+                Permanently delete your account and all associated data. This action cannot be
+                undone.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete My Account
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
       </div>
+
+      {user?.id && (
+        <DeleteAccountDialog
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          userId={user.id}
+          onSuccess={logout}
+        />
+      )}
     </div>
   );
 }

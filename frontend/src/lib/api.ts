@@ -376,6 +376,13 @@ class ApiClient {
       throw { message, status: response.status };
     }
   }
+
+  async deleteAccount(id: string, password: string): Promise<void> {
+    return this.request<void>(`/api/users/${id}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ password }),
+    });
+  }
 }
 
 export interface QuestResponse {
