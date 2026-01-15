@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useQuests, useCategories, useCompleteQuest, useDeleteQuest } from '@/hooks/use-api';
-import { useInboxFilters } from '@/hooks/useInboxFilters';
-import { useInboxSort } from '@/hooks/useInboxSort';
+import { useInboxState } from '@/hooks/useInboxState';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { InboxToolbar } from '@/components/InboxToolbar';
-import { QuestCard } from '@/components/QuestCard';
+import { Button } from '@/components/ui/button';
+import { InboxControls } from '@/components/inbox/InboxControls';
+import { GroupedQuestList } from '@/components/inbox/GroupedQuestList';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import { type QuestResponse } from '@/lib/api';
+import { ChevronDown } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 const fireConfettiFromElement = (element: HTMLElement) => {
@@ -36,29 +37,39 @@ export function InboxPage() {
     isLoading: isLoadingQuests,
     error: errorQuests,
   } = useQuests(undefined, 'inbox');
-  const { data: categories, isLoading: isLoadingCategories } = useCategories();
+  const { isLoading: isLoadingCategories } = useCategories();
   const completeQuestMutation = useCompleteQuest();
   const deleteQuestMutation = useDeleteQuest();
 
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
   const [parentQuest, setParentQuest] = useState<QuestResponse | null>(null);
 
-  const {
-    filters,
-    setSearch,
-    toggleDifficulty,
-    toggleRegion,
-    toggleRecurrence,
-    setStructure,
-    clearAllFilters,
-    filterQuests,
-    activeFilterCount,
-    hasActiveFilters,
-    getActiveFilterLabels,
-    removeFilter,
-  } = useInboxFilters(categories || []);
+  // Get pending quests
+  const pendingQuests = quests?.filter((q) => q.status === 'PENDING') || [];
 
-  const { sortOption, setSortOption, sortQuests, sortLabels } = useInboxSort();
+  // Use new inbox state hook
+  const {
+    search,
+    groupBy,
+    sortBy,
+    density,
+    quickFilters,
+    groupedQuests,
+    paginatedQuests,
+    totalCount,
+    displayedCount,
+    overdueCount,
+    todayCount,
+    hasMore,
+    setSearch,
+    setGroupBy,
+    setSortBy,
+    toggleDensity,
+    toggleQuickFilter,
+    togglePinRegion,
+    toggleCollapseRegion,
+    loadMore,
+  } = useInboxState(pendingQuests);
 
   const handleComplete = (id: string, checkboxElement?: HTMLElement) => {
     if (checkboxElement) {
@@ -76,10 +87,6 @@ export function InboxPage() {
   const handleAddSubquest = (quest: QuestResponse) => {
     setParentQuest(quest);
   };
-
-  const pendingQuests = quests?.filter((q) => q.status === 'PENDING') || [];
-  const filteredQuests = filterQuests(pendingQuests);
-  const sortedQuests = sortQuests(filteredQuests);
 
   if (isLoadingQuests || isLoadingCategories) {
     return (
@@ -100,21 +107,21 @@ export function InboxPage() {
         <p className="text-muted-foreground">Quest Board</p>
       </div>
 
-      <InboxToolbar
-        filters={filters}
-        categories={categories || []}
+      <InboxControls
+        search={search}
+        groupBy={groupBy}
+        sortBy={sortBy}
+        density={density}
+        quickFilters={quickFilters}
+        totalCount={totalCount}
+        displayedCount={displayedCount}
+        overdueCount={overdueCount}
+        todayCount={todayCount}
         onSearchChange={setSearch}
-        onToggleDifficulty={toggleDifficulty}
-        onToggleRegion={toggleRegion}
-        onToggleRecurrence={toggleRecurrence}
-        onSetStructure={setStructure}
-        onClearAllFilters={clearAllFilters}
-        onRemoveFilter={removeFilter}
-        activeFilterCount={activeFilterCount}
-        activeFilterLabels={getActiveFilterLabels()}
-        sortOption={sortOption}
-        sortLabels={sortLabels}
-        onSortChange={setSortOption}
+        onGroupByChange={setGroupBy}
+        onSortByChange={setSortBy}
+        onToggleDensity={toggleDensity}
+        onToggleQuickFilter={toggleQuickFilter}
       />
 
       {errorQuests && (
@@ -123,27 +130,37 @@ export function InboxPage() {
         </Alert>
       )}
 
-      {sortedQuests.length === 0 ? (
+      {totalCount === 0 ? (
         <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
-          {hasActiveFilters
+          {search || quickFilters.overdue || quickFilters.today
             ? 'No quests match your search or filters.'
             : 'No quests found. Start your journey by adding a new quest!'}
         </div>
       ) : (
-        <div className="space-y-3">
-          {sortedQuests.map((quest) => (
-            <QuestCard
-              key={quest.id}
-              quest={quest}
-              onComplete={handleComplete}
-              onEdit={setEditingQuest}
-              onDelete={handleDelete}
-              onAddSubquest={handleAddSubquest}
-              isPending={completeQuestMutation.isPending}
-              showInlineSubquests
-            />
-          ))}
-        </div>
+        <>
+          <GroupedQuestList
+            groupBy={groupBy}
+            groupedQuests={groupedQuests}
+            paginatedQuests={paginatedQuests}
+            density={density}
+            onToggleCollapse={toggleCollapseRegion}
+            onTogglePin={togglePinRegion}
+            onComplete={handleComplete}
+            onEdit={setEditingQuest}
+            onDelete={handleDelete}
+            onAddSubquest={handleAddSubquest}
+            isPending={completeQuestMutation.isPending}
+          />
+
+          {hasMore && (
+            <div className="flex justify-center pt-4">
+              <Button variant="outline" onClick={loadMore} className="gap-2">
+                <ChevronDown className="h-4 w-4" />
+                Load More
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       <CreateQuestDialog

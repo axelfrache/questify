@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import { XpBadge } from '@/components/ui/xp-badge';
 import { InlineSubquests } from '@/components/InlineSubquests';
 import { cn } from '@/lib/utils';
 import type { QuestResponse } from '@/lib/api';
+import type { Density } from '@/types/inboxTypes';
 
 interface QuestCardProps {
   quest: QuestResponse;
@@ -27,9 +28,11 @@ interface QuestCardProps {
   disabled?: boolean;
   hideCheckbox?: boolean;
   showInlineSubquests?: boolean;
+  density?: Density;
+  showRegionMarker?: boolean;
 }
 
-export function QuestCard({
+function QuestCardInner({
   quest,
   onComplete,
   onEdit,
@@ -40,8 +43,11 @@ export function QuestCard({
   disabled = false,
   hideCheckbox = false,
   showInlineSubquests = false,
+  density = 'comfort',
+  showRegionMarker = true,
 }: QuestCardProps) {
   const [showXpAnimation, setShowXpAnimation] = useState(false);
+  const isCompact = density === 'compact';
 
   const isCompleted = quest.status === 'COMPLETED';
   const hasCategoryColor = !!quest.category?.color;
@@ -79,7 +85,7 @@ export function QuestCard({
         borderLeftColor: hasCategoryColor ? quest.category!.color : undefined,
       }}
     >
-      <CardContent className="p-4">
+      <CardContent className={cn('p-4', isCompact && 'p-2.5')}>
         <div className="flex items-start gap-3">
           {!hideCheckbox && !isProject && (
             <div className="pt-0.5">
@@ -98,8 +104,11 @@ export function QuestCard({
           {/* Main content */}
           <div className="flex-1 min-w-0 space-y-1.5">
             <div className="flex items-center gap-2">
-              {quest.category?.icon && (
-                <span className="text-sm flex-shrink-0">{quest.category.icon}</span>
+              {showRegionMarker && quest.category?.icon && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-medium rounded-full bg-muted/50">
+                  <span>{quest.category.icon}</span>
+                  <span className="text-muted-foreground">{quest.category.name}</span>
+                </span>
               )}
               <h3
                 className={cn(
@@ -216,3 +225,5 @@ export function QuestCard({
     </Card>
   );
 }
+
+export const QuestCard = memo(QuestCardInner);
