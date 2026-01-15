@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -23,4 +24,10 @@ public interface QuestTemplateRepository extends JpaRepository<QuestTemplate, UU
 
   @Query("SELECT q FROM QuestTemplate q WHERE q.id = :id AND q.user.id = :userId")
   Optional<QuestTemplate> findByIdAndUserId(@Param("id") UUID id, @Param("userId") UUID userId);
+
+  @Modifying
+  @Query("UPDATE QuestTemplate q SET q.parent = null WHERE q.user = :user")
+  void nullifyParentForUser(@Param("user") User user);
+
+  void deleteAllByUser(User user);
 }

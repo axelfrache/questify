@@ -1,6 +1,7 @@
 package com.axelfrache.questify.controller;
 
 import com.axelfrache.questify.dto.ChangePasswordRequest;
+import com.axelfrache.questify.dto.DeleteAccountRequest;
 import com.axelfrache.questify.dto.UpdateUserRequest;
 import com.axelfrache.questify.dto.UserDto;
 import com.axelfrache.questify.dto.UserProgressionDto;
@@ -71,5 +72,15 @@ public class UserController {
       @AuthenticationPrincipal UserDetails userDetails, @PathVariable UUID id) {
     securityUtils.validateOwnership(userDetails, id);
     return ResponseEntity.ok(userService.deleteProfilePicture(id));
+  }
+
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deleteAccount(
+      @AuthenticationPrincipal UserDetails userDetails,
+      @PathVariable UUID id,
+      @Valid @RequestBody DeleteAccountRequest request) {
+    securityUtils.validateOwnership(userDetails, id);
+    userService.deleteAccount(id, request.password());
+    return ResponseEntity.noContent().build();
   }
 }

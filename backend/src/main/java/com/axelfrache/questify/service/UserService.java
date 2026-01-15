@@ -6,10 +6,16 @@ import com.axelfrache.questify.dto.UserDto;
 import com.axelfrache.questify.dto.UserProgressionDto;
 import com.axelfrache.questify.model.Grade;
 import com.axelfrache.questify.model.User;
+import com.axelfrache.questify.repository.CategoryRepository;
+import com.axelfrache.questify.repository.QuestHistoryRepository;
+import com.axelfrache.questify.repository.QuestTemplateRepository;
+import com.axelfrache.questify.repository.RefreshTokenRepository;
+import com.axelfrache.questify.repository.UserAchievementRepository;
 import com.axelfrache.questify.repository.UserRepository;
 import java.time.ZoneId;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +26,12 @@ public class UserService {
   private final UserRepository userRepository;
   private final LevelConfig levelConfig;
   private final StorageService storageService;
+  private final PasswordEncoder passwordEncoder;
+  private final UserAchievementRepository userAchievementRepository;
+  private final RefreshTokenRepository refreshTokenRepository;
+  private final QuestTemplateRepository questTemplateRepository;
+  private final CategoryRepository categoryRepository;
+  private final QuestHistoryRepository questHistoryRepository;
 
   @Transactional(readOnly = true)
   public UserDto getUserById(UUID id) {
@@ -61,7 +73,6 @@ public class UserService {
   public void changePassword(
       UUID userId, com.axelfrache.questify.dto.ChangePasswordRequest request) {
     var user = findUserOrThrow(userId);
-    var passwordEncoder = getPasswordEncoder();
 
     if (!passwordEncoder.matches(request.currentPassword(), user.getPassword()))
       throw new IllegalArgumentException("Current password is incorrect");
@@ -70,8 +81,26 @@ public class UserService {
     userRepository.save(user);
   }
 
-  private org.springframework.security.crypto.password.PasswordEncoder getPasswordEncoder() {
-    return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+  @Transactional
+  public void deleteAccount(UUID userId, String password) {
+    var user = findUserOrThrow(userId);
+
+    if (!passwordEncoder.matches(password, user.getPassword())) {
+      throw new IllegalArgumentException("Password is incorrect");
+    }
+
+    if (user.getProfilePictureUrl() != null) {
+      storageService.deleteFile(user.getProfilePictureUrl());
+    }
+
+    userAchievementRepository.deleteAllByUser(user);
+    refreshTokenRepository.deleteByUser(user);
+    questTemplateRepository.nullifyParentForUser(user);
+    questTemplateRepository.deleteAllByUser(user);
+    categoryRepository.deleteAllByUser(user);
+    questHistoryRepository.deleteAllByUserId(userId);
+
+    userRepository.delete(user);
   }
 
   @Transactional

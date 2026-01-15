@@ -9,11 +9,17 @@ import com.axelfrache.questify.dto.ChangePasswordRequest;
 import com.axelfrache.questify.dto.UpdateUserRequest;
 import com.axelfrache.questify.model.Grade;
 import com.axelfrache.questify.model.User;
+import com.axelfrache.questify.repository.CategoryRepository;
+import com.axelfrache.questify.repository.QuestHistoryRepository;
+import com.axelfrache.questify.repository.QuestTemplateRepository;
+import com.axelfrache.questify.repository.RefreshTokenRepository;
+import com.axelfrache.questify.repository.UserAchievementRepository;
 import com.axelfrache.questify.repository.UserRepository;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.multipart.MultipartFile;
 
 class UserServiceTest {
@@ -22,6 +28,12 @@ class UserServiceTest {
   private UserRepository userRepository;
   private LevelConfig levelConfig;
   private StorageService storageService;
+  private PasswordEncoder passwordEncoder;
+  private UserAchievementRepository userAchievementRepository;
+  private RefreshTokenRepository refreshTokenRepository;
+  private QuestTemplateRepository questTemplateRepository;
+  private CategoryRepository categoryRepository;
+  private QuestHistoryRepository questHistoryRepository;
 
   private User testUser;
   private UUID userId;
@@ -33,8 +45,24 @@ class UserServiceTest {
     levelConfig.setBaseXp(100);
     levelConfig.setMultiplier(1.0);
     storageService = mock(StorageService.class);
+    passwordEncoder = mock(PasswordEncoder.class);
+    userAchievementRepository = mock(UserAchievementRepository.class);
+    refreshTokenRepository = mock(RefreshTokenRepository.class);
+    questTemplateRepository = mock(QuestTemplateRepository.class);
+    categoryRepository = mock(CategoryRepository.class);
+    questHistoryRepository = mock(QuestHistoryRepository.class);
 
-    userService = new UserService(userRepository, levelConfig, storageService);
+    userService =
+        new UserService(
+            userRepository,
+            levelConfig,
+            storageService,
+            passwordEncoder,
+            userAchievementRepository,
+            refreshTokenRepository,
+            questTemplateRepository,
+            categoryRepository,
+            questHistoryRepository);
 
     userId = UUID.randomUUID();
     testUser = new User();
@@ -140,8 +168,9 @@ class UserServiceTest {
 
   @Test
   void changePassword_shouldThrow_whenCurrentIncorrect() {
-    var request = new ChangePasswordRequest("wrongpassword", "newpassword");
+    var request = new ChangePasswordRequest("wrongpassword", "NewPassword123");
     when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+    when(passwordEncoder.matches("wrongpassword", testUser.getPassword())).thenReturn(false);
 
     assertThrows(IllegalArgumentException.class, () -> userService.changePassword(userId, request));
   }
@@ -256,5 +285,44 @@ class UserServiceTest {
 
     verify(storageService, never()).deleteFile(any());
     verify(userRepository, never()).save(any());
+  }
+
+  @Test
+  void deleteAccount_shouldDeleteAllUserData() {
+    when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+    when(passwordEncoder.matches("correctPassword", testUser.getPassword())).thenReturn(true);
+
+    userService.deleteAccount(userId, "correctPassword");
+
+    verify(userAchievementRepository).deleteAllByUser(testUser);
+    verify(refreshTokenRepository).deleteByUser(testUser);
+    verify(questTemplateRepository).nullifyParentForUser(testUser);
+    verify(questTemplateRepository).deleteAllByUser(testUser);
+    verify(categoryRepository).deleteAllByUser(testUser);
+    verify(questHistoryRepository).deleteAllByUserId(userId);
+    verify(userRepository).delete(testUser);
+  }
+
+  @Test
+  void deleteAccount_shouldThrow_whenPasswordIncorrect() {
+    when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+    when(passwordEncoder.matches("wrongPassword", testUser.getPassword())).thenReturn(false);
+
+    assertThrows(
+        IllegalArgumentException.class, () -> userService.deleteAccount(userId, "wrongPassword"));
+
+    verify(userRepository, never()).delete(any());
+  }
+
+  @Test
+  void deleteAccount_shouldDeleteProfilePicture() {
+    testUser.setProfilePictureUrl("https://s3.example.com/bucket/profile.jpg");
+    when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+    when(passwordEncoder.matches("correctPassword", testUser.getPassword())).thenReturn(true);
+
+    userService.deleteAccount(userId, "correctPassword");
+
+    verify(storageService).deleteFile("https://s3.example.com/bucket/profile.jpg");
+    verify(userRepository).delete(testUser);
   }
 }
