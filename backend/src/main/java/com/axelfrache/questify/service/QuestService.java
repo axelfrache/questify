@@ -533,13 +533,15 @@ public class QuestService {
       }
     }
 
+    if (template.getOccurrences() != null && !template.getOccurrences().isEmpty()) {
+      var occurrences = new java.util.ArrayList<>(template.getOccurrences());
+      template.getOccurrences().clear();
+      questOccurrenceRepository.deleteAll(occurrences);
+    }
+
     template.setDeleted(true);
     template.setActive(false);
     questTemplateRepository.save(template);
-
-    if (template.getOccurrences() != null && !template.getOccurrences().isEmpty()) {
-      questOccurrenceRepository.deleteAll(template.getOccurrences());
-    }
   }
 
   private User findUserOrThrow(UUID userId) {
@@ -637,10 +639,10 @@ public class QuestService {
 
     if (occurrence != null) {
       id = occurrence.getId();
-      if (occurrence.isHasDueDate()) {
-        dueDate =
-            occurrence.getScheduledDate().atStartOfDay(template.getUser().getZoneId()).toInstant();
-      }
+      // Always return scheduledDate as dueDate for occurrences
+      // This allows frontend filters (Today, Overdue) to work correctly
+      dueDate =
+          occurrence.getScheduledDate().atStartOfDay(template.getUser().getZoneId()).toInstant();
       status = occurrence.getStatus();
       completedAt = occurrence.getCompletedAt();
     }
