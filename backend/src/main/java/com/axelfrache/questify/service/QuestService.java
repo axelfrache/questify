@@ -332,6 +332,8 @@ public class QuestService {
     for (var template : templates) {
       if (template.getRecurrenceRule() == null) continue;
 
+      autoSkipPastPendingOccurrences(template, today);
+
       if (shouldGenerateOccurrence(template, today)) {
         if (!questOccurrenceRepository.existsByQuestTemplateAndScheduledDate(template, today)) {
           var occurrence =
@@ -345,6 +347,8 @@ public class QuestService {
           if (template.getSubquests() != null) {
             for (var subquest : template.getSubquests()) {
               if (subquest.isActive() && !subquest.isDeleted()) {
+                autoSkipPastPendingOccurrences(subquest, today);
+
                 if (!questOccurrenceRepository.existsByQuestTemplateAndScheduledDate(
                     subquest, today)) {
                   var subOccurrence =
@@ -360,6 +364,19 @@ public class QuestService {
           }
         }
       }
+    }
+  }
+
+  private void autoSkipPastPendingOccurrences(QuestTemplate template, LocalDate today) {
+    var pastPendingOccurrences =
+        questOccurrenceRepository.findByQuestTemplate(template).stream()
+            .filter(o -> o.getStatus() == QuestStatus.PENDING)
+            .filter(o -> o.getScheduledDate().isBefore(today))
+            .toList();
+
+    for (var occurrence : pastPendingOccurrences) {
+      occurrence.setStatus(QuestStatus.SKIPPED);
+      questOccurrenceRepository.save(occurrence);
     }
   }
 
@@ -639,8 +656,6 @@ public class QuestService {
 
     if (occurrence != null) {
       id = occurrence.getId();
-      // Always return scheduledDate as dueDate for occurrences
-      // This allows frontend filters (Today, Overdue) to work correctly
       dueDate =
           occurrence.getScheduledDate().atStartOfDay(template.getUser().getZoneId()).toInstant();
       status = occurrence.getStatus();
