@@ -145,6 +145,8 @@ export function useUpdateCategory() {
       api.updateCategory(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['quests'] });
+      queryClient.invalidateQueries({ queryKey: ['subquests'] });
       queryClient.invalidateQueries({ queryKey: ['stats', 'categories'] });
       queryClient.invalidateQueries({ queryKey: ['stats', 'region-activity'] });
     },
