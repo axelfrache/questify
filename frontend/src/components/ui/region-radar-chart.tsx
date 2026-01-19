@@ -30,7 +30,7 @@ export function RegionRadarChart({ data }: RegionRadarChartProps) {
       }))
     : [];
 
-  const outerRadius = data.length <= 3 ? '60%' : data.length <= 5 ? '55%' : '50%';
+  const outerRadius = data.length <= 3 ? '55%' : data.length <= 5 ? '50%' : '45%';
 
   return (
     <Card className="flex flex-col h-full">
@@ -40,16 +40,16 @@ export function RegionRadarChart({ data }: RegionRadarChartProps) {
           By Region
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-2 flex-1 flex items-center justify-center min-h-[200px]">
+      <CardContent className="p-2 flex-1 flex items-center justify-center min-h-[180px] max-h-[240px] overflow-hidden">
         {hasData ? (
           <ChartContainer
             config={chartConfig}
-            className="mx-auto aspect-square max-h-[200px] w-full"
+            className="mx-auto aspect-square h-full max-h-[180px] w-full"
           >
             <RadarChart
               data={chartData}
               outerRadius={outerRadius}
-              margin={{ top: 20, right: 30, bottom: 20, left: 30 }}
+              margin={{ top: 15, right: 20, bottom: 15, left: 20 }}
             >
               <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
               <PolarAngleAxis

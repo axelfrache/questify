@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuests, useCategories, useCompleteQuest, useDeleteQuest } from '@/hooks/use-api';
 import { useInboxState } from '@/hooks/useInboxState';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -32,22 +33,40 @@ const fireConfettiFromElement = (element: HTMLElement) => {
 };
 
 export function InboxPage() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const categoryFilter = searchParams.get('category');
+
+  const clearCategoryFilter = () => {
+    navigate('/inbox', { replace: true });
+  };
+
   const {
     data: quests,
     isLoading: isLoadingQuests,
     error: errorQuests,
   } = useQuests(undefined, 'inbox');
-  const { isLoading: isLoadingCategories } = useCategories();
+  const { data: categories, isLoading: isLoadingCategories } = useCategories();
   const completeQuestMutation = useCompleteQuest();
   const deleteQuestMutation = useDeleteQuest();
 
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
   const [parentQuest, setParentQuest] = useState<QuestResponse | null>(null);
 
-  // Get pending quests
-  const pendingQuests = quests?.filter((q) => q.status === 'PENDING') || [];
+  const pendingQuests = useMemo(() => {
+    let result = quests?.filter((q) => q.status === 'PENDING') || [];
+    if (categoryFilter) {
+      result = result.filter((q) => q.category?.id === categoryFilter);
+    }
+    return result;
+  }, [quests, categoryFilter]);
 
-  // Use new inbox state hook
+  const filteredCategoryName = useMemo(() => {
+    if (!categoryFilter || !categories) return null;
+    const cat = categories.find((c) => c.id === categoryFilter);
+    return cat ? `${cat.icon} ${cat.name}` : null;
+  }, [categoryFilter, categories]);
+
   const {
     search,
     groupBy,
@@ -123,6 +142,19 @@ export function InboxPage() {
         onToggleDensity={toggleDensity}
         onToggleQuickFilter={toggleQuickFilter}
       />
+
+      {filteredCategoryName && (
+        <div className="flex items-center gap-1.5 text-xs">
+          <span className="text-muted-foreground">Region:</span>
+          <button
+            onClick={clearCategoryFilter}
+            className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-primary hover:bg-primary/20 transition-colors"
+          >
+            {filteredCategoryName}
+            <span className="text-primary/60 hover:text-primary">×</span>
+          </button>
+        </div>
+      )}
 
       {errorQuests && (
         <Alert variant="destructive">
