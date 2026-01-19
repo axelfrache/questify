@@ -43,11 +43,11 @@ export function MonthlyActivityGraph({
   };
 
   const getCompletionColor = (rate: number | null, plannedQuests: number) => {
-    if (plannedQuests === 0 || rate === null) return 'bg-muted/20';
+    if (plannedQuests === 0 || rate === null) return 'bg-muted/40';
     if (rate >= 100) return 'bg-primary';
     if (rate >= 50) return 'bg-primary/60';
     if (rate > 0) return 'bg-primary/30';
-    return 'bg-muted/40';
+    return 'bg-muted/50';
   };
 
   const firstDayOfMonth = startOfMonth(currentDate);
@@ -135,7 +135,7 @@ export function MonthlyActivityGraph({
                             className={cn(
                               'w-4 h-4 sm:w-5 sm:h-5 rounded-[3px] cursor-default transition-all',
                               'hover:ring-1 hover:ring-foreground/30',
-                              isFuture ? 'bg-muted/15' : getCompletionColor(rate, plannedQuests),
+                              isFuture ? 'bg-muted/30' : getCompletionColor(rate, plannedQuests),
                               isToday && 'ring-2 ring-primary/60'
                             )}
                           />
@@ -181,7 +181,7 @@ export function MonthlyActivityGraph({
                 <TooltipProvider delayDuration={100}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="w-2.5 h-2.5 rounded-[2px] bg-muted/20 cursor-default hover:ring-1 hover:ring-foreground/20" />
+                      <span className="w-2.5 h-2.5 rounded-[2px] bg-muted/40 cursor-default hover:ring-1 hover:ring-foreground/20" />
                     </TooltipTrigger>
                     <TooltipContent side="top" className="text-xs">
                       No required quests
