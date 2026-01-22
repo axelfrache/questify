@@ -90,7 +90,7 @@ export function HistoryPage() {
   const sortedDates = Object.keys(groupedHistory || {}).sort((a, b) => b.localeCompare(a));
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-24">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold">History</h1>
@@ -150,25 +150,27 @@ export function HistoryPage() {
                     className="group overflow-hidden border-l-[3px] transition-all hover:bg-muted/30"
                     style={{ borderLeftColor: quest.categoryColor || 'transparent' }}
                   >
-                    <CardContent className="flex items-center justify-between p-3">
-                      <div className="flex items-center gap-3 overflow-hidden">
+                    <CardContent className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-3 min-w-0">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-success/10 text-success">
                           <CheckCircle2 className="h-4 w-4" />
                         </div>
 
-                        <div className="min-w-0 space-y-0.5">
-                          <div className="flex items-center gap-2">
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center gap-2 min-w-0">
                             {quest.categoryIcon && (
-                              <span className="text-sm">{quest.categoryIcon}</span>
+                              <span className="text-sm shrink-0">{quest.categoryIcon}</span>
                             )}
                             <span className="truncate font-medium leading-none">{quest.title}</span>
                           </div>
 
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                             {quest.parentTitle && (
                               <span className="flex items-center gap-1 rounded bg-primary/5 px-1.5 py-0.5 text-primary">
-                                <ArrowRight className="h-3 w-3" />
-                                Part of {quest.parentTitle}
+                                <ArrowRight className="h-3 w-3 shrink-0" />
+                                <span className="truncate max-w-[120px]">
+                                  Part of {quest.parentTitle}
+                                </span>
                               </span>
                             )}
                             {quest.recurrenceType === 'DAILY' && (
@@ -185,7 +187,7 @@ export function HistoryPage() {
                         </div>
                       </div>
 
-                      <div className="flex shrink-0 items-center gap-3">
+                      <div className="flex shrink-0 items-center gap-2 pl-11 sm:pl-0">
                         <DifficultyChip difficulty={quest.difficulty} />
                         <Badge
                           variant="secondary"

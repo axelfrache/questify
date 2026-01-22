@@ -87,7 +87,7 @@ export function ProgressPage() {
   const totalCompleted = summary?.totalQuestsCompleted || 0;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-24">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold">Progress</h1>
@@ -111,115 +111,114 @@ export function ProgressPage() {
         </TooltipProvider>
       </div>
 
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Star className="h-5 w-5 text-secondary" />
             Grade Journey
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <TooltipProvider delayDuration={200}>
-            <div className="flex flex-col gap-2">
-              {/* Nodes and connectors row */}
-              <div className="flex items-center">
-                {GRADES.map((grade, index) => {
-                  const isPast = index < currentGradeIndex;
-                  const isCurrent = index === currentGradeIndex;
-                  const isFuture = index > currentGradeIndex;
+        <CardContent className="px-0">
+          <div className="overflow-x-auto scrollbar-hide pb-2">
+            <TooltipProvider delayDuration={200}>
+              <div className="flex flex-col gap-2 min-w-max px-4">
+                {/* Nodes and connectors row */}
+                <div className="flex items-center">
+                  {GRADES.map((grade, index) => {
+                    const isPast = index < currentGradeIndex;
+                    const isCurrent = index === currentGradeIndex;
+                    const isFuture = index > currentGradeIndex;
 
-                  return (
-                    <div key={grade.name} className="flex items-center flex-1 last:flex-none">
-                      <div className="flex justify-center w-16">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              className="relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-full"
-                              aria-label={`${grade.name}: ${grade.tooltip}`}
-                            >
-                              <div
-                                className={cn(
-                                  'w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all cursor-pointer hover:scale-105',
-                                  isPast && 'bg-primary border-primary text-primary-foreground',
-                                  isCurrent && 'bg-primary/20 border-primary text-primary',
-                                  isFuture &&
-                                    'bg-muted border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/50'
-                                )}
+                    return (
+                      <div key={grade.name} className="flex items-center last:flex-none">
+                        <div className="flex justify-center w-16">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                className="relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-full"
+                                aria-label={`${grade.name}: ${grade.tooltip}`}
                               >
-                                {isPast || (isCurrent && currentLevel >= grade.minLevel) ? (
-                                  <Check className="h-5 w-5" />
-                                ) : (
-                                  <span className="text-sm font-bold">{grade.minLevel}</span>
+                                <div
+                                  className={cn(
+                                    'w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all cursor-pointer hover:scale-105',
+                                    isPast && 'bg-primary border-primary text-primary-foreground',
+                                    isCurrent && 'bg-primary/20 border-primary text-primary',
+                                    isFuture &&
+                                      'bg-muted border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/50'
+                                  )}
+                                >
+                                  {isPast || (isCurrent && currentLevel >= grade.minLevel) ? (
+                                    <Check className="h-5 w-5" />
+                                  ) : (
+                                    <span className="text-sm font-bold">{grade.minLevel}</span>
+                                  )}
+                                </div>
+                                {isCurrent && (
+                                  <ShineBorder
+                                    className="rounded-full"
+                                    shineColor={['#a855f7', '#6366f1', '#22d3ee']}
+                                    borderWidth={2}
+                                    duration={8}
+                                  />
                                 )}
-                              </div>
-                              {isCurrent && (
-                                <ShineBorder
-                                  className="rounded-full"
-                                  shineColor={['#a855f7', '#6366f1', '#22d3ee']}
-                                  borderWidth={2}
-                                  duration={8}
-                                />
-                              )}
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-[200px] text-center">
-                            <p className="text-sm italic">{grade.tooltip}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      {index < GRADES.length - 1 && (
-                        <div className="flex-1 flex items-center min-w-[24px]">
-                          <div
-                            className={cn(
-                              'h-0.5 flex-1 rounded-full transition-all',
-                              index < currentGradeIndex && 'bg-primary',
-                              index === currentGradeIndex &&
-                                'bg-gradient-to-r from-primary to-muted',
-                              index > currentGradeIndex && 'bg-muted'
-                            )}
-                          />
-                          <ChevronRight
-                            className={cn(
-                              'h-4 w-4 -ml-0.5 flex-shrink-0',
-                              index < currentGradeIndex && 'text-primary',
-                              index >= currentGradeIndex && 'text-muted-foreground/50'
-                            )}
-                          />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-[200px] text-center">
+                              <p className="text-sm italic">{grade.tooltip}</p>
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              {/* Labels row */}
-              <div className="flex items-center">
-                {GRADES.map((grade, index) => {
-                  const isCurrent = index === currentGradeIndex;
-                  const isFuture = index > currentGradeIndex;
-
-                  return (
-                    <div
-                      key={`${grade.name}-label`}
-                      className="flex items-center flex-1 last:flex-none"
-                    >
-                      <div className="flex justify-center w-16">
-                        <span
-                          className={cn(
-                            'text-xs font-medium text-center whitespace-nowrap',
-                            isCurrent && 'text-primary font-bold',
-                            isFuture && 'text-muted-foreground'
-                          )}
-                        >
-                          {grade.name}
-                        </span>
+                        {index < GRADES.length - 1 && (
+                          <div className="flex items-center w-8">
+                            <div
+                              className={cn(
+                                'h-0.5 flex-1 rounded-full transition-all',
+                                index < currentGradeIndex && 'bg-primary',
+                                index === currentGradeIndex &&
+                                  'bg-gradient-to-r from-primary to-muted',
+                                index > currentGradeIndex && 'bg-muted'
+                              )}
+                            />
+                            <ChevronRight
+                              className={cn(
+                                'h-4 w-4 -ml-0.5 flex-shrink-0',
+                                index < currentGradeIndex && 'text-primary',
+                                index >= currentGradeIndex && 'text-muted-foreground/50'
+                              )}
+                            />
+                          </div>
+                        )}
                       </div>
-                      {index < GRADES.length - 1 && <div className="flex-1 min-w-[24px]" />}
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+                {/* Labels row */}
+                <div className="flex items-center">
+                  {GRADES.map((grade, index) => {
+                    const isCurrent = index === currentGradeIndex;
+                    const isFuture = index > currentGradeIndex;
+
+                    return (
+                      <div key={`${grade.name}-label`} className="flex items-center last:flex-none">
+                        <div className="flex justify-center w-16">
+                          <span
+                            className={cn(
+                              'text-xs font-medium text-center whitespace-nowrap',
+                              isCurrent && 'text-primary font-bold',
+                              isFuture && 'text-muted-foreground'
+                            )}
+                          >
+                            {grade.name}
+                          </span>
+                        </div>
+                        {index < GRADES.length - 1 && <div className="w-8" />}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          </TooltipProvider>
+            </TooltipProvider>
+          </div>
         </CardContent>
       </Card>
 
