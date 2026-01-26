@@ -13,32 +13,17 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { EmojiPicker } from '@/components/EmojiPicker';
+import { ColorPicker } from '@/components/ColorPicker';
+
+const DEFAULT_COLOR = '#10b981';
 
 interface CreateCategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   categoryToEdit?: CategoryStats;
 }
-
-const PRESET_COLORS = [
-  { name: 'Emerald', value: '#10B981' },
-  { name: 'Blue', value: '#3B82F6' },
-  { name: 'Violet', value: '#8B5CF6' },
-  { name: 'Amber', value: '#F59E0B' },
-  { name: 'Green', value: '#059669' },
-  { name: 'Pink', value: '#EC4899' },
-  { name: 'Red', value: '#EF4444' },
-  { name: 'Cyan', value: '#06B6D4' },
-];
 
 export function CreateCategoryDialog({
   open,
@@ -48,7 +33,8 @@ export function CreateCategoryDialog({
   const createCategoryMutation = useCreateCategory();
   const updateCategoryMutation = useUpdateCategory();
   const [selectedIcon, setSelectedIcon] = useState('');
-  const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0].value);
+  const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
+  const [isColorValid, setIsColorValid] = useState(true);
 
   const isEditMode = !!categoryToEdit;
 
@@ -73,7 +59,7 @@ export function CreateCategoryDialog({
     } else if (open && !categoryToEdit) {
       reset();
       setSelectedIcon('');
-      setSelectedColor(PRESET_COLORS[0].value);
+      setSelectedColor(DEFAULT_COLOR);
     }
   }, [open, categoryToEdit, setValue, reset]);
 
@@ -139,41 +125,22 @@ export function CreateCategoryDialog({
             />
             {errors.name && <span className="text-xs text-destructive">Name is required</span>}
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2 min-w-0">
-              <Label>Icon</Label>
-              <EmojiPicker
-                value={selectedIcon}
-                onChange={setSelectedIcon}
-                regionName={regionName}
-              />
-              <input type="hidden" {...register('icon', { required: true })} />
-              {errors.icon && <span className="text-xs text-destructive">Icon is required</span>}
-            </div>
-            <div className="grid gap-2 min-w-0">
-              <Label htmlFor="color">Color</Label>
-              <Select value={selectedColor} onValueChange={setSelectedColor}>
-                <SelectTrigger id="color">
-                  <SelectValue placeholder="Select color" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRESET_COLORS.map((color) => (
-                    <SelectItem key={color.value} value={color.value}>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-4 h-4 rounded-full"
-                          style={{ backgroundColor: color.value }}
-                        />
-                        {color.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="grid gap-2 min-w-0">
+            <Label>Icon</Label>
+            <EmojiPicker value={selectedIcon} onChange={setSelectedIcon} regionName={regionName} />
+            <input type="hidden" {...register('icon', { required: true })} />
+            {errors.icon && <span className="text-xs text-destructive">Icon is required</span>}
+          </div>
+          <div className="grid gap-2">
+            <Label>Color</Label>
+            <ColorPicker
+              value={selectedColor}
+              onChange={setSelectedColor}
+              onValidityChange={setIsColorValid}
+            />
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={isPending || !isColorValid}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isEditMode ? 'Save Changes' : 'Create Region'}
             </Button>
