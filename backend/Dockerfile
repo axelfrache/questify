@@ -11,6 +11,8 @@ COPY src/ src/
 
 RUN ./mvnw package -DskipTests -B
 
+RUN wget -O opentelemetry-javaagent.jar https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v1.32.0/opentelemetry-javaagent.jar
+
 FROM eclipse-temurin:21-jre-alpine AS runtime
 
 LABEL org.opencontainers.image.title="Questify Backend"
@@ -23,6 +25,7 @@ RUN addgroup -g 1001 -S appgroup && \
 WORKDIR /app
 
 COPY --from=build --chown=appuser:appgroup /app/target/*.jar app.jar
+COPY --from=build --chown=appuser:appgroup /app/opentelemetry-javaagent.jar opentelemetry-javaagent.jar
 
 USER appuser
 

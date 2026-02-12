@@ -1,0 +1,47 @@
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.95.0
+    container_name: questify-otel-collector
+    command: [ "--config=/etc/otelcol-contrib/config.yaml" ]
+    volumes:
+      - ./otel-config.yaml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver
+      - "8888:8888" # Prometheus metrics
+    networks:
+      - questify-network
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.54
+    container_name: questify-jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686" # UI
+    networks:
+      - questify-network
+
+  backend:
+    environment:
+      - OTEL_SERVICE_NAME=questify-backend
+      - OTEL_RESOURCE_ATTRIBUTES=service.version=1.0.0,deployment.environment=demo
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=none
+      - OTEL_PROPAGATORS=tracecontext,baggage
+      - OTEL_INSTRUMENTATION_JDBC_ENABLED=true
+      - JAVA_TOOL_OPTIONS=-javaagent:/app/opentelemetry-javaagent.jar
+    depends_on:
+      otel-collector:
+        condition: service_started
+
+  frontend:
+    environment:
+      - VITE_OTEL_ENABLED=true
+      - VITE_OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318/v1/traces
+    depends_on:
+      otel-collector:
+        condition: service_started

@@ -32,6 +32,22 @@ The application is divided in 2 parts: **backend** and **frontend**.
 - Node.js 20
 - Docker & Docker Compose
 
+## OpenTelemetry
+
+By default, the stack runs without OpenTelemetry. To enable distributed tracing:
+
+1.  **Start with OTel enabled:**
+    ```bash
+    docker compose -f docker-compose.yml -f docker-compose.otel.yml up -d --build
+    ```
+
+2.  **Access Jaeger UI:**
+    Open [http://localhost:16686](http://localhost:16686) to view traces.
+
+3.  **Generate Traces:**
+    - Use the application (Frontend -> Backend -> DB).
+    - Traces should appear in Jaeger for `questify-frontend` and `questify-backend`.
+
 ## Running
 
 ### Locally (development mode)
