@@ -232,8 +232,6 @@ export function CreateQuestDialog({
                 </SelectContent>
               </Select>
             </div>
-
-
           </div>
 
           <Accordion type="single" collapsible className="w-full">
