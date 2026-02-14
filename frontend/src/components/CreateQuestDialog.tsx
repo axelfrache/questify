@@ -195,7 +195,7 @@ export function CreateQuestDialog({
                 }
                 value={difficulty || 'EASY'}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -217,7 +217,7 @@ export function CreateQuestDialog({
                 onValueChange={(value) => setValue('categoryId', value)}
                 value={watch('categoryId')}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -232,59 +232,39 @@ export function CreateQuestDialog({
                 </SelectContent>
               </Select>
             </div>
+
+
           </div>
 
           <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="more-options" className="border-none">
+            <AccordionItem value="advanced" className="border-none">
               <AccordionTrigger className="py-2 text-sm text-muted-foreground hover:text-foreground hover:no-underline">
                 <span className="flex items-center gap-1">More options</span>
               </AccordionTrigger>
               <AccordionContent className="space-y-4 pt-2">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Description</Label>
-                  <Textarea
-                    placeholder="Add notes or details..."
-                    className="resize-none"
-                    rows={2}
-                    {...register('description')}
-                  />
-                </div>
-
                 {!parentId || (parentId && parentRecurrence === 'NONE') ? (
-                  <>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-muted-foreground">Recurrence</Label>
-                      <Select
-                        onValueChange={(value) =>
-                          setValue(
-                            'recurrenceInterval',
-                            value as CreateQuestRequest['recurrenceInterval']
-                          )
-                        }
-                        value={recurrence || 'NONE'}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="NONE">One-time</SelectItem>
-                          <SelectItem value="DAILY">Daily</SelectItem>
-                          <SelectItem value="WEEKLY">Weekly</SelectItem>
-                          <SelectItem value="MONTHLY">Monthly</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {recurrence === 'WEEKLY' && (
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-muted-foreground">Repeat on</Label>
-                        <WeekdayPicker selectedDays={selectedDays} onDaysChange={setSelectedDays} />
-                        {selectedDays.length === 0 && (
-                          <p className="text-xs text-muted-foreground">Select at least one day</p>
-                        )}
-                      </div>
-                    )}
-                  </>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Recurrence</Label>
+                    <Select
+                      onValueChange={(value) =>
+                        setValue(
+                          'recurrenceInterval',
+                          value as CreateQuestRequest['recurrenceInterval']
+                        )
+                      }
+                      value={recurrence || 'NONE'}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="NONE">One-time</SelectItem>
+                        <SelectItem value="DAILY">Daily</SelectItem>
+                        <SelectItem value="WEEKLY">Weekly</SelectItem>
+                        <SelectItem value="MONTHLY">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 ) : (
                   <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
                     <p>
@@ -316,6 +296,27 @@ export function CreateQuestDialog({
                     </Popover>
                   </div>
                 )}
+
+                {recurrence === 'WEEKLY' &&
+                  (!parentId || (parentId && parentRecurrence === 'NONE')) && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Repeat on</Label>
+                      <WeekdayPicker selectedDays={selectedDays} onDaysChange={setSelectedDays} />
+                      {selectedDays.length === 0 && (
+                        <p className="text-xs text-muted-foreground">Select at least one day</p>
+                      )}
+                    </div>
+                  )}
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Description</Label>
+                  <Textarea
+                    placeholder="Add notes or details..."
+                    className="resize-none"
+                    rows={3}
+                    {...register('description')}
+                  />
+                </div>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
