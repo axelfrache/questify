@@ -115,32 +115,58 @@ export function CreateCategoryDialog({
               : 'Add a new region to organize your quests.'}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="name">Name</Label>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 py-2">
+          <div className="grid gap-1.5">
+            <Label htmlFor="name" className="text-xs font-medium text-muted-foreground ml-1">
+              Name
+            </Label>
             <Input
               id="name"
               placeholder="e.g., Work, Health"
               {...register('name', { required: true })}
+              autoFocus
+              className="h-9"
             />
             {errors.name && <span className="text-xs text-destructive">Name is required</span>}
           </div>
-          <div className="grid gap-2 min-w-0">
-            <Label>Icon</Label>
-            <EmojiPicker value={selectedIcon} onChange={setSelectedIcon} regionName={regionName} />
-            <input type="hidden" {...register('icon', { required: true })} />
-            {errors.icon && <span className="text-xs text-destructive">Icon is required</span>}
+
+          {/* Informational Preview */}
+          {/* Informational Preview */}
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-medium text-muted-foreground ml-1">Preview</span>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl leading-none">{selectedIcon || '✨'}</span>
+              <span
+                className="text-xl font-bold transition-colors duration-200"
+                style={{ color: isColorValid ? selectedColor : undefined }}
+              >
+                {regionName || 'New Region'}
+              </span>
+            </div>
           </div>
-          <div className="grid gap-2">
-            <Label>Color</Label>
+
+          <div className="grid gap-1.5">
+            <Label className="text-xs font-medium text-muted-foreground ml-1">Color</Label>
             <ColorPicker
               value={selectedColor}
               onChange={setSelectedColor}
               onValidityChange={setIsColorValid}
             />
           </div>
-          <DialogFooter>
-            <Button type="submit" disabled={isPending || !isColorValid}>
+
+          <div className="grid gap-1.5 min-w-0">
+            <Label className="text-xs font-medium text-muted-foreground ml-1">Icon</Label>
+            <EmojiPicker value={selectedIcon} onChange={setSelectedIcon} regionName={regionName} />
+            <input type="hidden" {...register('icon', { required: true })} />
+            {errors.icon && <span className="text-xs text-destructive">Icon is required</span>}
+          </div>
+
+          <DialogFooter className="pt-2">
+            <Button
+              type="submit"
+              disabled={isPending || !isColorValid}
+              className="w-full sm:w-auto"
+            >
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isEditMode ? 'Save Changes' : 'Create Region'}
             </Button>

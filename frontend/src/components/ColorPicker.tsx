@@ -3,7 +3,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Check, AlertCircle, RotateCcw, Plus } from 'lucide-react';
+import { AlertCircle, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const PRESET_COLORS = [
@@ -45,15 +45,6 @@ function normalizeHex(input: string): string | null {
 
 function isValidHexInput(input: string): boolean {
   return normalizeHex(input) !== null;
-}
-
-function getContrastColor(hex: string): string {
-  const rgb = parseInt(hex.slice(1), 16);
-  const r = (rgb >> 16) & 0xff;
-  const g = (rgb >> 8) & 0xff;
-  const b = rgb & 0xff;
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.5 ? '#000000' : '#ffffff';
 }
 
 function getRecentColors(): string[] {
@@ -163,42 +154,25 @@ export function ColorPicker({ value, onChange, onValidityChange }: ColorPickerPr
     setMode('presets');
   };
 
-  const handleSwitchToCustom = () => {
-    setMode('custom');
-    if (isPresetColor) {
-      setCustomInput(value);
-    }
-  };
-
-  const displayColor = normalizeHex(customInput) || value || DEFAULT_COLOR;
-
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-3">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div
-              className="w-9 h-9 rounded-lg border-2 border-border shadow-sm shrink-0 flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
-              style={{ backgroundColor: displayColor }}
-            >
-              {mode === 'presets' && (
-                <Check className="w-4 h-4" style={{ color: getContrastColor(displayColor) }} />
-              )}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>{displayColor}</TooltipContent>
-        </Tooltip>
-
+      <div className="flex items-center justify-between gap-3">
         <Tabs
           value={mode}
           onValueChange={(v) => setMode(v as 'presets' | 'custom')}
-          className="flex-1"
+          className="w-full"
         >
-          <TabsList className="w-full">
-            <TabsTrigger value="presets" className="flex-1">
+          <TabsList className="w-full grid grid-cols-2 h-8 bg-muted/50 p-0.5">
+            <TabsTrigger
+              value="presets"
+              className="text-xs h-7 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
               Presets
             </TabsTrigger>
-            <TabsTrigger value="custom" className="flex-1">
+            <TabsTrigger
+              value="custom"
+              className="text-xs h-7 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
               Custom
             </TabsTrigger>
           </TabsList>
@@ -207,7 +181,7 @@ export function ColorPicker({ value, onChange, onValidityChange }: ColorPickerPr
 
       {mode === 'presets' ? (
         <div className="space-y-2">
-          <div className="grid grid-cols-6 gap-1.5">
+          <div className="grid grid-cols-6 gap-x-2 gap-y-4 place-items-center">
             {PRESET_COLORS.map((color) => (
               <Tooltip key={color.value}>
                 <TooltipTrigger asChild>
@@ -215,34 +189,24 @@ export function ColorPicker({ value, onChange, onValidityChange }: ColorPickerPr
                     type="button"
                     onClick={() => handlePresetSelect(color.value)}
                     className={cn(
-                      'w-8 h-8 rounded-lg transition-all hover:scale-110 flex items-center justify-center',
+                      'w-6 h-6 rounded-full transition-all duration-200 hover:scale-110 active:scale-95',
                       value.toLowerCase() === color.value.toLowerCase()
-                        ? 'ring-2 ring-primary ring-offset-2 ring-offset-background'
+                        ? 'ring-1 ring-foreground/20 scale-105'
                         : 'hover:ring-1 hover:ring-muted-foreground/30'
                     )}
-                    style={{ backgroundColor: color.value }}
-                  >
-                    {value.toLowerCase() === color.value.toLowerCase() && (
-                      <Check className="w-4 h-4" style={{ color: getContrastColor(color.value) }} />
-                    )}
-                  </button>
+                    style={{
+                      backgroundColor: color.value,
+                      boxShadow:
+                        value.toLowerCase() === color.value.toLowerCase()
+                          ? '0 0 0 1px var(--background), 0 0 0 2px var(--foreground)'
+                          : undefined,
+                    }}
+                    aria-label={`Select ${color.name}`}
+                  />
                 </TooltipTrigger>
-                <TooltipContent>{color.name}</TooltipContent>
+                <TooltipContent className="pointer-events-none">{color.name}</TooltipContent>
               </Tooltip>
             ))}
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={handleSwitchToCustom}
-                  className="w-8 h-8 rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Custom color</TooltipContent>
-            </Tooltip>
           </div>
         </div>
       ) : (
@@ -320,9 +284,9 @@ export function ColorPicker({ value, onChange, onValidityChange }: ColorPickerPr
                         type="button"
                         onClick={() => handleRecentSelect(color)}
                         className={cn(
-                          'w-7 h-7 rounded-md transition-all hover:scale-110',
+                          'w-7 h-7 rounded-md transition-all duration-200 hover:scale-105 active:scale-95',
                           customInput.toLowerCase() === color.toLowerCase()
-                            ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
+                            ? 'ring-2 ring-primary ring-offset-1 ring-offset-background scale-105'
                             : 'hover:ring-1 hover:ring-muted-foreground/30'
                         )}
                         style={{ backgroundColor: color }}
