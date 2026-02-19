@@ -40,12 +40,11 @@ public class AuthService {
       throw new IllegalArgumentException("Username already exists");
     }
 
-    var user =
-        User.builder()
-            .username(request.username())
-            .email(request.email())
-            .password(passwordEncoder.encode(request.password()))
-            .build();
+    var user = User.builder()
+        .username(request.username())
+        .email(request.email())
+        .password(passwordEncoder.encode(request.password()))
+        .build();
 
     userRepository.save(user);
 
@@ -63,10 +62,9 @@ public class AuthService {
       throw e;
     }
 
-    var user =
-        userRepository
-            .findByEmail(request.email())
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    var user = userRepository
+        .findByEmail(request.email())
+        .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
     refreshTokenRepository.revokeAllByUser(user);
 
@@ -76,14 +74,12 @@ public class AuthService {
 
   @Transactional
   public AuthResponse refresh(RefreshTokenRequest request) {
-    var refreshToken =
-        refreshTokenRepository
-            .findByToken(request.refreshToken())
-            .orElseThrow(() -> new IllegalArgumentException("Invalid refresh token"));
+    var refreshToken = refreshTokenRepository
+        .findByToken(request.refreshToken())
+        .orElseThrow(() -> new IllegalArgumentException("Invalid refresh token"));
 
-    if (!refreshToken.isValid()) {
+    if (!refreshToken.isValid())
       throw new IllegalArgumentException("Refresh token is expired or revoked");
-    }
 
     var user = refreshToken.getUser();
 
@@ -104,22 +100,20 @@ public class AuthService {
   }
 
   private AuthResponse createAuthResponse(User user) {
-    var userDetails =
-        org.springframework.security.core.userdetails.User.builder()
-            .username(user.getEmail())
-            .password(user.getPassword())
-            .authorities("ROLE_USER")
-            .build();
+    var userDetails = org.springframework.security.core.userdetails.User.builder()
+        .username(user.getEmail())
+        .password(user.getPassword())
+        .authorities("ROLE_USER")
+        .build();
 
     var accessToken = jwtService.generateAccessToken(userDetails);
     var refreshTokenValue = UUID.randomUUID().toString();
 
-    var refreshToken =
-        RefreshToken.builder()
-            .token(refreshTokenValue)
-            .user(user)
-            .expiryDate(Instant.now().plusMillis(jwtConfig.getRefreshExpiration()))
-            .build();
+    var refreshToken = RefreshToken.builder()
+        .token(refreshTokenValue)
+        .user(user)
+        .expiryDate(Instant.now().plusMillis(jwtConfig.getRefreshExpiration()))
+        .build();
 
     refreshTokenRepository.save(refreshToken);
 
@@ -128,6 +122,7 @@ public class AuthService {
         refreshTokenValue,
         user.getId(),
         user.getUsername(),
-        user.getProfilePictureUrl());
+        user.getProfilePictureUrl(),
+        user.getRole());
   }
 }

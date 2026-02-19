@@ -14,9 +14,11 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -29,6 +31,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 @Slf4j
 public class SecurityConfig {
@@ -66,14 +69,15 @@ public class SecurityConfig {
               auth.requestMatchers("/api/auth/**").permitAll();
               auth.requestMatchers("/actuator/health", "/actuator/health/**").permitAll();
               auth.requestMatchers("/actuator/**").denyAll();
+              auth.requestMatchers("/api/admin/**").hasRole("ADMIN");
 
               if (isDevProfile) {
                 auth.requestMatchers(
-                        "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/h2-console/**")
+                    "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/h2-console/**")
                     .permitAll();
               } else {
                 auth.requestMatchers(
-                        "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/h2-console/**")
+                    "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/h2-console/**")
                     .denyAll();
               }
 
@@ -86,9 +90,11 @@ public class SecurityConfig {
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .headers(
             headers -> {
-              headers.frameOptions(frame -> frame.sameOrigin());
-              headers.xssProtection(xss -> {});
-              headers.contentTypeOptions(contentType -> {});
+              headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin);
+              headers.xssProtection(xss -> {
+              });
+              headers.contentTypeOptions(contentType -> {
+              });
             })
         .build();
   }

@@ -16,15 +16,14 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
   @Override
   public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-    var user =
-        userRepository
-            .findByEmail(email)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
+    var user = userRepository
+        .findByEmail(email)
+        .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
     return User.builder()
         .username(user.getEmail())
         .password(user.getPassword())
-        .authorities("ROLE_USER")
+        .authorities("ROLE_" + user.getRole().name())
         .build();
   }
 }

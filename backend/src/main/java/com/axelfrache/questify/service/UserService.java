@@ -39,6 +39,90 @@ public class UserService {
     return toUserDto(user);
   }
 
+  @Transactional
+  public UserDto createUser(com.axelfrache.questify.dto.RegisterRequest request) {
+    if (userRepository.existsByEmail(request.email()))
+      throw new IllegalArgumentException("Email already exists");
+    if (userRepository.existsByUsername(request.username()))
+      throw new IllegalArgumentException("Username already exists");
+
+    var user = User.builder()
+        .username(request.username())
+        .email(request.email())
+        .password(passwordEncoder.encode(request.password()))
+        .build();
+
+    userRepository.save(user);
+    return toUserDto(user);
+  }
+
+  @Transactional
+  public UserDto createUser(com.axelfrache.questify.dto.AdminCreateUserRequest request) {
+    if (userRepository.existsByEmail(request.email()))
+      throw new IllegalArgumentException("Email already exists");
+    if (userRepository.existsByUsername(request.username()))
+      throw new IllegalArgumentException("Username already exists");
+
+    var user = User.builder()
+        .username(request.username())
+        .email(request.email())
+        .password(passwordEncoder.encode(request.password()))
+        .role(request.role() != null ? request.role() : com.axelfrache.questify.model.Role.USER)
+        .isEnabled(request.isEnabled() != null ? request.isEnabled() : true)
+        .build();
+
+    userRepository.save(user);
+    return toUserDto(user);
+  }
+
+  @Transactional
+  public UserDto updateUser(UUID userId, com.axelfrache.questify.dto.AdminUpdateUserRequest request) {
+    var user = findUserOrThrow(userId);
+
+    if (request.username() != null && !request.username().isBlank() && !request.username().equals(user.getUsername())) {
+      if (userRepository.existsByUsername(request.username()))
+        throw new IllegalArgumentException("Username already exists");
+      user.setUsername(request.username());
+    }
+
+    if (request.email() != null && !request.email().isBlank() && !request.email().equals(user.getEmail())) {
+      if (userRepository.existsByEmail(request.email()))
+        throw new IllegalArgumentException("Email already exists");
+      user.setEmail(request.email());
+    }
+
+    if (request.role() != null) {
+      user.setRole(request.role());
+    }
+
+    if (request.isEnabled() != null) {
+      user.setEnabled(request.isEnabled());
+    }
+
+    if (request.password() != null && !request.password().isBlank()) {
+      user.setPassword(passwordEncoder.encode(request.password()));
+    }
+
+    userRepository.save(user);
+    return toUserDto(user);
+  }
+
+  @Transactional
+  public UserDto updateUserStatus(UUID userId, boolean isEnabled) {
+    var user = findUserOrThrow(userId);
+    user.setEnabled(isEnabled);
+    userRepository.save(user);
+    return toUserDto(user);
+  }
+
+  @Transactional
+  public UserDto updateUserRole(UUID userId, com.axelfrache.questify.model.Role role) {
+    var user = findUserOrThrow(userId);
+    user.setRole(role);
+    userRepository.save(user);
+    return toUserDto(user);
+  }
+
   @Transactional(readOnly = true)
   public UserProgressionDto getUserProgression(UUID id) {
     var user = findUserOrThrow(id);
@@ -89,6 +173,16 @@ public class UserService {
       throw new IllegalArgumentException("Password is incorrect");
     }
 
+    performDelete(user);
+  }
+
+  @Transactional
+  public void forceDeleteUser(UUID userId) {
+    var user = findUserOrThrow(userId);
+    performDelete(user);
+  }
+
+  private void performDelete(User user) {
     if (user.getProfilePictureUrl() != null) {
       storageService.deleteFile(user.getProfilePictureUrl());
     }
@@ -98,7 +192,7 @@ public class UserService {
     questTemplateRepository.nullifyParentForUser(user);
     questTemplateRepository.deleteAllByUser(user);
     categoryRepository.deleteAllByUser(user);
-    questHistoryRepository.deleteAllByUserId(userId);
+    questHistoryRepository.deleteAllByUserId(user.getId());
 
     userRepository.delete(user);
   }
@@ -116,7 +210,8 @@ public class UserService {
 
     while (true) {
       var required = levelConfig.requiredXpForLevel(level);
-      if (accumulated + required > totalXp) break;
+      if (accumulated + required > totalXp)
+        break;
       accumulated += required;
       level++;
     }
@@ -189,7 +284,9 @@ public class UserService {
         user.getTimezone(),
         user.getProfilePictureUrl(),
         user.getCreatedAt(),
-        user.getUpdatedAt());
+        user.getUpdatedAt(),
+        user.getRole(),
+        user.isEnabled());
   }
 
   private UserProgressionDto toProgressionDto(User user) {

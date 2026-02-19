@@ -29,10 +29,18 @@ public class AuthController {
   private final CookieConfig cookieConfig;
   private final JwtConfig jwtConfig;
   private final UserRepository userRepository;
+  private final com.axelfrache.questify.repository.InstanceSettingsRepository instanceSettingsRepository;
 
   @PostMapping("/register")
   public ResponseEntity<AuthResponse> register(
       @Valid @RequestBody RegisterRequest request, HttpServletResponse response) {
+    var settings = instanceSettingsRepository.findFirstByOrderByUpdatedAtDesc()
+        .orElseThrow(() -> new IllegalStateException("Instance settings not initialized"));
+
+    if (!settings.isRegistrationEnabled()) {
+      return ResponseEntity.status(403).build();
+    }
+
     var authResponse = authService.register(request);
     addAuthCookies(response, authResponse);
     return ResponseEntity.ok(authResponse);
@@ -93,7 +101,9 @@ public class AuthController {
             user.getTimezone(),
             user.getProfilePictureUrl(),
             user.getCreatedAt(),
-            user.getUpdatedAt()));
+            user.getUpdatedAt(),
+            user.getRole(),
+            user.isEnabled()));
   }
 
   private void addAuthCookies(HttpServletResponse response, AuthResponse authResponse) {
