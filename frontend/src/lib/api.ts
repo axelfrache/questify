@@ -17,6 +17,7 @@ export interface AuthResponse {
   userId: string;
   username: string;
   profilePictureUrl: string | null;
+  role: 'USER' | 'ADMIN';
 }
 
 export interface ApiError {
@@ -383,6 +384,73 @@ class ApiClient {
       body: JSON.stringify({ password }),
     });
   }
+
+  async getSettings(): Promise<{ registrationEnabled: boolean; initialized: boolean }> {
+    return this.request('/api/admin/settings');
+  }
+
+  async updateSettings(updates: {
+    registrationEnabled: boolean;
+  }): Promise<{ registrationEnabled: boolean; initialized: boolean }> {
+    return this.request('/api/admin/settings', {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async getUsers(page: number = 0, query?: string): Promise<Page<UserDto>> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      size: '20',
+      sort: 'createdAt,desc',
+    });
+    if (query) {
+      params.append('query', query);
+    }
+    return this.request<Page<UserDto>>(`/api/admin/users?${params.toString()}`);
+  }
+
+  async adminCreateUser(data: AdminCreateUserRequest): Promise<UserDto> {
+    return this.request<UserDto>('/api/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async adminUpdateUser(id: string, data: AdminUpdateUserRequest): Promise<UserDto> {
+    return this.request<UserDto>(`/api/admin/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async adminUpdateUserStatus(id: string, isEnabled: boolean): Promise<UserDto> {
+    return this.request<UserDto>(`/api/admin/users/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isEnabled }),
+    });
+  }
+
+  async adminUpdateUserRole(id: string, role: string): Promise<UserDto> {
+    return this.request<UserDto>(`/api/admin/users/${id}/role`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role }),
+    });
+  }
+
+  async adminDeleteUser(id: string): Promise<void> {
+    return this.request<void>(`/api/admin/users/${id}`, {
+      method: 'DELETE',
+    });
+  }
+}
+
+export interface Page<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
 }
 
 export interface QuestResponse {
@@ -482,12 +550,30 @@ export interface ProgressSummary {
   levelProgress: UserProgressionDto;
 }
 
+export interface AdminCreateUserRequest {
+  username: string;
+  email: string;
+  password?: string;
+  role: 'USER' | 'ADMIN';
+  isEnabled: boolean;
+}
+
+export interface AdminUpdateUserRequest {
+  username?: string;
+  email?: string;
+  password?: string;
+  role?: 'USER' | 'ADMIN';
+  isEnabled?: boolean;
+}
+
 export interface UserDto {
   id: string;
   username: string;
   email: string;
   timezone: string;
   profilePictureUrl: string | null;
+  role: 'USER' | 'ADMIN';
+  isEnabled: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

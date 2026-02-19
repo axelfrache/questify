@@ -8,6 +8,7 @@ import { HabitsPage } from '@/pages/HabitsPage';
 import { AppLayout } from '@/layouts/AppLayout';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { AdminGuard } from '@/components/AdminGuard';
 import {
   InboxPage,
   TodayPage,
@@ -17,6 +18,7 @@ import {
   ProfilePage,
   SettingsPage,
   HistoryPage,
+  AdminSettings,
 } from '@/pages';
 
 const queryClient = new QueryClient({
@@ -56,6 +58,14 @@ function App() {
                 <Route path="/history" element={<HistoryPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminGuard>
+                      <AdminSettings />
+                    </AdminGuard>
+                  }
+                />
               </Route>
             </Routes>
           </AuthProvider>

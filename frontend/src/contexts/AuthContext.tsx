@@ -8,6 +8,7 @@ interface User {
   email: string;
   username: string;
   profilePictureUrl: string | null;
+  role: 'USER' | 'ADMIN';
 }
 
 interface AuthContextType {
@@ -39,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: userDto.email,
           username: userDto.username,
           profilePictureUrl: userDto.profilePictureUrl,
+          role: userDto.role,
         });
       } catch {
         setUser(null);
@@ -60,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       username: response.username,
       profilePictureUrl: response.profilePictureUrl,
+      role: response.role,
     });
   };
 
