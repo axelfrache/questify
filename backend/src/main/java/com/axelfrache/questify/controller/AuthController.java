@@ -29,13 +29,16 @@ public class AuthController {
   private final CookieConfig cookieConfig;
   private final JwtConfig jwtConfig;
   private final UserRepository userRepository;
-  private final com.axelfrache.questify.repository.InstanceSettingsRepository instanceSettingsRepository;
+  private final com.axelfrache.questify.repository.InstanceSettingsRepository
+      instanceSettingsRepository;
 
   @PostMapping("/register")
   public ResponseEntity<AuthResponse> register(
       @Valid @RequestBody RegisterRequest request, HttpServletResponse response) {
-    var settings = instanceSettingsRepository.findFirstByOrderByUpdatedAtDesc()
-        .orElseThrow(() -> new IllegalStateException("Instance settings not initialized"));
+    var settings =
+        instanceSettingsRepository
+            .findFirstByOrderByUpdatedAtDesc()
+            .orElseThrow(() -> new IllegalStateException("Instance settings not initialized"));
 
     if (!settings.isRegistrationEnabled()) {
       return ResponseEntity.status(403).build();

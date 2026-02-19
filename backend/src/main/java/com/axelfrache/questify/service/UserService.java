@@ -46,11 +46,12 @@ public class UserService {
     if (userRepository.existsByUsername(request.username()))
       throw new IllegalArgumentException("Username already exists");
 
-    var user = User.builder()
-        .username(request.username())
-        .email(request.email())
-        .password(passwordEncoder.encode(request.password()))
-        .build();
+    var user =
+        User.builder()
+            .username(request.username())
+            .email(request.email())
+            .password(passwordEncoder.encode(request.password()))
+            .build();
 
     userRepository.save(user);
     return toUserDto(user);
@@ -63,29 +64,35 @@ public class UserService {
     if (userRepository.existsByUsername(request.username()))
       throw new IllegalArgumentException("Username already exists");
 
-    var user = User.builder()
-        .username(request.username())
-        .email(request.email())
-        .password(passwordEncoder.encode(request.password()))
-        .role(request.role() != null ? request.role() : com.axelfrache.questify.model.Role.USER)
-        .isEnabled(request.isEnabled() != null ? request.isEnabled() : true)
-        .build();
+    var user =
+        User.builder()
+            .username(request.username())
+            .email(request.email())
+            .password(passwordEncoder.encode(request.password()))
+            .role(request.role() != null ? request.role() : com.axelfrache.questify.model.Role.USER)
+            .isEnabled(request.isEnabled() != null ? request.isEnabled() : true)
+            .build();
 
     userRepository.save(user);
     return toUserDto(user);
   }
 
   @Transactional
-  public UserDto updateUser(UUID userId, com.axelfrache.questify.dto.AdminUpdateUserRequest request) {
+  public UserDto updateUser(
+      UUID userId, com.axelfrache.questify.dto.AdminUpdateUserRequest request) {
     var user = findUserOrThrow(userId);
 
-    if (request.username() != null && !request.username().isBlank() && !request.username().equals(user.getUsername())) {
+    if (request.username() != null
+        && !request.username().isBlank()
+        && !request.username().equals(user.getUsername())) {
       if (userRepository.existsByUsername(request.username()))
         throw new IllegalArgumentException("Username already exists");
       user.setUsername(request.username());
     }
 
-    if (request.email() != null && !request.email().isBlank() && !request.email().equals(user.getEmail())) {
+    if (request.email() != null
+        && !request.email().isBlank()
+        && !request.email().equals(user.getEmail())) {
       if (userRepository.existsByEmail(request.email()))
         throw new IllegalArgumentException("Email already exists");
       user.setEmail(request.email());
@@ -210,8 +217,7 @@ public class UserService {
 
     while (true) {
       var required = levelConfig.requiredXpForLevel(level);
-      if (accumulated + required > totalXp)
-        break;
+      if (accumulated + required > totalXp) break;
       accumulated += required;
       level++;
     }

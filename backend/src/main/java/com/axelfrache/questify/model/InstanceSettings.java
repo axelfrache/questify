@@ -15,19 +15,19 @@ import org.hibernate.annotations.UpdateTimestamp;
 @AllArgsConstructor
 public class InstanceSettings {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private boolean registrationEnabled = true;
+  @Column(nullable = false)
+  @Builder.Default
+  private boolean registrationEnabled = true;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private boolean initialized = false;
+  @Column(nullable = false)
+  @Builder.Default
+  private boolean initialized = false;
 
-    @UpdateTimestamp
-    @Column(nullable = false)
-    private Instant updatedAt;
+  @UpdateTimestamp
+  @Column(nullable = false)
+  private Instant updatedAt;
 }
