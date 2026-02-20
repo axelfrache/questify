@@ -52,9 +52,7 @@ public class StorageService {
   }
 
   public void deleteFile(String fileUrl) {
-    if (fileUrl == null || fileUrl.isBlank()) {
-      return;
-    }
+    if (fileUrl == null || fileUrl.isBlank()) return;
 
     var key = extractKeyFromUrl(fileUrl);
     if (key != null) {
@@ -65,33 +63,25 @@ public class StorageService {
   }
 
   private void validateFile(MultipartFile file) {
-    if (file == null || file.isEmpty()) {
-      throw new IllegalArgumentException("File is required");
-    }
+    if (file == null || file.isEmpty()) throw new IllegalArgumentException("File is required");
 
-    if (file.getSize() > MAX_FILE_SIZE) {
+    if (file.getSize() > MAX_FILE_SIZE)
       throw new IllegalArgumentException("File size exceeds maximum allowed size of 5MB");
-    }
 
     var contentType = file.getContentType();
-    if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
+    if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType))
       throw new IllegalArgumentException("Invalid file type. Allowed types: JPEG, PNG, WebP, GIF");
-    }
   }
 
   private String getFileExtension(String filename) {
-    if (filename == null || !filename.contains(".")) {
-      return "";
-    }
+    if (filename == null || !filename.contains(".")) return "";
     return filename.substring(filename.lastIndexOf("."));
   }
 
   private String extractKeyFromUrl(String url) {
     var bucketPath = "/" + bucket + "/";
     var index = url.indexOf(bucketPath);
-    if (index == -1) {
-      return null;
-    }
+    if (index == -1) return null;
     return url.substring(index + bucketPath.length());
   }
 }

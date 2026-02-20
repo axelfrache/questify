@@ -51,50 +51,50 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     String clientIp = clientIpResolver.resolve(request);
 
-    if (path.equals("/api/auth/login")) {
-      if (!checkRateLimit("login:ip:" + clientIp, rateLimitConfig.getLoginIpPerMinute())) {
-        sendRateLimitResponse(response, clientIp, "login");
-        return;
-      }
-
-      byte[] body = request.getInputStream().readAllBytes();
-      String email = extractEmailFromBody(body);
-
-      if (email != null) {
-        String emailKey = "login:email:" + clientIp + ":" + normalizeEmail(email);
-        if (!checkRateLimit(emailKey, rateLimitConfig.getLoginEmailPerMinute())) {
+    switch (path) {
+      case "/api/auth/login" -> {
+        if (!checkRateLimit("login:ip:" + clientIp, rateLimitConfig.getLoginIpPerMinute())) {
           sendRateLimitResponse(response, clientIp, "login");
           return;
         }
-      }
 
-      filterChain.doFilter(new CachedBodyRequest(request, body), response);
-      return;
-    }
+        var body = request.getInputStream().readAllBytes();
+        String email = extractEmailFromBody(body);
 
-    if (path.equals("/api/auth/register")) {
-      if (!checkRateLimit("register:ip:" + clientIp, rateLimitConfig.getRegisterIpPerMinute())) {
-        sendRateLimitResponse(response, clientIp, "register");
+        if (email != null) {
+          var emailKey = "login:email:" + clientIp + ":" + normalizeEmail(email);
+          if (!checkRateLimit(emailKey, rateLimitConfig.getLoginEmailPerMinute())) {
+            sendRateLimitResponse(response, clientIp, "login");
+            return;
+          }
+        }
+
+        filterChain.doFilter(new CachedBodyRequest(request, body), response);
         return;
       }
-      filterChain.doFilter(request, response);
-      return;
-    }
-
-    if (path.equals("/api/auth/refresh")) {
-      if (!checkRateLimit("refresh:ip:" + clientIp, rateLimitConfig.getRefreshIpPerMinute())) {
-        sendRateLimitResponse(response, clientIp, "refresh");
+      case "/api/auth/register" -> {
+        if (!checkRateLimit("register:ip:" + clientIp, rateLimitConfig.getRegisterIpPerMinute())) {
+          sendRateLimitResponse(response, clientIp, "register");
+          return;
+        }
+        filterChain.doFilter(request, response);
         return;
       }
-      filterChain.doFilter(request, response);
-      return;
+      case "/api/auth/refresh" -> {
+        if (!checkRateLimit("refresh:ip:" + clientIp, rateLimitConfig.getRefreshIpPerMinute())) {
+          sendRateLimitResponse(response, clientIp, "refresh");
+          return;
+        }
+        filterChain.doFilter(request, response);
+        return;
+      }
     }
 
     filterChain.doFilter(request, response);
   }
 
   private boolean checkRateLimit(String key, int tokensPerMinute) {
-    Bucket bucket =
+    var bucket =
         buckets.computeIfAbsent(
             key,
             k ->
@@ -123,13 +123,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
   private String extractEmailFromBody(byte[] body) {
     try {
-      if (body.length == 0) {
-        return null;
-      }
+      if (body.length == 0) return null;
       var jsonNode = objectMapper.readTree(body);
-      if (jsonNode.has("email")) {
-        return jsonNode.get("email").asText();
-      }
+      if (jsonNode.has("email")) return jsonNode.get("email").asText();
     } catch (Exception e) {
       log.debug("Could not extract email from request body");
     }
@@ -142,10 +138,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
   private String maskIp(String ip) {
     if (ip == null) return "unknown";
-    int lastDot = ip.lastIndexOf('.');
-    if (lastDot > 0) {
-      return ip.substring(0, lastDot) + ".xxx";
-    }
+    var lastDot = ip.lastIndexOf('.');
+    if (lastDot > 0) return ip.substring(0, lastDot) + ".xxx";
     return ip;
   }
 
