@@ -2,10 +2,12 @@ package com.axelfrache.questify.controller;
 
 import com.axelfrache.questify.dto.UserDto;
 import com.axelfrache.questify.model.InstanceSettings;
+import com.axelfrache.questify.model.Role;
 import com.axelfrache.questify.model.User;
 import com.axelfrache.questify.repository.InstanceSettingsRepository;
 import com.axelfrache.questify.repository.UserRepository;
 import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,9 +39,8 @@ public class AdminController {
             .findFirstByOrderByUpdatedAtDesc()
             .orElseThrow(() -> new IllegalStateException("Instance settings not initialized"));
 
-    if (updates.containsKey("registrationEnabled")) {
+    if (updates.containsKey("registrationEnabled"))
       settings.setRegistrationEnabled(updates.get("registrationEnabled"));
-    }
 
     return ResponseEntity.ok(instanceSettingsRepository.save(settings));
   }
@@ -52,9 +53,7 @@ public class AdminController {
       users =
           userRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(
               query, query, pageable);
-    } else {
-      users = userRepository.findAll(pageable);
-    }
+    } else users = userRepository.findAll(pageable);
     return ResponseEntity.ok(users.map(this::mapToDto));
   }
 
@@ -79,29 +78,24 @@ public class AdminController {
 
   @PutMapping("/users/{id}")
   public ResponseEntity<UserDto> updateUser(
-      @PathVariable java.util.UUID id,
+      @PathVariable UUID id,
       @RequestBody @jakarta.validation.Valid com.axelfrache.questify.dto.AdminUpdateUserRequest request) {
     return ResponseEntity.ok(userService.updateUser(id, request));
   }
 
   @PatchMapping("/users/{id}/status")
   public ResponseEntity<UserDto> updateUserStatus(
-      @PathVariable java.util.UUID id, @RequestBody Map<String, Boolean> statusUpdate) {
-    if (!statusUpdate.containsKey("isEnabled")) {
-      return ResponseEntity.badRequest().build();
-    }
+      @PathVariable UUID id, @RequestBody Map<String, Boolean> statusUpdate) {
+    if (!statusUpdate.containsKey("isEnabled")) return ResponseEntity.badRequest().build();
     return ResponseEntity.ok(userService.updateUserStatus(id, statusUpdate.get("isEnabled")));
   }
 
   @PatchMapping("/users/{id}/role")
   public ResponseEntity<UserDto> updateUserRole(
-      @PathVariable java.util.UUID id, @RequestBody Map<String, String> roleUpdate) {
-    if (!roleUpdate.containsKey("role")) {
-      return ResponseEntity.badRequest().build();
-    }
+      @PathVariable UUID id, @RequestBody Map<String, String> roleUpdate) {
+    if (!roleUpdate.containsKey("role")) return ResponseEntity.badRequest().build();
     try {
-      com.axelfrache.questify.model.Role role =
-          com.axelfrache.questify.model.Role.valueOf(roleUpdate.get("role"));
+      var role = Role.valueOf(roleUpdate.get("role"));
       return ResponseEntity.ok(userService.updateUserRole(id, role));
     } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest().build();
@@ -112,14 +106,12 @@ public class AdminController {
   public ResponseEntity<Void> deleteUser(
       @PathVariable java.util.UUID id,
       @org.springframework.security.core.annotation.AuthenticationPrincipal User currentUser) {
-    User user =
+    var user =
         userRepository
             .findById(id)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-    if (currentUser.getId().equals(id)) {
-      return ResponseEntity.badRequest().build();
-    }
+    if (currentUser.getId().equals(id)) return ResponseEntity.badRequest().build();
 
     userService.forceDeleteUser(id);
     return ResponseEntity.noContent().build();
