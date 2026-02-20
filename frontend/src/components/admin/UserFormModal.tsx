@@ -82,21 +82,17 @@ export function UserFormModal({ open, onOpenChange, user, onSubmit }: UserFormMo
         isEnabled: true,
         password: '',
       });
-      setChangePassword(true); // Always require password for new users
+      setChangePassword(true);
     }
-  }, [user, form, open]); // Added open to dependency to reset when re-opening for create? verification needed
+  }, [user, form, open]);
 
   const handleSubmit = async (data: UserFormValues) => {
-    // Validation for password
     if (!user && !data.password) {
       form.setError('password', { message: 'Password is required for new users' });
       return;
     }
     if (user && changePassword && (!data.password || data.password.length < 8)) {
-      if (changePassword && !data.password) {
-        // If user unchecked changePassword this wouldn't trigger ideally, but logic below handles omit
-      } else {
-        // If changing password, must be valid
+      if (!(changePassword && !data.password)) {
         if (data.password && data.password.length < 8) {
           form.setError('password', { message: 'Password must be at least 8 characters' });
           return;
@@ -119,7 +115,6 @@ export function UserFormModal({ open, onOpenChange, user, onSubmit }: UserFormMo
       await onSubmit(payload);
       onOpenChange(false);
     } catch (error) {
-      // Handled by parent or set generic error
       console.error(error);
     }
   };
