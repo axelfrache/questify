@@ -166,12 +166,12 @@ export function AdminSettings() {
               <CardTitle>Registration Control</CardTitle>
               <CardDescription>Manage user registration access.</CardDescription>
             </CardHeader>
-            <CardContent className="flex items-center justify-between">
+            <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
                 <span className="font-medium">User Registration</span>
                 <p className="text-sm text-muted-foreground">Allow new users to create accounts</p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 self-start sm:self-auto">
                 <span className="text-sm text-muted-foreground">
                   {settings?.registrationEnabled ? 'Enabled' : 'Disabled'}
                 </span>
@@ -185,12 +185,12 @@ export function AdminSettings() {
         </section>
 
         <section>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Users className="h-5 w-5" />
               Users Management
             </h2>
-            <Button onClick={handleCreateClick}>
+            <Button onClick={handleCreateClick} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Add User
             </Button>
@@ -201,7 +201,7 @@ export function AdminSettings() {
               <CardDescription>A list of all users registered on this instance.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
+              <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
