@@ -83,7 +83,6 @@ export function AdminSettings() {
       }
       loadData();
     } catch (err: unknown) {
-      // Re-throw to let modal handle it if needed, or set error here
       const error = err as { message: string };
       setError(error.message || 'Operation failed');
       throw err;
@@ -91,7 +90,6 @@ export function AdminSettings() {
   };
 
   const toggleUserStatus = async (user: UserDto) => {
-    // Prevent disabling self
     if (currentUser?.id === user.id) {
       return;
     }
