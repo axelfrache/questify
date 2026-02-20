@@ -33,6 +33,15 @@ public class User {
   @NotBlank @Column(nullable = false)
   private String password;
 
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  @Builder.Default
+  private Role role = Role.USER;
+
+  @Builder.Default
+  @Column(nullable = false)
+  private boolean isEnabled = true;
+
   @Builder.Default
   @Column(nullable = false)
   private long totalXp = 0;

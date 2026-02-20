@@ -58,10 +58,7 @@ public class StatsService {
     var weekStart = today.minusDays(6);
 
     var dailyBreakdown = new ArrayList<DailyStats>();
-    for (var i = 0; i < 7; i++) {
-      dailyBreakdown.add(getDailyStats(userId, weekStart.plusDays(i)));
-    }
-
+    for (var i = 0; i < 7; i++) dailyBreakdown.add(getDailyStats(userId, weekStart.plusDays(i)));
     var totalQuests = dailyBreakdown.stream().mapToInt(DailyStats::questsCompleted).sum();
     var totalXp = dailyBreakdown.stream().mapToLong(DailyStats::xpEarned).sum();
     var average = totalQuests / 7.0;
@@ -264,9 +261,8 @@ public class StatsService {
     var lastDay = firstDay.withDayOfMonth(firstDay.lengthOfMonth());
 
     var rates = new ArrayList<DailyCompletionRate>();
-    for (var date = firstDay; !date.isAfter(lastDay); date = date.plusDays(1)) {
+    for (var date = firstDay; !date.isAfter(lastDay); date = date.plusDays(1))
       rates.add(getDailyCompletionRate(userId, date));
-    }
 
     return rates;
   }

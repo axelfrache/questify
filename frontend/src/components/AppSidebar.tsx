@@ -11,16 +11,19 @@ import {
   TrendingUp,
   BarChart3,
   History,
+  Shield,
 } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import {
   DropdownMenu,
@@ -138,6 +141,23 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      {user?.role === 'ADMIN' && (
+        <>
+          <SidebarSeparator className="mx-0" />
+          <SidebarFooter>
+            <SidebarMenu>
+              <SidebarMenuItem key="Admin">
+                <SidebarMenuButton asChild isActive={isActive('/admin')}>
+                  <Link to="/admin" className="flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    <span>Admin</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarFooter>
+        </>
+      )}
     </Sidebar>
   );
 }

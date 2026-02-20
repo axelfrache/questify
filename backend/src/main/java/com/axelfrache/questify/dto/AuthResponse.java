@@ -7,4 +7,5 @@ public record AuthResponse(
     String refreshToken,
     UUID userId,
     String username,
-    String profilePictureUrl) {}
+    String profilePictureUrl,
+    com.axelfrache.questify.model.Role role) {}

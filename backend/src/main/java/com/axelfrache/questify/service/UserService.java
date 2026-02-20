@@ -1,6 +1,7 @@
 package com.axelfrache.questify.service;
 
 import com.axelfrache.questify.config.LevelConfig;
+import com.axelfrache.questify.dto.ChangePasswordRequest;
 import com.axelfrache.questify.dto.UpdateUserRequest;
 import com.axelfrache.questify.dto.UserDto;
 import com.axelfrache.questify.dto.UserProgressionDto;
@@ -39,6 +40,92 @@ public class UserService {
     return toUserDto(user);
   }
 
+  @Transactional
+  public UserDto createUser(com.axelfrache.questify.dto.RegisterRequest request) {
+    if (userRepository.existsByEmail(request.email()))
+      throw new IllegalArgumentException("Email already exists");
+    if (userRepository.existsByUsername(request.username()))
+      throw new IllegalArgumentException("Username already exists");
+
+    var user =
+        User.builder()
+            .username(request.username())
+            .email(request.email())
+            .password(passwordEncoder.encode(request.password()))
+            .build();
+
+    userRepository.save(user);
+    return toUserDto(user);
+  }
+
+  @Transactional
+  public UserDto createUser(com.axelfrache.questify.dto.AdminCreateUserRequest request) {
+    if (userRepository.existsByEmail(request.email()))
+      throw new IllegalArgumentException("Email already exists");
+    if (userRepository.existsByUsername(request.username()))
+      throw new IllegalArgumentException("Username already exists");
+
+    var user =
+        User.builder()
+            .username(request.username())
+            .email(request.email())
+            .password(passwordEncoder.encode(request.password()))
+            .role(request.role() != null ? request.role() : com.axelfrache.questify.model.Role.USER)
+            .isEnabled(request.isEnabled() != null ? request.isEnabled() : true)
+            .build();
+
+    userRepository.save(user);
+    return toUserDto(user);
+  }
+
+  @Transactional
+  public UserDto updateUser(
+      UUID userId, com.axelfrache.questify.dto.AdminUpdateUserRequest request) {
+    var user = findUserOrThrow(userId);
+
+    if (request.username() != null
+        && !request.username().isBlank()
+        && !request.username().equals(user.getUsername())) {
+      if (userRepository.existsByUsername(request.username()))
+        throw new IllegalArgumentException("Username already exists");
+      user.setUsername(request.username());
+    }
+
+    if (request.email() != null
+        && !request.email().isBlank()
+        && !request.email().equals(user.getEmail())) {
+      if (userRepository.existsByEmail(request.email()))
+        throw new IllegalArgumentException("Email already exists");
+      user.setEmail(request.email());
+    }
+
+    if (request.role() != null) user.setRole(request.role());
+
+    if (request.isEnabled() != null) user.setEnabled(request.isEnabled());
+
+    if (request.password() != null && !request.password().isBlank())
+      user.setPassword(passwordEncoder.encode(request.password()));
+
+    userRepository.save(user);
+    return toUserDto(user);
+  }
+
+  @Transactional
+  public UserDto updateUserStatus(UUID userId, boolean isEnabled) {
+    var user = findUserOrThrow(userId);
+    user.setEnabled(isEnabled);
+    userRepository.save(user);
+    return toUserDto(user);
+  }
+
+  @Transactional
+  public UserDto updateUserRole(UUID userId, com.axelfrache.questify.model.Role role) {
+    var user = findUserOrThrow(userId);
+    user.setRole(role);
+    userRepository.save(user);
+    return toUserDto(user);
+  }
+
   @Transactional(readOnly = true)
   public UserProgressionDto getUserProgression(UUID id) {
     var user = findUserOrThrow(id);
@@ -51,9 +138,8 @@ public class UserService {
 
     if (request.username() != null && !request.username().isBlank()) {
       if (!request.username().equals(user.getUsername())
-          && userRepository.existsByUsername(request.username())) {
+          && userRepository.existsByUsername(request.username()))
         throw new IllegalArgumentException("Username already exists");
-      }
       user.setUsername(request.username());
     }
 
@@ -70,8 +156,7 @@ public class UserService {
   }
 
   @Transactional
-  public void changePassword(
-      UUID userId, com.axelfrache.questify.dto.ChangePasswordRequest request) {
+  public void changePassword(UUID userId, ChangePasswordRequest request) {
     var user = findUserOrThrow(userId);
 
     if (!passwordEncoder.matches(request.currentPassword(), user.getPassword()))
@@ -85,20 +170,27 @@ public class UserService {
   public void deleteAccount(UUID userId, String password) {
     var user = findUserOrThrow(userId);
 
-    if (!passwordEncoder.matches(password, user.getPassword())) {
+    if (!passwordEncoder.matches(password, user.getPassword()))
       throw new IllegalArgumentException("Password is incorrect");
-    }
 
-    if (user.getProfilePictureUrl() != null) {
-      storageService.deleteFile(user.getProfilePictureUrl());
-    }
+    performDelete(user);
+  }
+
+  @Transactional
+  public void forceDeleteUser(UUID userId) {
+    var user = findUserOrThrow(userId);
+    performDelete(user);
+  }
+
+  private void performDelete(User user) {
+    if (user.getProfilePictureUrl() != null) storageService.deleteFile(user.getProfilePictureUrl());
 
     userAchievementRepository.deleteAllByUser(user);
     refreshTokenRepository.deleteByUser(user);
     questTemplateRepository.nullifyParentForUser(user);
     questTemplateRepository.deleteAllByUser(user);
     categoryRepository.deleteAllByUser(user);
-    questHistoryRepository.deleteAllByUserId(userId);
+    questHistoryRepository.deleteAllByUserId(user.getId());
 
     userRepository.delete(user);
   }
@@ -128,9 +220,7 @@ public class UserService {
     var level = calculateLevel(totalXp);
     var xpAtLevelStart = 0L;
 
-    for (var i = 1; i < level; i++) {
-      xpAtLevelStart += levelConfig.requiredXpForLevel(i);
-    }
+    for (var i = 1; i < level; i++) xpAtLevelStart += levelConfig.requiredXpForLevel(i);
 
     return totalXp - xpAtLevelStart;
   }
@@ -157,9 +247,7 @@ public class UserService {
       UUID userId, org.springframework.web.multipart.MultipartFile file) {
     var user = findUserOrThrow(userId);
 
-    if (user.getProfilePictureUrl() != null) {
-      storageService.deleteFile(user.getProfilePictureUrl());
-    }
+    if (user.getProfilePictureUrl() != null) storageService.deleteFile(user.getProfilePictureUrl());
 
     var url = storageService.uploadProfilePicture(userId, file);
     user.setProfilePictureUrl(url);
@@ -189,7 +277,9 @@ public class UserService {
         user.getTimezone(),
         user.getProfilePictureUrl(),
         user.getCreatedAt(),
-        user.getUpdatedAt());
+        user.getUpdatedAt(),
+        user.getRole(),
+        user.isEnabled());
   }
 
   private UserProgressionDto toProgressionDto(User user) {

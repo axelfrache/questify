@@ -1,0 +1,18 @@
+package com.axelfrache.questify.dto;
+
+import com.axelfrache.questify.model.Role;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
+public record AdminCreateUserRequest(
+    @NotBlank @Size(min = 3, max = 50) String username,
+    @Email @NotBlank String email,
+    @NotBlank @Size(min = 8) @Pattern(
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$",
+            message = "Password must contain uppercase, lowercase, and digit")
+        String password,
+    Role role,
+    @JsonProperty("isEnabled") Boolean isEnabled) {}

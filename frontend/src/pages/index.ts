@@ -11,3 +11,4 @@ export * from './LoginPage';
 export * from './SignupPage';
 export * from './RegionsPage';
 export * from './HabitsPage';
+export * from './admin/AdminSettings';

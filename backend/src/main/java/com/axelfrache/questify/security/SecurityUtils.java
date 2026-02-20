@@ -26,8 +26,7 @@ public class SecurityUtils {
 
   public void validateOwnership(UserDetails userDetails, UUID targetUserId) {
     var currentUserId = getCurrentUserId(userDetails);
-    if (!currentUserId.equals(targetUserId)) {
+    if (!currentUserId.equals(targetUserId))
       throw new AccessDeniedException("Access denied to this resource");
-    }
   }
 }

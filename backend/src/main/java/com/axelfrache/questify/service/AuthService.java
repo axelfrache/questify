@@ -81,9 +81,8 @@ public class AuthService {
             .findByToken(request.refreshToken())
             .orElseThrow(() -> new IllegalArgumentException("Invalid refresh token"));
 
-    if (!refreshToken.isValid()) {
+    if (!refreshToken.isValid())
       throw new IllegalArgumentException("Refresh token is expired or revoked");
-    }
 
     var user = refreshToken.getUser();
 
@@ -128,6 +127,7 @@ public class AuthService {
         refreshTokenValue,
         user.getId(),
         user.getUsername(),
-        user.getProfilePictureUrl());
+        user.getProfilePictureUrl(),
+        user.getRole());
   }
 }
