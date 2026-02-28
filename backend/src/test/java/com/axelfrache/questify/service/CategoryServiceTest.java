@@ -96,8 +96,9 @@ class CategoryServiceTest {
 
     var request = new CreateCategoryRequest("New Name", "star", "#00FF00");
     when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+    when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
 
-    var response = categoryService.update(categoryId, request);
+    var response = categoryService.update(categoryId, request, userId);
 
     assertEquals("New Name", response.name());
     assertEquals("star", response.icon());
@@ -111,7 +112,8 @@ class CategoryServiceTest {
     var request = new CreateCategoryRequest("Name", "icon", "#000000");
     when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
 
-    assertThrows(IllegalArgumentException.class, () -> categoryService.update(categoryId, request));
+    assertThrows(
+        IllegalArgumentException.class, () -> categoryService.update(categoryId, request, userId));
   }
 
   @Test
@@ -122,8 +124,28 @@ class CategoryServiceTest {
 
     var request = new CreateCategoryRequest("New Name", "icon", "#000000");
     when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+    when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
 
-    assertThrows(IllegalStateException.class, () -> categoryService.update(categoryId, request));
+    assertThrows(
+        IllegalStateException.class, () -> categoryService.update(categoryId, request, userId));
+  }
+
+  @Test
+  void update_shouldThrow_whenNotOwner() {
+    var categoryId = UUID.randomUUID();
+    var otherUser = new User();
+    otherUser.setId(UUID.randomUUID());
+
+    var category = createCategory("Work", false);
+    category.setId(categoryId);
+    category.setUser(otherUser);
+
+    var request = new CreateCategoryRequest("New Name", "icon", "#000000");
+    when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+    when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+
+    assertThrows(
+        IllegalStateException.class, () -> categoryService.update(categoryId, request, userId));
   }
 
   @Test

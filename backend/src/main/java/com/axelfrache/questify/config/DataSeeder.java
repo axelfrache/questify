@@ -20,18 +20,8 @@ public class DataSeeder implements CommandLineRunner {
 
   @Override
   public void run(String... args) {
-    // seedGlobalCategories();
     seedAchievements();
   }
-
-  // private void seedGlobalCategories() {
-  // createGlobalCategoryIfNotExists("Health & Fitness", "🏃", "#10B981");
-  // createGlobalCategoryIfNotExists("Work & Career", "💼", "#3B82F6");
-  // createGlobalCategoryIfNotExists("Learning & Growth", "📚", "#8B5CF6");
-  // createGlobalCategoryIfNotExists("Home & Life", "🏠", "#F59E0B");
-  // createGlobalCategoryIfNotExists("Finance", "💰", "#059669");
-  // createGlobalCategoryIfNotExists("Hobbies", "🎨", "#EC4899");
-  // }
 
   private void seedAchievements() {
     createGeneralAchievement("FIRST_STEP", "The First Step", "Complete your first quest", "🎯", 1);
@@ -57,14 +47,6 @@ public class DataSeeder implements CommandLineRunner {
           "🎖️",
           50,
           category);
-    }
-  }
-
-  private void createGlobalCategoryIfNotExists(String name, String icon, String color) {
-    if (!categoryRepository.existsByNameAndUserIsNull(name)) {
-      var category = Category.builder().name(name).icon(icon).color(color).user(null).build();
-      categoryRepository.save(category);
-      log.info("Created global category: {}", name);
     }
   }
 

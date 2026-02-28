@@ -47,7 +47,7 @@ public class HistoryMigrationService implements CommandLineRunner {
               .title(template.getTitle())
               .description(template.getDescription())
               .difficulty(template.getDifficulty())
-              .xpEarned(occurrence.getXpEarned()) // Use actual XP earned
+              .xpEarned(occurrence.getXpEarned())
               .completedAt(occurrence.getCompletedAt())
               .categoryName(
                   template.getCategory() != null ? template.getCategory().getName() : null)

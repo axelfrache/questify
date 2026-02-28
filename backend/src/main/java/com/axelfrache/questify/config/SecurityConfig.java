@@ -11,8 +11,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -20,7 +18,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -38,7 +35,6 @@ public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final RateLimitFilter rateLimitFilter;
-  private final UserDetailsService userDetailsService;
   private final Environment environment;
 
   @Value("${questify.jwt.secret:}")
@@ -67,9 +63,7 @@ public class SecurityConfig {
         .authorizeHttpRequests(
             auth -> {
               auth.requestMatchers("/api/auth/**").permitAll();
-              auth.requestMatchers(
-                      "/actuator/health", "/actuator/health/**", "/actuator/prometheus")
-                  .permitAll();
+              auth.requestMatchers("/actuator/health", "/actuator/health/**").permitAll();
               auth.requestMatchers("/actuator/**").denyAll();
               auth.requestMatchers("/api/admin/**").hasRole("ADMIN");
 
@@ -87,7 +81,6 @@ public class SecurityConfig {
             })
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authenticationProvider(authenticationProvider())
         .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .headers(
@@ -112,13 +105,6 @@ public class SecurityConfig {
     var source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", config);
     return source;
-  }
-
-  @Bean
-  public AuthenticationProvider authenticationProvider() {
-    var provider = new DaoAuthenticationProvider(userDetailsService);
-    provider.setPasswordEncoder(passwordEncoder());
-    return provider;
   }
 
   @Bean

@@ -50,10 +50,14 @@ public class CategoryService {
   }
 
   @Transactional
-  public CategoryResponse update(UUID categoryId, CreateCategoryRequest request) {
+  public CategoryResponse update(UUID categoryId, CreateCategoryRequest request, UUID userId) {
     var category = findCategoryOrThrow(categoryId);
+    var user = findUserOrThrow(userId);
 
     if (category.isGlobal()) throw new IllegalStateException("Cannot update global category");
+    if (category.getUser() == null || !category.getUser().getId().equals(user.getId())) {
+      throw new IllegalStateException("Cannot update category that doesn't belong to you");
+    }
 
     if (request.name() != null) category.setName(request.name());
     if (request.icon() != null) category.setIcon(request.icon());

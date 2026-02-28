@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -28,7 +29,7 @@ public class QuestController {
       @AuthenticationPrincipal UserDetails userDetails,
       @Valid @RequestBody CreateQuestRequest request) {
     var userId = securityUtils.getCurrentUserId(userDetails);
-    return ResponseEntity.ok(questService.create(userId, request));
+    return ResponseEntity.status(HttpStatus.CREATED).body(questService.create(userId, request));
   }
 
   @GetMapping

@@ -21,10 +21,10 @@ public class AdminBootstrap implements CommandLineRunner {
   private final InstanceSettingsRepository instanceSettingsRepository;
   private final PasswordEncoder passwordEncoder;
 
-  @Value("${questify.admin.email:admin@example.com}")
+  @Value("${questify.admin.email:}")
   private String adminEmail;
 
-  @Value("${questify.admin.password:admin}")
+  @Value("${questify.admin.password:}")
   private String adminPassword;
 
   @Override
@@ -42,30 +42,31 @@ public class AdminBootstrap implements CommandLineRunner {
   }
 
   private void initializeAdminUser() {
-    if (userRepository.count() == 0) {
-      log.info("No users found. Creating initial admin user...");
-
-      User admin =
-          User.builder()
-              .username("admin")
-              .email(adminEmail)
-              .password(passwordEncoder.encode(adminPassword))
-              .role(Role.ADMIN)
-              .build();
-
-      userRepository.save(admin);
-
-      log.info("=================================================");
-      log.info("ADMIN USER CREATED");
-      log.info("Email: {}", adminEmail);
-      log.info("Password: {}", adminPassword);
-      log.info("PLEASE CHANGE THIS PASSWORD IMMEDIATELY AFTER LOGIN");
-      log.info("=================================================");
-
-      InstanceSettings settings =
-          instanceSettingsRepository.findFirstByOrderByUpdatedAtDesc().orElseThrow();
-      settings.setInitialized(true);
-      instanceSettingsRepository.save(settings);
+    if (userRepository.count() != 0) {
+      return;
     }
+
+    if (adminEmail.isBlank() || adminPassword.isBlank()) {
+      log.warn("Initial admin user not created because questify.admin.email/password are not set");
+      return;
+    }
+
+    log.info("No users found. Creating initial admin user...");
+
+    User admin =
+        User.builder()
+            .username("admin")
+            .email(adminEmail)
+            .password(passwordEncoder.encode(adminPassword))
+            .role(Role.ADMIN)
+            .build();
+
+    userRepository.save(admin);
+    log.info("Initial admin user created: {}", adminEmail);
+
+    InstanceSettings settings =
+        instanceSettingsRepository.findFirstByOrderByUpdatedAtDesc().orElseThrow();
+    settings.setInitialized(true);
+    instanceSettingsRepository.save(settings);
   }
 }

@@ -107,7 +107,7 @@ public class AuthService {
         org.springframework.security.core.userdetails.User.builder()
             .username(user.getEmail())
             .password(user.getPassword())
-            .authorities("ROLE_USER")
+            .authorities("ROLE_" + user.getRole().name())
             .build();
 
     var accessToken = jwtService.generateAccessToken(userDetails);

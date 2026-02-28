@@ -1,7 +1,7 @@
 package com.axelfrache.questify.controller;
 
 import com.axelfrache.questify.model.QuestHistory;
-import com.axelfrache.questify.repository.UserRepository;
+import com.axelfrache.questify.security.SecurityUtils;
 import com.axelfrache.questify.service.HistoryService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -17,15 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class HistoryController {
 
   private final HistoryService historyService;
-  private final UserRepository userRepository;
+  private final SecurityUtils securityUtils;
 
   @GetMapping
   public List<QuestHistory> getHistory(@AuthenticationPrincipal UserDetails userDetails) {
-    var userId =
-        userRepository
-            .findByEmail(userDetails.getUsername())
-            .orElseThrow(() -> new IllegalArgumentException("User not found"))
-            .getId();
+    var userId = securityUtils.getCurrentUserId(userDetails);
     return historyService.getUserHistory(userId);
   }
 }

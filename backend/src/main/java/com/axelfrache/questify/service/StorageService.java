@@ -19,7 +19,7 @@ public class StorageService {
   private static final Set<String> ALLOWED_CONTENT_TYPES =
       Set.of("image/jpeg", "image/png", "image/webp", "image/gif");
 
-  private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
 
   private final S3Client s3Client;
 
