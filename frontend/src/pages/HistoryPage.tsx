@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { useHistory } from '@/hooks/use-api';
 import { format, isToday, isYesterday, isSameYear } from 'date-fns';
 import {
   CheckCircle2,
@@ -22,30 +21,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { DifficultyChip } from '@/components/ui/quest-meta-chip';
-import type { DifficultyLevel } from '@/lib/quest-config';
-
-interface QuestHistory {
-  id: string;
-  title: string;
-  description: string;
-  difficulty: DifficultyLevel;
-  xpEarned: number;
-  completedAt: string;
-  categoryName?: string;
-  categoryIcon?: string;
-  categoryColor?: string;
-  recurrenceType: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
-  parentTitle?: string;
-}
+import type { QuestHistory } from '@/lib/api';
 
 export function HistoryPage() {
-  const { data: history, isLoading } = useQuery<QuestHistory[]>({
-    queryKey: ['history'],
-    queryFn: async () => {
-      const response = await api.get<QuestHistory[]>('/api/history');
-      return response;
-    },
-  });
+  const { data: history, isLoading } = useHistory();
 
   const [filterType, setFilterType] = useState<string>('ALL');
 

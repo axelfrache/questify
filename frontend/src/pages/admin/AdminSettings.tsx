@@ -1,11 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
-  api,
   type UserDto,
   type AdminCreateUserRequest,
   type AdminUpdateUserRequest,
-} from '../../lib/api';
-import { useAuth } from '../../contexts/AuthContext';
+  ApiError,
+} from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  useAdminCreateUser,
+  useAdminDeleteUser,
+  useAdminSettings,
+  useAdminUpdateUser,
+  useAdminUpdateUserStatus,
+  useAdminUsers,
+  useUpdateAdminSettings,
+} from '@/hooks/use-api';
 import {
   Table,
   TableBody,
@@ -25,42 +34,38 @@ import { Separator } from '@/components/ui/separator';
 import { UserFormModal } from '@/components/admin/UserFormModal';
 
 export function AdminSettings() {
-  const [users, setUsers] = useState<UserDto[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [settings, setSettings] = useState<{ registrationEnabled: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
   const { user: currentUser } = useAuth();
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const { data: settings, isLoading: isLoadingSettings } = useAdminSettings();
+  const { data: usersPage, isLoading: isLoadingUsers } = useAdminUsers(0, '');
+  const updateSettingsMutation = useUpdateAdminSettings();
+  const adminCreateUserMutation = useAdminCreateUser();
+  const adminUpdateUserMutation = useAdminUpdateUser();
+  const adminUpdateUserStatusMutation = useAdminUpdateUserStatus();
+  const adminDeleteUserMutation = useAdminDeleteUser();
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [settingsData, usersPage] = await Promise.all([api.getSettings(), api.getUsers()]);
-      setSettings(settingsData);
-      setUsers(usersPage.content);
-    } catch (err: unknown) {
-      const error = err as { message: string; userData?: { message: string } };
-      setError(error.userData?.message || error.message || 'Failed to load admin data');
-    } finally {
-      setLoading(false);
+  const users = usersPage?.content ?? [];
+  const loading = isLoadingSettings || isLoadingUsers;
+
+  const getErrorMessage = (err: unknown, fallback: string) => {
+    if (err instanceof ApiError || err instanceof Error) {
+      return err.message;
     }
+    return fallback;
   };
 
   const toggleRegistration = async () => {
     if (!settings) return;
     try {
-      const updated = await api.updateSettings({
+      setError(null);
+      await updateSettingsMutation.mutateAsync({
         registrationEnabled: !settings.registrationEnabled,
       });
-      setSettings(updated);
     } catch (err: unknown) {
-      const error = err as { message: string; userData?: { message: string } };
-      setError(error.userData?.message || error.message || 'Failed to update settings');
+      setError(getErrorMessage(err, 'Failed to update settings'));
     }
   };
 
@@ -76,15 +81,18 @@ export function AdminSettings() {
 
   const handleUserFormSubmit = async (data: AdminCreateUserRequest | AdminUpdateUserRequest) => {
     try {
+      setError(null);
       if (selectedUser) {
-        await api.adminUpdateUser(selectedUser.id, data as AdminUpdateUserRequest);
+        await adminUpdateUserMutation.mutateAsync({
+          id: selectedUser.id,
+          data: data as AdminUpdateUserRequest,
+        });
       } else {
-        await api.adminCreateUser(data as AdminCreateUserRequest);
+        await adminCreateUserMutation.mutateAsync(data as AdminCreateUserRequest);
       }
-      loadData();
     } catch (err: unknown) {
-      const error = err as { message: string };
-      setError(error.message || 'Operation failed');
+      const message = getErrorMessage(err, 'Operation failed');
+      setError(message);
       throw err;
     }
   };
@@ -94,11 +102,13 @@ export function AdminSettings() {
       return;
     }
     try {
-      await api.adminUpdateUserStatus(user.id, !user.isEnabled);
-      loadData();
+      setError(null);
+      await adminUpdateUserStatusMutation.mutateAsync({
+        id: user.id,
+        isEnabled: !user.isEnabled,
+      });
     } catch (err: unknown) {
-      const error = err as { message: string };
-      setError(error.message || 'Failed to update user status');
+      setError(getErrorMessage(err, 'Failed to update user status'));
     }
   };
 
@@ -109,11 +119,10 @@ export function AdminSettings() {
       return;
     }
     try {
-      await api.adminDeleteUser(userId);
-      loadData(); // Reload list
+      setError(null);
+      await adminDeleteUserMutation.mutateAsync(userId);
     } catch (err: unknown) {
-      const error = err as { message: string };
-      setError(error.message || 'Failed to delete user');
+      setError(getErrorMessage(err, 'Failed to delete user'));
     }
   };
 
@@ -176,6 +185,7 @@ export function AdminSettings() {
                 <Switch
                   checked={settings?.registrationEnabled}
                   onCheckedChange={toggleRegistration}
+                  disabled={updateSettingsMutation.isPending}
                 />
               </div>
             </CardContent>
@@ -256,7 +266,9 @@ export function AdminSettings() {
                             <Switch
                               checked={u.isEnabled}
                               onCheckedChange={() => toggleUserStatus(u)}
-                              disabled={currentUser.id === u.id}
+                              disabled={
+                                currentUser.id === u.id || adminUpdateUserStatusMutation.isPending
+                              }
                             />
 
                             <Button variant="ghost" size="icon" onClick={() => handleEditClick(u)}>
@@ -269,7 +281,9 @@ export function AdminSettings() {
                               size="icon"
                               className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
                               onClick={() => handleDeleteUser(u.id)}
-                              disabled={currentUser.id === u.id}
+                              disabled={
+                                currentUser.id === u.id || adminDeleteUserMutation.isPending
+                              }
                             >
                               <Trash2 className="h-4 w-4" />
                               <span className="sr-only">Delete</span>

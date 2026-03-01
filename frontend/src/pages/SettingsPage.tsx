@@ -14,7 +14,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import { api } from '@/lib/api';
+import { ApiError } from '@/lib/api';
+import {
+  useChangePassword,
+  useDeleteProfilePicture,
+  useUpdateUserProfile,
+  useUploadProfilePicture,
+  useUserProfile,
+} from '@/hooks/use-api';
 import { Upload, Trash2, Loader2, Save, Globe, Lock, AlertTriangle } from 'lucide-react';
 import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
 
@@ -22,9 +29,9 @@ function PasswordChangeForm({ userId }: { userId?: string }) {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [isChanging, setIsChanging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const changePasswordMutation = useChangePassword();
 
   const handleChangePassword = async () => {
     if (!userId) return;
@@ -43,17 +50,23 @@ function PasswordChangeForm({ userId }: { userId?: string }) {
     }
 
     try {
-      setIsChanging(true);
-      await api.changePassword(userId, { currentPassword, newPassword });
+      await changePasswordMutation.mutateAsync({
+        id: userId,
+        data: { currentPassword, newPassword },
+      });
       setSuccess(true);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to change password');
-    } finally {
-      setIsChanging(false);
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to change password');
+      }
     }
   };
 
@@ -94,9 +107,11 @@ function PasswordChangeForm({ userId }: { userId?: string }) {
       {success && <p className="text-sm text-green-600">Password changed successfully!</p>}
       <Button
         onClick={handleChangePassword}
-        disabled={isChanging || !currentPassword || !newPassword || !confirmPassword}
+        disabled={
+          changePasswordMutation.isPending || !currentPassword || !newPassword || !confirmPassword
+        }
       >
-        {isChanging ? (
+        {changePasswordMutation.isPending ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Changing...
@@ -127,10 +142,11 @@ const COMMON_TIMEZONES = [
 
 export function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const { user, updateProfilePicture, logout } = useAuth();
-  const [isUploading, setIsUploading] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const { user, updateUser, logout } = useAuth();
+  const { data: profile } = useUserProfile(user?.id);
+  const updateUserProfileMutation = useUpdateUserProfile();
+  const uploadProfilePictureMutation = useUploadProfilePicture();
+  const deleteProfilePictureMutation = useDeleteProfilePicture();
   const [username, setUsername] = useState(user?.username || '');
   const [timezone, setTimezone] = useState('UTC');
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -139,12 +155,10 @@ export function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (user?.id) {
-      api.getUserProfile(user.id).then((profile) => {
-        setTimezone(profile.timezone || 'UTC');
-      });
+    if (profile?.timezone) {
+      setTimezone(profile.timezone);
     }
-  }, [user?.id]);
+  }, [profile?.timezone]);
 
   useEffect(() => {
     setUsername(user?.username || '');
@@ -161,14 +175,21 @@ export function SettingsPage() {
     const file = event.target.files?.[0];
     if (!file || !user?.id) return;
 
+    setProfileError(null);
+
     try {
-      setIsUploading(true);
-      const updatedUser = await api.uploadProfilePicture(user.id, file);
-      updateProfilePicture(updatedUser.profilePictureUrl);
+      const updatedUser = await uploadProfilePictureMutation.mutateAsync({ id: user.id, file });
+      updateUser({
+        username: updatedUser.username,
+        profilePictureUrl: updatedUser.profilePictureUrl,
+      });
     } catch (error) {
-      console.error('Failed to upload profile picture:', error);
+      if (error instanceof ApiError || error instanceof Error) {
+        setProfileError(error.message);
+      } else {
+        setProfileError('Failed to upload profile picture');
+      }
     } finally {
-      setIsUploading(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -178,14 +199,20 @@ export function SettingsPage() {
   const handleDeletePicture = async () => {
     if (!user?.id) return;
 
+    setProfileError(null);
+
     try {
-      setIsDeleting(true);
-      await api.deleteProfilePicture(user.id);
-      updateProfilePicture(null);
+      const updatedUser = await deleteProfilePictureMutation.mutateAsync(user.id);
+      updateUser({
+        username: updatedUser.username,
+        profilePictureUrl: updatedUser.profilePictureUrl,
+      });
     } catch (error) {
-      console.error('Failed to delete profile picture:', error);
-    } finally {
-      setIsDeleting(false);
+      if (error instanceof ApiError || error instanceof Error) {
+        setProfileError(error.message);
+      } else {
+        setProfileError('Failed to delete profile picture');
+      }
     }
   };
 
@@ -196,17 +223,52 @@ export function SettingsPage() {
     setProfileSuccess(false);
 
     try {
-      setIsSavingProfile(true);
-      await api.updateUserProfile(user.id, { username, timezone });
+      const updatedUser = await updateUserProfileMutation.mutateAsync({
+        id: user.id,
+        data: { username, timezone },
+      });
+      updateUser({
+        username: updatedUser.username,
+        profilePictureUrl: updatedUser.profilePictureUrl,
+      });
       setProfileSuccess(true);
-      localStorage.setItem('username', username);
       setTimeout(() => setProfileSuccess(false), 3000);
     } catch (error) {
-      setProfileError(error instanceof Error ? error.message : 'Failed to update profile');
-    } finally {
-      setIsSavingProfile(false);
+      if (error instanceof ApiError || error instanceof Error) {
+        setProfileError(error.message);
+      } else {
+        setProfileError('Failed to update profile');
+      }
     }
   };
+
+  const handleTimezoneChange = (value: string) => {
+    setTimezone(value);
+    if (!user?.id) return;
+    setProfileError(null);
+    updateUserProfileMutation.mutate(
+      { id: user.id, data: { timezone: value } },
+      {
+        onSuccess: (updatedUser) => {
+          updateUser({
+            username: updatedUser.username,
+            profilePictureUrl: updatedUser.profilePictureUrl,
+          });
+        },
+        onError: (error) => {
+          if (error instanceof ApiError || error instanceof Error) {
+            setProfileError(error.message);
+          } else {
+            setProfileError('Failed to update timezone');
+          }
+        },
+      }
+    );
+  };
+
+  const isUploading = uploadProfilePictureMutation.isPending;
+  const isDeleting = deleteProfilePictureMutation.isPending;
+  const isSavingProfile = updateUserProfileMutation.isPending;
 
   return (
     <div className="space-y-6">
@@ -385,15 +447,7 @@ export function SettingsPage() {
                       Used for daily resets and scheduling.
                     </p>
                   </div>
-                  <Select
-                    value={timezone}
-                    onValueChange={(value) => {
-                      setTimezone(value);
-                      if (user?.id) {
-                        api.updateUserProfile(user.id, { timezone: value });
-                      }
-                    }}
-                  >
+                  <Select value={timezone} onValueChange={handleTimezoneChange}>
                     <SelectTrigger className="w-[220px]">
                       <SelectValue placeholder="Select timezone" />
                     </SelectTrigger>

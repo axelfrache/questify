@@ -36,9 +36,9 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
   { title: 'Inbox', url: '/inbox', icon: Inbox },
-  { title: 'Today', url: '/today', icon: Sun }, // This item is changed in the instruction's snippet, but I'm keeping the original structure for consistency with other items not explicitly changed to the new format.
-  { title: 'Upcoming', url: '/upcoming', icon: Calendar }, // This item is changed in the instruction's snippet, but I'm keeping the original structure.
-  { title: 'Habits', url: '/habits', icon: Repeat }, // Added Habits link
+  { title: 'Today', url: '/today', icon: Sun },
+  { title: 'Upcoming', url: '/upcoming', icon: Calendar },
+  { title: 'Habits', url: '/habits', icon: Repeat },
   { title: 'Regions', url: '/regions', icon: Map },
 ];
 

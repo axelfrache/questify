@@ -11,7 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, AlertTriangle } from 'lucide-react';
-import { api } from '@/lib/api';
+import { ApiError } from '@/lib/api';
+import { useDeleteAccount } from '@/hooks/use-api';
 
 interface DeleteAccountDialogProps {
   open: boolean;
@@ -28,7 +29,7 @@ export function DeleteAccountDialog({
 }: DeleteAccountDialogProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const deleteAccountMutation = useDeleteAccount();
 
   const handleDelete = async () => {
     if (!password.trim()) {
@@ -37,20 +38,21 @@ export function DeleteAccountDialog({
     }
 
     setError(null);
-    setIsDeleting(true);
 
     try {
-      await api.deleteAccount(userId, password);
+      await deleteAccountMutation.mutateAsync({ id: userId, password });
       onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete account');
-    } finally {
-      setIsDeleting(false);
+      if (err instanceof ApiError || err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to delete account');
+      }
     }
   };
 
   const handleClose = (isOpen: boolean) => {
-    if (!isDeleting) {
+    if (!deleteAccountMutation.isPending) {
       setPassword('');
       setError(null);
       onOpenChange(isOpen);
@@ -86,7 +88,7 @@ export function DeleteAccountDialog({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-              disabled={isDeleting}
+              disabled={deleteAccountMutation.isPending}
             />
           </div>
 
@@ -94,11 +96,19 @@ export function DeleteAccountDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => handleClose(false)} disabled={isDeleting}>
+          <Button
+            variant="outline"
+            onClick={() => handleClose(false)}
+            disabled={deleteAccountMutation.isPending}
+          >
             Cancel
           </Button>
-          <Button variant="destructive" onClick={handleDelete} disabled={isDeleting || !password}>
-            {isDeleting ? (
+          <Button
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={deleteAccountMutation.isPending || !password}
+          >
+            {deleteAccountMutation.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Deleting...

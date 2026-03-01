@@ -20,9 +20,18 @@ export interface AuthResponse {
   role: 'USER' | 'ADMIN';
 }
 
-export interface ApiError {
-  message: string;
+export class ApiError extends Error {
   status: number;
+  code?: string;
+  details?: unknown;
+
+  constructor(message: string, status: number, code?: string, details?: unknown) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+    this.details = details;
+  }
 }
 
 class ApiClient {
@@ -79,9 +88,12 @@ class ApiClient {
 
   private async request<T>(endpoint: string, options: RequestInit = {}, retry = true): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
+    const headers = new Headers(options.headers ?? {});
+    const isFormData = options.body instanceof FormData;
+
+    if (options.body && !isFormData && !headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
 
     const response = await fetch(url, {
       ...options,
@@ -89,7 +101,7 @@ class ApiClient {
       credentials: 'include',
     });
 
-    if (response.status === 401 && retry) {
+    if (response.status === 401 && retry && !endpoint.startsWith('/api/auth/')) {
       const refreshed = await this.tryRefreshToken();
       if (refreshed) {
         return this.request<T>(endpoint, options, false);
@@ -97,49 +109,61 @@ class ApiClient {
         if (this.onUnauthorized) {
           this.onUnauthorized();
         }
-        const error: ApiError = {
-          message: 'Session expired. Please log in again.',
-          status: response.status,
-        };
-        throw error;
+        throw new ApiError(
+          'Session expired. Please log in again.',
+          response.status,
+          'UNAUTHORIZED'
+        );
       }
-    }
-
-    if (response.status === 403) {
-      const error: ApiError = {
-        message: 'Access denied.',
-        status: response.status,
-      };
-      throw error;
     }
 
     if (!response.ok) {
       let message = 'An error occurred';
-      try {
-        const errorData = await response.json();
-        message = errorData.message || message;
-      } catch {
-        const text = await response.text();
-        if (text && text.length < 200) {
-          message = text;
+      let code: string | undefined;
+      let details: unknown;
+      const contentType = response.headers.get('content-type') ?? '';
+      const raw = await response.text();
+      details = raw;
+
+      if (contentType.includes('application/json') && raw) {
+        try {
+          const errorData = JSON.parse(raw) as {
+            message?: string;
+            code?: string;
+          };
+          details = errorData;
+          message = errorData.message || message;
+          code = errorData.code;
+        } catch {
+          if (raw.length < 200) {
+            message = raw;
+          }
         }
+      } else if (raw && raw.length < 200) {
+        message = raw;
       }
-      const error: ApiError = {
-        message,
-        status: response.status,
-      };
-      throw error;
+
+      throw new ApiError(message, response.status, code, details);
     }
 
     if (response.status === 204 || response.headers.get('content-length') === '0') {
       return undefined as T;
     }
 
-    return response.json();
+    const raw = await response.text();
+    if (!raw) {
+      return undefined as T;
+    }
+
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      return raw as T;
+    }
   }
 
-  async get<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint);
+  async get<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, options);
   }
 
   async login(data: LoginRequest): Promise<AuthResponse> {
@@ -180,20 +204,21 @@ class ApiClient {
 
   async getQuests(
     status?: 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'SKIPPED',
-    view?: 'today' | 'inbox' | 'upcoming' | 'recurring'
+    view?: 'today' | 'inbox' | 'upcoming' | 'recurring',
+    signal?: AbortSignal
   ): Promise<QuestResponse[]> {
     const params = new URLSearchParams();
     if (status) params.append('status', status);
     if (view) params.append('view', view);
-    return this.request<QuestResponse[]>(`/api/quests?${params.toString()}`);
+    return this.request<QuestResponse[]>(`/api/quests?${params.toString()}`, { signal });
   }
 
-  async getQuest(id: string): Promise<QuestResponse> {
-    return this.request<QuestResponse>(`/api/quests/${id}`);
+  async getQuest(id: string, signal?: AbortSignal): Promise<QuestResponse> {
+    return this.request<QuestResponse>(`/api/quests/${id}`, { signal });
   }
 
-  async getSubquests(parentId: string): Promise<QuestResponse[]> {
-    return this.request<QuestResponse[]>(`/api/quests/${parentId}/subquests`);
+  async getSubquests(parentId: string, signal?: AbortSignal): Promise<QuestResponse[]> {
+    return this.request<QuestResponse[]>(`/api/quests/${parentId}/subquests`, { signal });
   }
 
   async createQuest(data: CreateQuestRequest): Promise<QuestResponse> {
@@ -240,8 +265,8 @@ class ApiClient {
     });
   }
 
-  async getCategories(): Promise<CategoryResponse[]> {
-    return this.request<CategoryResponse[]>('/api/categories');
+  async getCategories(signal?: AbortSignal): Promise<CategoryResponse[]> {
+    return this.request<CategoryResponse[]>('/api/categories', { signal });
   }
 
   async createCategory(data: CreateCategoryRequest): Promise<CategoryResponse> {
@@ -267,46 +292,51 @@ class ApiClient {
     });
   }
 
-  async getDailyStats(): Promise<DailyStats> {
-    return this.request<DailyStats>('/api/stats/today');
+  async getDailyStats(signal?: AbortSignal): Promise<DailyStats> {
+    return this.request<DailyStats>('/api/stats/today', { signal });
   }
 
-  async getWeeklyStats(): Promise<WeeklyStats> {
-    return this.request<WeeklyStats>('/api/stats/week');
+  async getWeeklyStats(signal?: AbortSignal): Promise<WeeklyStats> {
+    return this.request<WeeklyStats>('/api/stats/week', { signal });
   }
 
-  async getMonthlyStats(): Promise<MonthlyStats> {
-    return this.request<MonthlyStats>('/api/stats/month');
+  async getMonthlyStats(signal?: AbortSignal): Promise<MonthlyStats> {
+    return this.request<MonthlyStats>('/api/stats/month', { signal });
   }
 
-  async getProgressSummary(): Promise<ProgressSummary> {
-    return this.request<ProgressSummary>('/api/stats/summary');
+  async getProgressSummary(signal?: AbortSignal): Promise<ProgressSummary> {
+    return this.request<ProgressSummary>('/api/stats/summary', { signal });
   }
 
-  async getCategoryStats(): Promise<CategoryStats[]> {
-    return this.request<CategoryStats[]>('/api/stats/categories');
+  async getCategoryStats(signal?: AbortSignal): Promise<CategoryStats[]> {
+    return this.request<CategoryStats[]>('/api/stats/categories', { signal });
   }
 
-  async getCompletionRate(): Promise<DailyCompletionRate> {
-    return this.request<DailyCompletionRate>('/api/stats/completion-rate');
+  async getCompletionRate(signal?: AbortSignal): Promise<DailyCompletionRate> {
+    return this.request<DailyCompletionRate>('/api/stats/completion-rate', { signal });
   }
 
-  async getRegionActivity(): Promise<RegionActivityStats[]> {
-    return this.request<RegionActivityStats[]>('/api/stats/region-activity');
+  async getRegionActivity(signal?: AbortSignal): Promise<RegionActivityStats[]> {
+    return this.request<RegionActivityStats[]>('/api/stats/region-activity', { signal });
   }
 
-  async getWeeklyCompletionRates(): Promise<DailyCompletionRate[]> {
-    return this.request<DailyCompletionRate[]>('/api/stats/weekly-completion');
+  async getWeeklyCompletionRates(signal?: AbortSignal): Promise<DailyCompletionRate[]> {
+    return this.request<DailyCompletionRate[]>('/api/stats/weekly-completion', { signal });
   }
 
-  async getMonthlyCompletionRates(year: number, month: number): Promise<DailyCompletionRate[]> {
+  async getMonthlyCompletionRates(
+    year: number,
+    month: number,
+    signal?: AbortSignal
+  ): Promise<DailyCompletionRate[]> {
     return this.request<DailyCompletionRate[]>(
-      `/api/stats/monthly-completion?year=${year}&month=${month}`
+      `/api/stats/monthly-completion?year=${year}&month=${month}`,
+      { signal }
     );
   }
 
-  async getUserProfile(id: string): Promise<UserDto> {
-    return this.request<UserDto>(`/api/users/${id}`);
+  async getUserProfile(id: string, signal?: AbortSignal): Promise<UserDto> {
+    return this.request<UserDto>(`/api/users/${id}`, { signal });
   }
 
   async getUserProgression(id: string): Promise<UserProgressionDto> {
@@ -317,21 +347,10 @@ class ApiClient {
     const formData = new FormData();
     formData.append('file', file);
 
-    const url = `${this.baseUrl}/api/users/${id}/profile-picture`;
-    const headers: Record<string, string> = {};
-
-    const response = await fetch(url, {
+    return this.request<UserDto>(`/api/users/${id}/profile-picture`, {
       method: 'POST',
-      headers,
-      credentials: 'include',
       body: formData,
     });
-
-    if (!response.ok) {
-      throw { message: 'Failed to upload profile picture', status: response.status };
-    }
-
-    return response.json();
   }
 
   async deleteProfilePicture(id: string): Promise<UserDto> {
@@ -354,28 +373,10 @@ class ApiClient {
     id: string,
     data: { currentPassword: string; newPassword: string }
   ): Promise<void> {
-    const url = `${this.baseUrl}/api/users/${id}/password`;
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    const response = await fetch(url, {
+    return this.request<void>(`/api/users/${id}/password`, {
       method: 'POST',
-      headers,
-      credentials: 'include',
       body: JSON.stringify(data),
     });
-
-    if (!response.ok) {
-      let message = 'Failed to change password';
-      try {
-        const errorData = await response.json();
-        message = errorData.message || message;
-      } catch {
-        // Ignore JSON parse error
-      }
-      throw { message, status: response.status };
-    }
   }
 
   async deleteAccount(id: string, password: string): Promise<void> {
@@ -385,8 +386,10 @@ class ApiClient {
     });
   }
 
-  async getSettings(): Promise<{ registrationEnabled: boolean; initialized: boolean }> {
-    return this.request('/api/admin/settings');
+  async getSettings(
+    signal?: AbortSignal
+  ): Promise<{ registrationEnabled: boolean; initialized: boolean }> {
+    return this.request('/api/admin/settings', { signal });
   }
 
   async updateSettings(updates: {
@@ -398,7 +401,7 @@ class ApiClient {
     });
   }
 
-  async getUsers(page: number = 0, query?: string): Promise<Page<UserDto>> {
+  async getUsers(page: number = 0, query?: string, signal?: AbortSignal): Promise<Page<UserDto>> {
     const params = new URLSearchParams({
       page: page.toString(),
       size: '20',
@@ -407,7 +410,11 @@ class ApiClient {
     if (query) {
       params.append('query', query);
     }
-    return this.request<Page<UserDto>>(`/api/admin/users?${params.toString()}`);
+    return this.request<Page<UserDto>>(`/api/admin/users?${params.toString()}`, { signal });
+  }
+
+  async getHistory(signal?: AbortSignal): Promise<QuestHistory[]> {
+    return this.request<QuestHistory[]>('/api/history', { signal });
   }
 
   async adminCreateUser(data: AdminCreateUserRequest): Promise<UserDto> {
@@ -508,6 +515,20 @@ export interface CreateCategoryRequest {
   name: string;
   color: string;
   icon: string;
+}
+
+export interface QuestHistory {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: 'EASY' | 'MEDIUM' | 'HARD' | 'EPIC';
+  xpEarned: number;
+  completedAt: string;
+  categoryName?: string;
+  categoryIcon?: string;
+  categoryColor?: string;
+  recurrenceType: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
+  parentTitle?: string;
 }
 
 export interface DailyStats {
