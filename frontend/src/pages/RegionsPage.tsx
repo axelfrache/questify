@@ -47,7 +47,7 @@ export function RegionsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Regions</h1>
-          <p className="text-muted-foreground">Your quest categories.</p>
+          <p className="text-muted-foreground">Your quest categories and their current activity.</p>
         </div>
         <Button onClick={() => setIsCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
@@ -86,7 +86,7 @@ export function RegionsPage() {
           open={!!deletingCategory}
           onOpenChange={(open) => !open && setDeletingCategory(null)}
           regionName={deletingCategory.name}
-          questCount={deletingCategory.totalQuests - deletingCategory.completedQuests}
+          questCount={deletingCategory.activeQuests}
           onConfirm={handleDelete}
           isPending={deleteCategory.isPending}
         />

@@ -604,6 +604,7 @@ export interface CategoryStats {
   name: string;
   icon: string;
   color: string;
+  activeQuests: number;
   totalQuests: number;
   completedQuests: number;
   progress: number;

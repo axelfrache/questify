@@ -7,6 +7,7 @@ public record CategoryStats(
     String name,
     String icon,
     String color,
+    int activeQuests,
     int totalQuests,
     int completedQuests,
     double progress,

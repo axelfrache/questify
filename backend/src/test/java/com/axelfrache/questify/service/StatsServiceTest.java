@@ -167,7 +167,8 @@ class StatsServiceTest {
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
     when(categoryRepository.findAllForUser(testUser)).thenReturn(List.of(category));
-    when(questTemplateRepository.findByUserAndActiveTrue(testUser)).thenReturn(List.of(template));
+    when(questTemplateRepository.findByUserAndActiveTrueAndDeletedFalse(testUser))
+        .thenReturn(List.of(template));
     when(questOccurrenceRepository.findAllByUserId(userId)).thenReturn(occurrences);
 
     var stats = statsService.getCategoryStats(userId);
@@ -175,10 +176,35 @@ class StatsServiceTest {
     assertEquals(1, stats.size());
     var categoryStats = stats.get(0);
     assertEquals("Health", categoryStats.name());
+    assertEquals(0, categoryStats.activeQuests());
     assertEquals(5, categoryStats.totalQuests());
     assertEquals(5, categoryStats.completedQuests());
     assertEquals("Apprentice", categoryStats.grade());
     assertEquals(100.0, categoryStats.progress());
+  }
+
+  @Test
+  void getCategoryStats_shouldExcludeFutureOccurrencesFromActiveCount() {
+    var today = LocalDate.now(testUser.getZoneId());
+    var tomorrow = today.plusDays(1);
+    var category = createCategory("Prime Time");
+    var template = createTemplateWithCategory(category);
+
+    var occurrences =
+        List.of(
+            createPendingOccurrenceWithCategory(template, today),
+            createPendingOccurrenceWithCategory(template, tomorrow));
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+    when(categoryRepository.findAllForUser(testUser)).thenReturn(List.of(category));
+    when(questTemplateRepository.findByUserAndActiveTrueAndDeletedFalse(testUser))
+        .thenReturn(List.of(template));
+    when(questOccurrenceRepository.findAllByUserId(userId)).thenReturn(occurrences);
+
+    var stats = statsService.getCategoryStats(userId);
+
+    assertEquals(1, stats.size());
+    assertEquals(1, stats.get(0).activeQuests());
   }
 
   @Test
@@ -192,6 +218,8 @@ class StatsServiceTest {
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
     when(categoryRepository.findAllForUser(testUser)).thenReturn(List.of(category));
+    when(questTemplateRepository.findByUserAndActiveTrueAndDeletedFalse(testUser))
+        .thenReturn(List.of(template));
     when(questOccurrenceRepository.findAllByUserId(userId)).thenReturn(completedOccurrences);
 
     var stats = statsService.getCategoryStats(userId);
@@ -212,6 +240,8 @@ class StatsServiceTest {
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
     when(categoryRepository.findAllForUser(testUser)).thenReturn(List.of(category));
+    when(questTemplateRepository.findByUserAndActiveTrueAndDeletedFalse(testUser))
+        .thenReturn(List.of(template));
     when(questOccurrenceRepository.findAllByUserId(userId)).thenReturn(completedOccurrences);
 
     var stats = statsService.getCategoryStats(userId);
@@ -231,6 +261,8 @@ class StatsServiceTest {
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
     when(categoryRepository.findAllForUser(testUser)).thenReturn(List.of(category));
+    when(questTemplateRepository.findByUserAndActiveTrueAndDeletedFalse(testUser))
+        .thenReturn(List.of(template));
     when(questOccurrenceRepository.findAllByUserId(userId)).thenReturn(completedOccurrences);
 
     var stats = statsService.getCategoryStats(userId);
@@ -242,6 +274,8 @@ class StatsServiceTest {
   void getCategoryStats_shouldReturnEmpty_whenNoCategories() {
     when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
     when(categoryRepository.findAllForUser(testUser)).thenReturn(List.of());
+    when(questTemplateRepository.findByUserAndActiveTrueAndDeletedFalse(testUser))
+        .thenReturn(List.of());
 
     var stats = statsService.getCategoryStats(userId);
 
@@ -278,6 +312,15 @@ class StatsServiceTest {
     occurrence.setStatus(QuestStatus.COMPLETED);
     occurrence.setScheduledDate(LocalDate.now());
     occurrence.setCompletedAt(Instant.now());
+    return occurrence;
+  }
+
+  private QuestOccurrence createPendingOccurrenceWithCategory(
+      QuestTemplate template, LocalDate date) {
+    var occurrence = new QuestOccurrence();
+    occurrence.setQuestTemplate(template);
+    occurrence.setStatus(QuestStatus.PENDING);
+    occurrence.setScheduledDate(date);
     return occurrence;
   }
 

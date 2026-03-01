@@ -133,6 +133,31 @@ public class StatsService {
     var categories = categoryRepository.findAllForUser(user);
     var occurrences = questOccurrenceRepository.findAllByUserId(userId);
 
+    var today = LocalDate.now(user.getZoneId());
+
+    var pendingActionableOccurrencesByCategoryId =
+        occurrences.stream()
+            .filter(q -> q.getStatus() == QuestStatus.PENDING)
+            .filter(q -> q.getScheduledDate() != null && !q.getScheduledDate().isAfter(today))
+            .filter(q -> q.getQuestTemplate().getParent() == null)
+            .filter(q -> q.getQuestTemplate().getCategory() != null)
+            .collect(
+                Collectors.groupingBy(
+                    q -> q.getQuestTemplate().getCategory().getId(), Collectors.counting()));
+
+    var templatesWithOccurrences =
+        occurrences.stream().map(q -> q.getQuestTemplate().getId()).collect(Collectors.toSet());
+
+    var floatingActionableTemplatesByCategoryId =
+        questTemplateRepository.findByUserAndActiveTrueAndDeletedFalse(user).stream()
+            .filter(template -> template.getParent() == null)
+            .filter(template -> template.getCategory() != null)
+            .filter(template -> template.getRecurrenceRule() == null)
+            .filter(template -> !templatesWithOccurrences.contains(template.getId()))
+            .collect(
+                Collectors.groupingBy(
+                    template -> template.getCategory().getId(), Collectors.counting()));
+
     return categories.stream()
         .map(
             category -> {
@@ -153,6 +178,13 @@ public class StatsService {
                       categoryOccurrences.stream()
                           .filter(q -> q.getStatus() == QuestStatus.COMPLETED)
                           .count();
+              var activeQuests =
+                  pendingActionableOccurrencesByCategoryId
+                          .getOrDefault(category.getId(), 0L)
+                          .intValue()
+                      + floatingActionableTemplatesByCategoryId
+                          .getOrDefault(category.getId(), 0L)
+                          .intValue();
 
               double progress =
                   totalQuests > 0 ? ((double) completedQuests / totalQuests) * 100 : 0;
@@ -175,6 +207,7 @@ public class StatsService {
                   category.getName(),
                   category.getIcon(),
                   category.getColor(),
+                  activeQuests,
                   totalQuests,
                   completedQuests,
                   progress,
