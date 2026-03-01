@@ -131,14 +131,6 @@ export function useSubquests(parentId: string, enabled = true) {
   });
 }
 
-export function useCurrentUser() {
-  return useQuery({
-    queryKey: queryKeys.auth.me,
-    queryFn: () => api.getCurrentUser(),
-    retry: false,
-  });
-}
-
 export function useCreateQuest() {
   const queryClient = useQueryClient();
   return useMutation({

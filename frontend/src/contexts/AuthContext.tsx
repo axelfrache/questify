@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect } from 'react';
+import { createContext, useCallback, useContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type UserDto } from '@/lib/api';
@@ -39,6 +39,24 @@ function toAuthUser(userDto: UserDto | null | undefined): User | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
 
+  const clearSessionQueries = useCallback(() => {
+    queryClient.removeQueries({
+      predicate: ({ queryKey }) => {
+        const root = queryKey[0];
+        return (
+          root === 'auth' ||
+          root === 'users' ||
+          root === 'quests' ||
+          root === 'categories' ||
+          root === 'stats' ||
+          root === 'history' ||
+          root === 'admin'
+        );
+      },
+    });
+    queryClient.setQueryData(queryKeys.auth.me, null);
+  }, [queryClient]);
+
   const { data: currentUser, isLoading } = useQuery({
     queryKey: queryKeys.auth.me,
     queryFn: () => api.getCurrentUser(),
@@ -47,10 +65,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     api.setOnUnauthorized(() => {
-      queryClient.clear();
-      queryClient.setQueryData(queryKeys.auth.me, null);
+      clearSessionQueries();
     });
-  }, [queryClient]);
+  }, [clearSessionQueries]);
 
   const refreshCurrentUser = async () => {
     await queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
@@ -73,8 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await api.logout();
-    queryClient.clear();
-    queryClient.setQueryData(queryKeys.auth.me, null);
+    clearSessionQueries();
   };
 
   const updateProfilePicture = (url: string | null) => {
