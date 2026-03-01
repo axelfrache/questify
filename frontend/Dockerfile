@@ -6,13 +6,14 @@ LABEL org.opencontainers.image.source="https://github.com/axelfrache/questify"
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml ./
 
-RUN npm ci
+RUN corepack enable && corepack prepare pnpm@10.30.3 --activate
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 
-RUN npm run build
+RUN pnpm run build
 
 FROM nginx:alpine AS runtime
 

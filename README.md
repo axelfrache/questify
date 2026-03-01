@@ -30,6 +30,7 @@ The application is divided in 2 parts: **backend** and **frontend**.
 
 - Java 21
 - Node.js 20
+- pnpm
 - Docker & Docker Compose
 
 ## Running
@@ -45,8 +46,8 @@ cd backend
 **Frontend:**
 ```bash
 cd frontend
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
 Then go to:
@@ -89,9 +90,9 @@ cd backend
 **Frontend:**
 ```bash
 cd frontend
-npm run lint          # Check linting
-npm run format:check  # Check formatting
-npm run format        # Fix formatting
+pnpm run lint          # Check linting
+pnpm run format:check  # Check formatting
+pnpm run format        # Fix formatting
 ```
 
 > **Warning**: Those are mandatory before pushing code, if it is not done the CI will fail.

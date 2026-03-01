@@ -19,29 +19,29 @@ Web application for Questify, a gamified task management application. Built with
 ### Prerequisites
 
 - Node.js 20+
-- npm
+- pnpm
 
 ### Installation
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### Running
 
 **Development mode:**
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 **Production build:**
 ```bash
-npm run build
+pnpm run build
 ```
 
 **Preview production build:**
 ```bash
-npm run preview
+pnpm run preview
 ```
 
 ### Endpoints
@@ -67,9 +67,9 @@ src/
 This project uses **ESLint** and **Prettier**.
 
 ```bash
-npm run lint          # Check linting
-npm run format:check  # Check formatting
-npm run format        # Fix formatting
+pnpm run lint          # Check linting
+pnpm run format:check  # Check formatting
+pnpm run format        # Fix formatting
 ```
 
 ## License
