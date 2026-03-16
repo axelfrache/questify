@@ -11,7 +11,6 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["assets/images/questifyFlat/*.png", "assets/icons/**/*"],
       manifest: {
         name: "Questify",
         short_name: "Questify",
