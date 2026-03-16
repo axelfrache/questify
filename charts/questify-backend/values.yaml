@@ -1,5 +1,5 @@
 image:
-  repository: registry.axelfrache.com/questify/backend
+  repository: axelfrache/questify-backend
   tag: "latest"
   pullPolicy: Always
 
