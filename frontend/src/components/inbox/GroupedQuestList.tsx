@@ -10,7 +10,7 @@ interface GroupedQuestListProps {
   paginatedQuests: QuestResponse[];
   density: Density;
   onToggleCollapse: (regionId: string) => void;
-  onTogglePin: (regionId: string) => void;
+  onTogglePin?: (regionId: string) => void;
   onComplete?: (id: string, checkboxElement?: HTMLElement) => void;
   onEdit?: (quest: QuestResponse) => void;
   onDelete?: (id: string) => void;
@@ -68,6 +68,7 @@ export function GroupedQuestList({
           overdueCount={group.overdueCount}
           isPinned={group.isPinned}
           isCollapsed={group.isCollapsed}
+          isPinnable={group.isPinnable}
           density={density}
           onToggleCollapse={onToggleCollapse}
           onTogglePin={onTogglePin}
@@ -76,6 +77,7 @@ export function GroupedQuestList({
           onDelete={onDelete}
           onAddSubquest={onAddSubquest}
           isPending={isPending}
+          showRegionMarker={groupBy === 'project'}
         />
       ))}
     </div>

@@ -40,6 +40,7 @@ interface InboxControlsProps {
 const GROUP_BY_OPTIONS: { value: GroupBy; label: string }[] = [
   { value: 'none', label: 'None' },
   { value: 'region', label: 'Region' },
+  { value: 'project', label: 'Project' },
 ];
 
 const SORT_BY_OPTIONS: { value: SortBy; label: string }[] = [

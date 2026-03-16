@@ -1,6 +1,6 @@
 import type { QuestResponse } from '@/lib/api';
 
-export type GroupBy = 'none' | 'region' | 'priority' | 'dueDate';
+export type GroupBy = 'none' | 'project' | 'region';
 
 export type SortBy = 'dueDate' | 'priority' | 'xp' | 'created';
 
@@ -34,11 +34,12 @@ export interface GroupedQuests {
   overdueCount: number;
   isPinned: boolean;
   isCollapsed: boolean;
+  isPinnable: boolean;
 }
 
 export const DEFAULT_INBOX_STATE: InboxState = {
   search: '',
-  groupBy: 'region',
+  groupBy: 'none',
   sortBy: 'dueDate',
   density: 'comfort',
   quickFilters: { overdue: false, today: false },

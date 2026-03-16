@@ -1,6 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useQuests, useCategories, useCompleteQuest, useDeleteQuest } from '@/hooks/use-api';
+import {
+  useQuests,
+  useCategories,
+  useCompleteQuest,
+  useDeleteQuest,
+  useProjectsSidebar,
+} from '@/hooks/use-api';
 import { useInboxState } from '@/hooks/useInboxState';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -46,6 +52,7 @@ export function InboxPage() {
     isLoading: isLoadingQuests,
     error: errorQuests,
   } = useQuests(undefined, 'inbox');
+  const { data: projectSidebar } = useProjectsSidebar();
   const { data: categories, isLoading: isLoadingCategories } = useCategories();
   const completeQuestMutation = useCompleteQuest();
   const deleteQuestMutation = useDeleteQuest();
@@ -66,6 +73,11 @@ export function InboxPage() {
     const cat = categories.find((c) => c.id === categoryFilter);
     return cat ? `${cat.icon} ${cat.name}` : null;
   }, [categoryFilter, categories]);
+
+  const pinnedProjectIds = useMemo(
+    () => (projectSidebar?.pinned ?? []).map((project) => project.id),
+    [projectSidebar]
+  );
 
   const {
     search,
@@ -88,7 +100,7 @@ export function InboxPage() {
     togglePinRegion,
     toggleCollapseRegion,
     loadMore,
-  } = useInboxState(pendingQuests);
+  } = useInboxState(pendingQuests, pinnedProjectIds);
 
   const handleComplete = (id: string, checkboxElement?: HTMLElement) => {
     if (checkboxElement) {
@@ -206,6 +218,7 @@ export function InboxPage() {
                 description: editingQuest.description,
                 difficulty: editingQuest.difficulty,
                 categoryId: editingQuest.category?.id,
+                projectId: editingQuest.project?.id,
                 dueDate: editingQuest.dueDate,
                 recurrenceInterval: editingQuest.recurrenceInterval,
                 recurrenceDays: editingQuest.recurrenceDays,

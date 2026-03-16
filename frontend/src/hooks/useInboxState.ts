@@ -9,12 +9,25 @@ import {
   type GroupedQuests,
   DEFAULT_INBOX_STATE,
 } from '@/types/inboxTypes';
-import { applySortAndBuckets, groupByRegion, applyQuickFilters } from '@/lib/inboxUtils';
+import {
+  applySortAndBuckets,
+  applyQuickFilters,
+  groupByProject,
+  groupByRegion,
+} from '@/lib/inboxUtils';
 
 const PINNED_REGIONS_KEY = 'questify.inbox.pinnedRegions';
 const DENSITY_KEY = 'questify.inbox.density';
 const GROUPBY_KEY = 'questify.inbox.groupBy';
 const SORTBY_KEY = 'questify.inbox.sortBy';
+const GROUPBY_VALUES: GroupBy[] = ['none', 'project', 'region'];
+
+function sanitizeGroupBy(value: unknown): GroupBy {
+  if (typeof value === 'string' && GROUPBY_VALUES.includes(value as GroupBy)) {
+    return value as GroupBy;
+  }
+  return DEFAULT_INBOX_STATE.groupBy;
+}
 
 function loadFromStorage<T>(key: string, defaultValue: T): T {
   if (typeof window === 'undefined') return defaultValue;
@@ -33,10 +46,10 @@ function saveToStorage<T>(key: string, value: T): void {
   } catch {} // eslint-disable-line no-empty
 }
 
-export function useInboxState(allQuests: QuestResponse[]) {
+export function useInboxState(allQuests: QuestResponse[], pinnedProjectIds: string[] = []) {
   const [search, setSearchRaw] = useState('');
   const [groupBy, setGroupByRaw] = useState<GroupBy>(() =>
-    loadFromStorage(GROUPBY_KEY, DEFAULT_INBOX_STATE.groupBy)
+    sanitizeGroupBy(loadFromStorage<unknown>(GROUPBY_KEY, DEFAULT_INBOX_STATE.groupBy))
   );
   const [sortBy, setSortByRaw] = useState<SortBy>(() =>
     loadFromStorage(SORTBY_KEY, DEFAULT_INBOX_STATE.sortBy)
@@ -161,12 +174,17 @@ export function useInboxState(allQuests: QuestResponse[]) {
           }).length,
           isPinned: false,
           isCollapsed: false,
+          isPinnable: false,
         },
       ];
     }
 
+    if (groupBy === 'project') {
+      return groupByProject(processedQuests, collapsedRegions, pinnedProjectIds);
+    }
+
     return groupByRegion(processedQuests, pinnedRegions, collapsedRegions);
-  }, [groupBy, processedQuests, pinnedRegions, collapsedRegions]);
+  }, [groupBy, processedQuests, collapsedRegions, pinnedProjectIds, pinnedRegions]);
 
   const paginatedQuests = useMemo(() => {
     return processedQuests.slice(0, page * pageSize);

@@ -167,6 +167,7 @@ export function TodayPage() {
                 description: editingQuest.description,
                 difficulty: editingQuest.difficulty,
                 categoryId: editingQuest.category?.id,
+                projectId: editingQuest.project?.id,
                 dueDate: editingQuest.dueDate,
                 recurrenceInterval: editingQuest.recurrenceInterval,
                 recurrenceDays: editingQuest.recurrenceDays,

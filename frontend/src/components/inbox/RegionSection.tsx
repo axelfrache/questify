@@ -16,14 +16,16 @@ interface RegionSectionProps {
   overdueCount: number;
   isPinned: boolean;
   isCollapsed: boolean;
+  isPinnable?: boolean;
   density: Density;
   onToggleCollapse: (regionId: string) => void;
-  onTogglePin: (regionId: string) => void;
+  onTogglePin?: (regionId: string) => void;
   onComplete?: (id: string, checkboxElement?: HTMLElement) => void;
   onEdit?: (quest: QuestResponse) => void;
   onDelete?: (id: string) => void;
   onAddSubquest?: (parentQuest: QuestResponse) => void;
   isPending?: boolean;
+  showRegionMarker?: boolean;
 }
 
 const MemoizedQuestCard = memo(QuestCard);
@@ -38,6 +40,7 @@ export function RegionSection({
   overdueCount,
   isPinned,
   isCollapsed,
+  isPinnable = true,
   density,
   onToggleCollapse,
   onTogglePin,
@@ -46,6 +49,7 @@ export function RegionSection({
   onDelete,
   onAddSubquest,
   isPending = false,
+  showRegionMarker = false,
 }: RegionSectionProps) {
   const effectiveRegionId = regionId ?? '__inbox__';
 
@@ -86,18 +90,20 @@ export function RegionSection({
           </span>
         )}
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(
-            'h-6 w-6 shrink-0 opacity-40 hover:opacity-100 transition-opacity',
-            isPinned && 'opacity-100 text-yellow-500'
-          )}
-          onClick={() => onTogglePin(effectiveRegionId)}
-          title={isPinned ? 'Unpin region' : 'Pin region'}
-        >
-          <Star className={cn('h-3.5 w-3.5', isPinned && 'fill-current')} />
-        </Button>
+        {isPinnable && onTogglePin && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              'h-6 w-6 shrink-0 opacity-40 hover:opacity-100 transition-opacity',
+              isPinned && 'opacity-100 text-yellow-500'
+            )}
+            onClick={() => onTogglePin(effectiveRegionId)}
+            title={isPinned ? 'Unpin region' : 'Pin region'}
+          >
+            <Star className={cn('h-3.5 w-3.5', isPinned && 'fill-current')} />
+          </Button>
+        )}
       </div>
 
       {!isCollapsed && (
@@ -113,7 +119,7 @@ export function RegionSection({
               isPending={isPending}
               showInlineSubquests
               density={density}
-              showRegionMarker={false}
+              showRegionMarker={showRegionMarker}
             />
           ))}
         </div>
