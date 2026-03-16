@@ -2,7 +2,6 @@ import { useState, memo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,14 +51,6 @@ function QuestCardInner({
   const isCompleted = quest.status === 'COMPLETED';
   const hasCategoryColor = !!quest.category?.color;
 
-  const isProject =
-    quest.recurrenceInterval === 'NONE' && quest.subquestCount > 0 && !quest.parentId;
-
-  const completionPercentage =
-    quest.subquestCount > 0
-      ? Math.round((quest.completedSubquestCount / quest.subquestCount) * 100)
-      : 0;
-
   const handleCheckboxClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (isCompleted || disabled) return;
 
@@ -87,7 +78,7 @@ function QuestCardInner({
     >
       <CardContent className={cn('p-4', isCompact && 'p-2.5')}>
         <div className="flex items-start gap-3">
-          {!hideCheckbox && !isProject && (
+          {!hideCheckbox && (
             <div className="pt-0.5">
               <Checkbox
                 checked={isCompleted}
@@ -110,6 +101,12 @@ function QuestCardInner({
                   <span className="text-muted-foreground">{quest.category.name}</span>
                 </span>
               )}
+              {quest.project && (
+                <span className="inline-flex max-w-[180px] items-center gap-1 truncate rounded-full bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary">
+                  <span>{quest.project.icon || '📁'}</span>
+                  <span className="truncate">{quest.project.name}</span>
+                </span>
+              )}
               <h3
                 className={cn(
                   'text-base font-medium leading-tight',
@@ -118,11 +115,6 @@ function QuestCardInner({
               >
                 {quest.title}
               </h3>
-              {isProject && (
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border px-1 rounded">
-                  Project
-                </span>
-              )}
             </div>
 
             {quest.description && (
@@ -134,16 +126,6 @@ function QuestCardInner({
               >
                 {quest.description}
               </p>
-            )}
-
-            {isProject && (
-              <div className="space-y-1 pt-1">
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Progress</span>
-                  <span>{completionPercentage}%</span>
-                </div>
-                <Progress value={completionPercentage} className="h-1.5" />
-              </div>
             )}
 
             <div className="flex flex-wrap items-center gap-1.5 pt-1">

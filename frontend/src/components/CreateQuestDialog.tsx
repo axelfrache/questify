@@ -42,6 +42,7 @@ interface CreateQuestDialogProps {
   parentId?: string;
   parentTitle?: string;
   parentRecurrence?: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
+  projectId?: string;
 }
 
 export function CreateQuestDialog({
@@ -52,6 +53,7 @@ export function CreateQuestDialog({
   parentId,
   parentTitle,
   parentRecurrence,
+  projectId,
 }: CreateQuestDialogProps) {
   const { data: categories } = useCategories();
   const createQuestMutation = useCreateQuest();
@@ -76,6 +78,7 @@ export function CreateQuestDialog({
   const title = watch('title');
   const recurrence = watch('recurrenceInterval');
   const difficulty = watch('difficulty');
+  const categoryId = watch('categoryId') ?? '';
 
   useEffect(() => {
     if (open) {
@@ -87,6 +90,7 @@ export function CreateQuestDialog({
           'categoryId',
           questToEdit.categoryId || (questToEdit as { category?: { id: string } }).category?.id
         );
+        setValue('projectId', questToEdit.projectId);
         setValue('recurrenceInterval', questToEdit.recurrenceInterval);
         setValue('baseXpReward', questToEdit.baseXpReward);
         if (questToEdit.dueDate) {
@@ -99,12 +103,13 @@ export function CreateQuestDialog({
         reset({
           difficulty: 'EASY',
           recurrenceInterval: 'NONE',
+          projectId,
         });
         setDate(undefined);
         setSelectedDays([]);
       }
     }
-  }, [open, questToEdit, reset, setValue]);
+  }, [open, projectId, questToEdit, reset, setValue]);
 
   const onSubmit = (data: CreateQuestRequest) => {
     let dueDateISO: string | undefined;
@@ -119,6 +124,7 @@ export function CreateQuestDialog({
       dueDate: dueDateISO,
       recurrenceDays: recurrence === 'WEEKLY' ? selectedDays : undefined,
       parentId: parentId,
+      projectId: projectId ?? data.projectId,
     };
 
     if (questToEdit) {
@@ -213,10 +219,7 @@ export function CreateQuestDialog({
 
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Region</Label>
-              <Select
-                onValueChange={(value) => setValue('categoryId', value)}
-                value={watch('categoryId')}
-              >
+              <Select onValueChange={(value) => setValue('categoryId', value)} value={categoryId}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select..." />
                 </SelectTrigger>

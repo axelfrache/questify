@@ -42,6 +42,16 @@ const RegionsPage = lazy(async () => {
   return { default: module.RegionsPage };
 });
 
+const ProjectsPage = lazy(async () => {
+  const module = await import('@/pages/ProjectsPage');
+  return { default: module.ProjectsPage };
+});
+
+const ProjectDetailPage = lazy(async () => {
+  const module = await import('@/pages/ProjectDetailPage');
+  return { default: module.ProjectDetailPage };
+});
+
 const HabitsPage = lazy(async () => {
   const module = await import('@/pages/HabitsPage');
   return { default: module.HabitsPage };
@@ -121,6 +131,8 @@ function App() {
                   <Route path="/today" element={<TodayPage />} />
                   <Route path="/upcoming" element={<UpcomingPage />} />
                   <Route path="/regions" element={<RegionsPage />} />
+                  <Route path="/projects" element={<ProjectsPage />} />
+                  <Route path="/projects/:id" element={<ProjectDetailPage />} />
                   <Route path="/habits" element={<HabitsPage />} />
                   <Route path="/progress" element={<ProgressPage />} />
                   <Route path="/stats" element={<StatsPage />} />

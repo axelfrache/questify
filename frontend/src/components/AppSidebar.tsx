@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Calendar,
+  ChevronDown,
+  ChevronRight,
   Inbox,
   LogOut,
   Map,
@@ -12,6 +15,7 @@ import {
   BarChart3,
   History,
   Shield,
+  FolderKanban,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -33,6 +37,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProjectsSidebar } from '@/hooks/use-api';
 
 const navItems = [
   { title: 'Inbox', url: '/inbox', icon: Inbox },
@@ -52,8 +57,11 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { data: projectSidebar } = useProjectsSidebar();
+  const [isProjectsOpen, setIsProjectsOpen] = useState(true);
 
   const isActive = (url: string) => location.pathname === url;
+  const sidebarProjects = [...(projectSidebar?.pinned ?? []), ...(projectSidebar?.recent ?? [])];
 
   const handleLogout = async () => {
     await logout();
@@ -121,6 +129,60 @@ export function AppSidebar() {
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <div className="flex items-center justify-between px-2">
+            <SidebarGroupLabel className="p-0">Projects</SidebarGroupLabel>
+            <button
+              type="button"
+              onClick={() => setIsProjectsOpen((open) => !open)}
+              className="rounded p-1 text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              aria-label={isProjectsOpen ? 'Collapse projects' : 'Expand projects'}
+            >
+              {isProjectsOpen ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+          {isProjectsOpen && (
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location.pathname === '/projects'} size="sm">
+                    <Link to="/projects" className="flex items-center gap-2">
+                      <FolderKanban className="h-4 w-4" />
+                      <span>View all</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                {sidebarProjects.length === 0 ? (
+                  <SidebarMenuItem>
+                    <div className="px-2 py-1 text-xs text-sidebar-foreground/60">
+                      Pin projects to access them here
+                    </div>
+                  </SidebarMenuItem>
+                ) : (
+                  sidebarProjects.map((project) => (
+                    <SidebarMenuItem key={project.id}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={location.pathname === `/projects/${project.id}`}
+                        size="sm"
+                      >
+                        <Link to={`/projects/${project.id}`} className="flex items-center gap-2">
+                          <span className="text-sm">{project.icon || '📁'}</span>
+                          <span>{project.name}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          )}
         </SidebarGroup>
 
         <SidebarGroup>

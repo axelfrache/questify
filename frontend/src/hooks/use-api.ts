@@ -10,8 +10,11 @@ import {
   type AdminCreateUserRequest,
   type AdminUpdateUserRequest,
   type CreateCategoryRequest,
+  type CreateProjectRequest,
   type CreateQuestRequest,
+  type ProjectDetailResponse,
   type QuestResponse,
+  type UpdateProjectRequest,
   type UpdateQuestRequest,
   type UserDto,
 } from '@/lib/api';
@@ -25,6 +28,7 @@ export const queryKeys = {
     list: (status?: QuestStatus, view?: QuestView) => ['quests', 'list', { status, view }] as const,
     detail: (id: string) => ['quests', 'detail', id] as const,
     subquests: (parentId: string) => ['quests', 'subquests', parentId] as const,
+    project: (projectId: string) => ['quests', 'project', projectId] as const,
   },
   categories: {
     all: ['categories'] as const,
@@ -56,11 +60,22 @@ export const queryKeys = {
   auth: {
     me: ['auth', 'me'] as const,
   },
+  projects: {
+    sidebar: ['projects', 'sidebar'] as const,
+    list: (search: string, sort: 'recent' | 'name', includeArchived: boolean) =>
+      ['projects', 'list', { search, sort, includeArchived }] as const,
+    detail: (id: string) => ['projects', 'detail', id] as const,
+    all: ['projects'] as const,
+  },
 };
 
 function invalidateQuestData(queryClient: QueryClient) {
   queryClient.invalidateQueries({ queryKey: queryKeys.quests.all });
   queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+}
+
+function invalidateProjectData(queryClient: QueryClient) {
+  queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
 }
 
 type QuestListSnapshot = Array<[readonly unknown[], QuestResponse[] | undefined]>;
@@ -112,6 +127,14 @@ export function useQuests(status?: QuestStatus, view?: QuestView) {
   return useQuery({
     queryKey: queryKeys.quests.list(status, view),
     queryFn: ({ signal }) => api.getQuests(status, view, signal),
+  });
+}
+
+export function useProjectQuests(projectId: string) {
+  return useQuery({
+    queryKey: queryKeys.quests.project(projectId),
+    queryFn: ({ signal }) => api.getQuests(undefined, undefined, signal, projectId),
+    enabled: !!projectId,
   });
 }
 
@@ -353,6 +376,92 @@ export function useDeleteCategory() {
       queryClient.invalidateQueries({ queryKey: queryKeys.stats.regionActivity });
       queryClient.invalidateQueries({ queryKey: queryKeys.quests.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+    },
+  });
+}
+
+export function useProjectsSidebar() {
+  return useQuery({
+    queryKey: queryKeys.projects.sidebar,
+    queryFn: ({ signal }) => api.getProjectsSidebar(signal),
+  });
+}
+
+export function useProjectsList(
+  search = '',
+  sort: 'recent' | 'name' = 'recent',
+  includeArchived = false
+) {
+  return useQuery({
+    queryKey: queryKeys.projects.list(search, sort, includeArchived),
+    queryFn: ({ signal }) => api.getProjects({ search, sort, includeArchived }, signal),
+  });
+}
+
+export function useProjectDetail(id: string) {
+  return useQuery({
+    queryKey: queryKeys.projects.detail(id),
+    queryFn: ({ signal }) => api.getProject(id, signal),
+    enabled: !!id,
+  });
+}
+
+export function useCreateProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateProjectRequest) => api.createProject(data),
+    onSuccess: (project) => {
+      queryClient.setQueryData<ProjectDetailResponse>(
+        queryKeys.projects.detail(project.id),
+        project
+      );
+      invalidateProjectData(queryClient);
+    },
+  });
+}
+
+export function useUpdateProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateProjectRequest }) =>
+      api.updateProject(id, data),
+    onSuccess: (project) => {
+      queryClient.setQueryData<ProjectDetailResponse>(
+        queryKeys.projects.detail(project.id),
+        project
+      );
+      invalidateProjectData(queryClient);
+    },
+  });
+}
+
+export function usePinProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.pinProject(id),
+    onSuccess: () => {
+      invalidateProjectData(queryClient);
+    },
+  });
+}
+
+export function useUnpinProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.unpinProject(id),
+    onSuccess: () => {
+      invalidateProjectData(queryClient);
+    },
+  });
+}
+
+export function useDeleteProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.deleteProject(id),
+    onSuccess: () => {
+      invalidateProjectData(queryClient);
+      queryClient.invalidateQueries({ queryKey: queryKeys.quests.all });
     },
   });
 }

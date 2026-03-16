@@ -197,9 +197,6 @@ export function EmojiPicker({ value, onChange, regionName }: EmojiPickerProps) {
               Show more emojis...
             </Button>
           )}
-          <p className="text-xs text-muted-foreground text-center">
-            Pick an emoji to represent this region.
-          </p>
         </div>
       </PopoverContent>
     </Popover>

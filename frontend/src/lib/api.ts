@@ -1,4 +1,20 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const REFRESH_LOCK_KEY = 'questify.auth.refresh.lock';
+const REFRESH_RESULT_KEY = 'questify.auth.refresh.result';
+const REFRESH_LOCK_TTL_MS = 10_000;
+const REFRESH_WAIT_TIMEOUT_MS = 12_000;
+const REFRESH_CHANNEL_NAME = 'questify.auth.refresh';
+
+interface RefreshLockState {
+  owner: string;
+  expiresAt: number;
+}
+
+interface RefreshResultState {
+  owner: string;
+  success: boolean;
+  timestamp: number;
+}
 
 export interface LoginRequest {
   email: string;
@@ -39,13 +55,190 @@ class ApiClient {
   private onUnauthorized: (() => void) | null = null;
   private isRefreshing = false;
   private refreshPromise: Promise<AuthResponse> | null = null;
+  private tabId: string;
+  private refreshChannel: BroadcastChannel | null = null;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
+    this.tabId = this.createTabId();
+    this.refreshChannel =
+      typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(REFRESH_CHANNEL_NAME) : null;
   }
 
   setOnUnauthorized(callback: () => void) {
     this.onUnauthorized = callback;
+  }
+
+  private createTabId(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  private readRefreshLock(): RefreshLockState | null {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = window.localStorage.getItem(REFRESH_LOCK_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as Partial<RefreshLockState>;
+      if (!parsed.owner || typeof parsed.expiresAt !== 'number') return null;
+      return { owner: parsed.owner, expiresAt: parsed.expiresAt };
+    } catch {
+      return null;
+    }
+  }
+
+  private tryClaimRefreshCoordinatorRole(): boolean {
+    if (typeof window === 'undefined') return true;
+
+    const current = this.readRefreshLock();
+    const now = Date.now();
+    if (current && current.owner !== this.tabId && current.expiresAt > now) {
+      return false;
+    }
+
+    try {
+      window.localStorage.setItem(
+        REFRESH_LOCK_KEY,
+        JSON.stringify({
+          owner: this.tabId,
+          expiresAt: now + REFRESH_LOCK_TTL_MS,
+        })
+      );
+      const confirmed = this.readRefreshLock();
+      return confirmed?.owner === this.tabId;
+    } catch {
+      return true;
+    }
+  }
+
+  private releaseRefreshCoordinatorRole() {
+    if (typeof window === 'undefined') return;
+    const current = this.readRefreshLock();
+    if (current?.owner !== this.tabId) return;
+    try {
+      window.localStorage.removeItem(REFRESH_LOCK_KEY);
+    } catch {
+      // Ignore storage errors.
+    }
+  }
+
+  private readLastRefreshResult(): RefreshResultState | null {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = window.localStorage.getItem(REFRESH_RESULT_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as Partial<RefreshResultState>;
+      if (
+        !parsed.owner ||
+        typeof parsed.success !== 'boolean' ||
+        typeof parsed.timestamp !== 'number'
+      ) {
+        return null;
+      }
+      return {
+        owner: parsed.owner,
+        success: parsed.success,
+        timestamp: parsed.timestamp,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private publishRefreshResult(success: boolean) {
+    if (typeof window === 'undefined') return;
+    const result: RefreshResultState = {
+      owner: this.tabId,
+      success,
+      timestamp: Date.now(),
+    };
+
+    try {
+      window.localStorage.setItem(REFRESH_RESULT_KEY, JSON.stringify(result));
+    } catch {
+      // Ignore storage errors.
+    }
+
+    try {
+      this.refreshChannel?.postMessage(result);
+    } catch {
+      // Ignore channel errors.
+    }
+  }
+
+  private waitForRefreshResult(): Promise<boolean> {
+    if (typeof window === 'undefined') {
+      return Promise.resolve(false);
+    }
+
+    const waitStartedAt = Date.now();
+    const existingResult = this.readLastRefreshResult();
+    if (existingResult && existingResult.timestamp >= waitStartedAt - 1_000) {
+      return Promise.resolve(existingResult.success);
+    }
+
+    return new Promise((resolve) => {
+      let settled = false;
+      let timeoutId = 0;
+
+      const cleanup = () => {
+        window.removeEventListener('storage', handleStorage);
+        this.refreshChannel?.removeEventListener('message', handleBroadcastMessage);
+        window.clearTimeout(timeoutId);
+      };
+
+      const finalize = (value: boolean) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve(value);
+      };
+
+      const handleResult = (result: RefreshResultState) => {
+        if (result.timestamp >= waitStartedAt) {
+          finalize(result.success);
+        }
+      };
+
+      const handleBroadcastMessage = (event: MessageEvent<RefreshResultState>) => {
+        if (!event.data) return;
+        handleResult(event.data);
+      };
+
+      const handleStorage = (event: StorageEvent) => {
+        if (event.key !== REFRESH_RESULT_KEY || !event.newValue) {
+          return;
+        }
+
+        try {
+          const parsed = JSON.parse(event.newValue) as Partial<RefreshResultState>;
+          if (
+            parsed.owner &&
+            typeof parsed.success === 'boolean' &&
+            typeof parsed.timestamp === 'number'
+          ) {
+            handleResult({
+              owner: parsed.owner,
+              success: parsed.success,
+              timestamp: parsed.timestamp,
+            });
+          }
+        } catch {
+          finalize(false);
+        }
+      };
+
+      timeoutId = window.setTimeout(() => finalize(false), REFRESH_WAIT_TIMEOUT_MS);
+      window.addEventListener('storage', handleStorage);
+      this.refreshChannel?.addEventListener('message', handleBroadcastMessage);
+
+      const latestResult = this.readLastRefreshResult();
+      if (latestResult && latestResult.timestamp >= waitStartedAt) {
+        finalize(latestResult.success);
+      }
+    });
   }
 
   private async tryRefreshToken(): Promise<boolean> {
@@ -58,16 +251,23 @@ class ApiClient {
       }
     }
 
+    if (!this.tryClaimRefreshCoordinatorRole()) {
+      return this.waitForRefreshResult();
+    }
+
     this.isRefreshing = true;
     try {
       this.refreshPromise = this.refreshTokenRequest();
       await this.refreshPromise;
+      this.publishRefreshResult(true);
       return true;
     } catch {
+      this.publishRefreshResult(false);
       return false;
     } finally {
       this.isRefreshing = false;
       this.refreshPromise = null;
+      this.releaseRefreshCoordinatorRole();
     }
   }
 
@@ -205,11 +405,13 @@ class ApiClient {
   async getQuests(
     status?: 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'SKIPPED',
     view?: 'today' | 'inbox' | 'upcoming' | 'recurring',
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    projectId?: string
   ): Promise<QuestResponse[]> {
     const params = new URLSearchParams();
     if (status) params.append('status', status);
     if (view) params.append('view', view);
+    if (projectId) params.append('projectId', projectId);
     return this.request<QuestResponse[]>(`/api/quests?${params.toString()}`, { signal });
   }
 
@@ -288,6 +490,59 @@ class ApiClient {
     questAction: 'MOVE_TO_INBOX' | 'DELETE_ALL' = 'MOVE_TO_INBOX'
   ): Promise<void> {
     return this.request<void>(`/api/categories/${id}?questAction=${questAction}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getProjectsSidebar(signal?: AbortSignal): Promise<ProjectSidebarResponse> {
+    return this.request<ProjectSidebarResponse>('/api/projects/sidebar', { signal });
+  }
+
+  async getProjects(
+    params: { search?: string; sort?: 'recent' | 'name'; includeArchived?: boolean } = {},
+    signal?: AbortSignal
+  ): Promise<ProjectSummaryResponse[]> {
+    const searchParams = new URLSearchParams();
+    if (params.search) searchParams.append('search', params.search);
+    if (params.sort) searchParams.append('sort', params.sort);
+    if (params.includeArchived) searchParams.append('includeArchived', 'true');
+    return this.request<ProjectSummaryResponse[]>(`/api/projects?${searchParams.toString()}`, {
+      signal,
+    });
+  }
+
+  async getProject(id: string, signal?: AbortSignal): Promise<ProjectDetailResponse> {
+    return this.request<ProjectDetailResponse>(`/api/projects/${id}`, { signal });
+  }
+
+  async createProject(data: CreateProjectRequest): Promise<ProjectDetailResponse> {
+    return this.request<ProjectDetailResponse>('/api/projects', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateProject(id: string, data: UpdateProjectRequest): Promise<ProjectDetailResponse> {
+    return this.request<ProjectDetailResponse>(`/api/projects/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async pinProject(id: string): Promise<void> {
+    return this.request<void>(`/api/projects/${id}/pin`, {
+      method: 'POST',
+    });
+  }
+
+  async unpinProject(id: string): Promise<void> {
+    return this.request<void>(`/api/projects/${id}/pin`, {
+      method: 'DELETE',
+    });
+  }
+
+  async deleteProject(id: string): Promise<void> {
+    return this.request<void>(`/api/projects/${id}`, {
       method: 'DELETE',
     });
   }
@@ -468,6 +723,7 @@ export interface QuestResponse {
   difficulty: 'EASY' | 'MEDIUM' | 'HARD' | 'EPIC';
   status: 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'SKIPPED';
   category?: CategoryResponse;
+  project?: ProjectReferenceResponse;
   dueDate?: string;
   baseXpReward: number;
   totalXpReward: number;
@@ -485,6 +741,7 @@ export interface CreateQuestRequest {
   description?: string;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD' | 'EPIC';
   categoryId?: string;
+  projectId?: string;
   dueDate?: string;
   recurrenceInterval?: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
   recurrenceDays?: number[];
@@ -498,6 +755,7 @@ export interface UpdateQuestRequest {
   difficulty?: 'EASY' | 'MEDIUM' | 'HARD' | 'EPIC';
   status?: 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'SKIPPED';
   categoryId?: string;
+  projectId?: string;
   dueDate?: string;
   recurrenceInterval?: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
   recurrenceDays?: number[];
@@ -509,6 +767,51 @@ export interface CategoryResponse {
   name: string;
   color: string;
   icon: string;
+}
+
+export interface ProjectReferenceResponse {
+  id: string;
+  name: string;
+  icon: string;
+}
+
+export interface ProjectSummaryResponse {
+  id: string;
+  name: string;
+  description?: string;
+  icon: string;
+  pinned: boolean;
+  archived: boolean;
+  updatedAt: string;
+}
+
+export interface ProjectSidebarResponse {
+  pinned: ProjectSummaryResponse[];
+  recent: ProjectSummaryResponse[];
+}
+
+export interface ProjectDetailResponse {
+  id: string;
+  name: string;
+  description?: string;
+  icon: string;
+  pinned: boolean;
+  archivedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateProjectRequest {
+  name: string;
+  description?: string;
+  icon?: string;
+}
+
+export interface UpdateProjectRequest {
+  name?: string;
+  description?: string;
+  icon?: string;
+  archived?: boolean;
 }
 
 export interface CreateCategoryRequest {
