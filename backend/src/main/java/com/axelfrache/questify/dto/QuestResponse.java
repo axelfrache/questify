@@ -17,6 +17,7 @@ public record QuestResponse(
     int totalXpReward,
     QuestStatus status,
     CategoryResponse category,
+    ProjectReferenceResponse project,
     Instant dueDate,
     Instant completedAt,
     Instant createdAt,

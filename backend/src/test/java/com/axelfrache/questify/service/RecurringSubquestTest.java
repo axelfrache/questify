@@ -28,6 +28,7 @@ class RecurringSubquestTest {
   private QuestOccurrenceRepository questOccurrenceRepository;
   private UserRepository userRepository;
   private CategoryRepository categoryRepository;
+  private ProjectService projectService;
   private ProgressionService progressionService;
   private com.axelfrache.questify.repository.QuestHistoryRepository questHistoryRepository;
 
@@ -39,6 +40,7 @@ class RecurringSubquestTest {
     questOccurrenceRepository = mock(QuestOccurrenceRepository.class);
     userRepository = mock(UserRepository.class);
     categoryRepository = mock(CategoryRepository.class);
+    projectService = mock(ProjectService.class);
     progressionService = mock(ProgressionService.class);
     questHistoryRepository = mock(com.axelfrache.questify.repository.QuestHistoryRepository.class);
 
@@ -48,6 +50,7 @@ class RecurringSubquestTest {
             questOccurrenceRepository,
             userRepository,
             categoryRepository,
+            projectService,
             progressionService,
             questHistoryRepository);
 
@@ -71,6 +74,7 @@ class RecurringSubquestTest {
             "Subquest",
             null,
             Difficulty.EASY,
+            null,
             null,
             null,
             null,
@@ -99,7 +103,8 @@ class RecurringSubquestTest {
         .thenReturn(Optional.of(subquest));
 
     var request =
-        new UpdateQuestRequest(null, null, null, null, null, null, RecurrenceType.DAILY, null);
+        new UpdateQuestRequest(
+            null, null, null, null, null, null, null, RecurrenceType.DAILY, null);
 
     assertThrows(
         IllegalArgumentException.class, () -> questService.update(subquestId, USER_ID, request));
@@ -125,7 +130,8 @@ class RecurringSubquestTest {
         .thenReturn(Optional.of(parent));
 
     var request =
-        new UpdateQuestRequest(null, null, null, null, null, null, RecurrenceType.DAILY, null);
+        new UpdateQuestRequest(
+            null, null, null, null, null, null, null, RecurrenceType.DAILY, null);
 
     assertThrows(
         IllegalArgumentException.class, () -> questService.update(parentId, USER_ID, request));

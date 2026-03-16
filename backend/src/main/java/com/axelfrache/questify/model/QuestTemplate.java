@@ -55,6 +55,10 @@ public class QuestTemplate {
   @JoinColumn(name = "category_id")
   private Category category;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "project_id")
+  private Project project;
+
   @CreationTimestamp
   @Column(nullable = false, updatable = false)
   private Instant createdAt;

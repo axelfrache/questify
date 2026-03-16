@@ -14,6 +14,7 @@ public record UpdateQuestRequest(
     Difficulty difficulty,
     @Positive Integer baseXpReward,
     UUID categoryId,
+    UUID projectId,
     Instant dueDate,
     RecurrenceType recurrenceInterval,
     List<Integer> recurrenceDays) {}

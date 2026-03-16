@@ -2,6 +2,7 @@ package com.axelfrache.questify.service;
 
 import com.axelfrache.questify.dto.CategoryResponse;
 import com.axelfrache.questify.dto.CreateQuestRequest;
+import com.axelfrache.questify.dto.ProjectReferenceResponse;
 import com.axelfrache.questify.dto.QuestResponse;
 import com.axelfrache.questify.dto.UpdateQuestRequest;
 import com.axelfrache.questify.model.*;
@@ -9,8 +10,10 @@ import com.axelfrache.questify.repository.CategoryRepository;
 import com.axelfrache.questify.repository.QuestOccurrenceRepository;
 import com.axelfrache.questify.repository.QuestTemplateRepository;
 import com.axelfrache.questify.repository.UserRepository;
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -26,6 +29,7 @@ public class QuestService {
   private final QuestOccurrenceRepository questOccurrenceRepository;
   private final UserRepository userRepository;
   private final CategoryRepository categoryRepository;
+  private final ProjectService projectService;
   private final ProgressionService progressionService;
   private final com.axelfrache.questify.repository.QuestHistoryRepository questHistoryRepository;
 
@@ -37,13 +41,17 @@ public class QuestService {
         request.categoryId() != null
             ? categoryRepository.findById(request.categoryId()).orElse(null)
             : null;
+    var project =
+        request.projectId() != null
+            ? projectService.requireMember(request.projectId(), userId)
+            : null;
 
     RecurrenceRule recurrenceRule = null;
     if (request.recurrenceInterval() != null
         && request.recurrenceInterval() != RecurrenceType.NONE) {
       var daysOfWeek =
           request.recurrenceDays() != null
-              ? request.recurrenceDays().stream().map(d -> java.time.DayOfWeek.of(d)).toList()
+              ? request.recurrenceDays().stream().map(DayOfWeek::of).toList()
               : null;
       recurrenceRule =
           RecurrenceRule.builder()
@@ -62,6 +70,15 @@ public class QuestService {
       if (parent.getRecurrenceRule() != null && recurrenceRule != null)
         throw new IllegalArgumentException(
             "Subquests of a recurring quest cannot have their own recurrence (Checklist Mode)");
+
+      if (parent.getProject() != null
+          && project != null
+          && !parent.getProject().getId().equals(project.getId())) {
+        throw new IllegalArgumentException("Subquest project must match parent project");
+      }
+      if (parent.getProject() != null) {
+        project = parent.getProject();
+      }
     }
 
     var template =
@@ -71,6 +88,7 @@ public class QuestService {
             .difficulty(request.difficulty() != null ? request.difficulty() : Difficulty.MEDIUM)
             .baseXpReward(request.baseXpReward() != null ? request.baseXpReward() : 50)
             .category(category)
+            .project(project)
             .user(user)
             .recurrenceRule(recurrenceRule)
             .parent(parent)
@@ -175,6 +193,10 @@ public class QuestService {
       var category = categoryRepository.findById(request.categoryId()).orElse(null);
       template.setCategory(category);
     }
+    if (request.projectId() != null) {
+      var project = projectService.requireMember(request.projectId(), template.getUser().getId());
+      template.setProject(project);
+    }
 
     if (request.recurrenceInterval() != null) {
       if (request.recurrenceInterval() == RecurrenceType.NONE) {
@@ -198,16 +220,14 @@ public class QuestService {
         rule.setType(request.recurrenceInterval());
 
         if (request.recurrenceDays() != null) {
-          var daysOfWeek =
-              request.recurrenceDays().stream().map(d -> java.time.DayOfWeek.of(d)).toList();
+          var daysOfWeek = request.recurrenceDays().stream().map(DayOfWeek::of).toList();
           rule.setDaysOfWeek(daysOfWeek);
         }
 
         template.setRecurrenceRule(rule);
       }
     } else if (request.recurrenceDays() != null && template.getRecurrenceRule() != null) {
-      var daysOfWeek =
-          request.recurrenceDays().stream().map(d -> java.time.DayOfWeek.of(d)).toList();
+      var daysOfWeek = request.recurrenceDays().stream().map(DayOfWeek::of).toList();
       template.getRecurrenceRule().setDaysOfWeek(daysOfWeek);
     }
   }
@@ -394,13 +414,14 @@ public class QuestService {
 
     return allOccurrences.stream()
         .filter(q -> q.getStatus() != QuestStatus.SKIPPED)
+        .filter(q -> q.getQuestTemplate().isActive() && !q.getQuestTemplate().isDeleted())
         .filter(q -> q.getScheduledDate().equals(today))
         .filter(
             q ->
                 !(q.getQuestTemplate().getSubquests() != null
                     && !q.getQuestTemplate().getSubquests().isEmpty()
                     && q.getQuestTemplate().getRecurrenceRule() == null))
-        .sorted((o1, o2) -> o1.getScheduledDate().compareTo(o2.getScheduledDate()))
+        .sorted(Comparator.comparing(QuestOccurrence::getScheduledDate))
         .map(this::toResponse)
         .collect(Collectors.toList());
   }
@@ -414,6 +435,7 @@ public class QuestService {
     var occurrenceResponses =
         allOccurrences.stream()
             .filter(q -> q.getStatus() == QuestStatus.PENDING)
+            .filter(q -> q.getQuestTemplate().isActive() && !q.getQuestTemplate().isDeleted())
             .filter(q -> q.getQuestTemplate().getParent() == null)
             .sorted((o1, o2) -> o2.getScheduledDate().compareTo(o1.getScheduledDate()))
             .map(this::toResponse)
@@ -486,14 +508,21 @@ public class QuestService {
   @Transactional(readOnly = true)
   public List<QuestResponse> findByUserAndStatus(UUID userId, QuestStatus status) {
     var occurrences = questOccurrenceRepository.findByUserIdAndStatus(userId, status);
-    return occurrences.stream().map(this::toResponse).toList();
+    return occurrences.stream()
+        .filter(
+            occurrence ->
+                occurrence.getQuestTemplate().isActive()
+                    && !occurrence.getQuestTemplate().isDeleted())
+        .map(this::toResponse)
+        .toList();
   }
 
   @Transactional(readOnly = true)
   public QuestResponse findById(UUID id, UUID userId) {
     var occurrenceOpt = questOccurrenceRepository.findByIdAndUserId(id, userId);
-    if (occurrenceOpt.isPresent()) return toResponse(occurrenceOpt.get());
-    return toResponse(findTemplateByIdAndUserOrThrow(id, userId));
+    return occurrenceOpt
+        .map(this::toResponse)
+        .orElseGet(() -> toResponse(findTemplateByIdAndUserOrThrow(id, userId)));
   }
 
   @Transactional
@@ -597,6 +626,44 @@ public class QuestService {
         .toList();
   }
 
+  @Transactional(readOnly = true)
+  public List<QuestResponse> findByProject(UUID projectId, UUID userId) {
+    projectService.requireMember(projectId, userId);
+    var user = findUserOrThrow(userId);
+    ensureDailyOccurrences(user);
+
+    var allOccurrences = questOccurrenceRepository.findAllByUserIdWithSubquests(userId);
+    var occurrenceResponses =
+        allOccurrences.stream()
+            .filter(q -> q.getStatus() == QuestStatus.PENDING)
+            .filter(
+                q ->
+                    q.getQuestTemplate().getProject() != null
+                        && q.getQuestTemplate().getProject().getId().equals(projectId))
+            .filter(q -> q.getQuestTemplate().isActive() && !q.getQuestTemplate().isDeleted())
+            .filter(q -> q.getQuestTemplate().getParent() == null)
+            .sorted((o1, o2) -> o2.getScheduledDate().compareTo(o1.getScheduledDate()))
+            .map(this::toResponse)
+            .toList();
+
+    var templatesWithOccurrences =
+        allOccurrences.stream().map(o -> o.getQuestTemplate().getId()).collect(Collectors.toSet());
+
+    var floatingTemplates =
+        questTemplateRepository.findByUserAndActiveTrueAndDeletedFalse(user).stream()
+            .filter(t -> t.getProject() != null && t.getProject().getId().equals(projectId))
+            .filter(t -> t.getRecurrenceRule() == null)
+            .filter(t -> !templatesWithOccurrences.contains(t.getId()))
+            .filter(t -> t.getParent() == null)
+            .map(this::toResponse)
+            .toList();
+
+    var result = new java.util.ArrayList<QuestResponse>();
+    result.addAll(floatingTemplates);
+    result.addAll(occurrenceResponses);
+    return result;
+  }
+
   private QuestResponse toResponse(QuestTemplate template) {
     return toResponse(template, null);
   }
@@ -614,6 +681,13 @@ public class QuestService {
                 template.getCategory().getIcon(),
                 template.getCategory().getColor(),
                 template.getCategory().isGlobal())
+            : null;
+    var projectResponse =
+        template.getProject() != null
+            ? new ProjectReferenceResponse(
+                template.getProject().getId(),
+                template.getProject().getName(),
+                template.getProject().getIcon())
             : null;
 
     Instant dueDate = null;
@@ -638,7 +712,7 @@ public class QuestService {
       recurrenceType = template.getRecurrenceRule().getType();
       if (template.getRecurrenceRule().getDaysOfWeek() != null)
         recurrenceDays =
-            template.getRecurrenceRule().getDaysOfWeek().stream().map(d -> d.getValue()).toList();
+            template.getRecurrenceRule().getDaysOfWeek().stream().map(DayOfWeek::getValue).toList();
     }
 
     UUID parentId = template.getParent() != null ? template.getParent().getId() : null;
@@ -679,6 +753,7 @@ public class QuestService {
         totalXp,
         status,
         categoryResponse,
+        projectResponse,
         dueDate,
         completedAt,
         template.getCreatedAt(),
@@ -701,6 +776,13 @@ public class QuestService {
                 template.getCategory().getColor(),
                 template.getCategory().isGlobal())
             : null;
+    var projectResponse =
+        template.getProject() != null
+            ? new ProjectReferenceResponse(
+                template.getProject().getId(),
+                template.getProject().getName(),
+                template.getProject().getIcon())
+            : null;
 
     Instant dueDate = scheduledDate.atStartOfDay(template.getUser().getZoneId()).toInstant();
     int totalXp =
@@ -712,7 +794,7 @@ public class QuestService {
       recurrenceType = template.getRecurrenceRule().getType();
       if (template.getRecurrenceRule().getDaysOfWeek() != null) {
         recurrenceDays =
-            template.getRecurrenceRule().getDaysOfWeek().stream().map(d -> d.getValue()).toList();
+            template.getRecurrenceRule().getDaysOfWeek().stream().map(DayOfWeek::getValue).toList();
       }
     }
 
@@ -729,6 +811,7 @@ public class QuestService {
         totalXp,
         QuestStatus.PENDING,
         categoryResponse,
+        projectResponse,
         dueDate,
         null,
         template.getCreatedAt(),

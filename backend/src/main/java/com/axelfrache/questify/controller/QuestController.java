@@ -36,8 +36,13 @@ public class QuestController {
   public ResponseEntity<List<QuestResponse>> findAll(
       @AuthenticationPrincipal UserDetails userDetails,
       @RequestParam(required = false) QuestStatus status,
-      @RequestParam(required = false) String view) {
+      @RequestParam(required = false) String view,
+      @RequestParam(required = false) UUID projectId) {
     var userId = securityUtils.getCurrentUserId(userDetails);
+
+    if (projectId != null) {
+      return ResponseEntity.ok(questService.findByProject(projectId, userId));
+    }
 
     if ("today".equalsIgnoreCase(view)) {
       return ResponseEntity.ok(questService.findTodayQuests(userId));

@@ -38,7 +38,7 @@ class QuestOccurrenceControllerTest {
     var expectedResponse =
         new QuestResponse(
             QUEST_ID, null, null, null, null, 0, 0, null, null, null, null, null, null, null, null,
-            null, null, 0, 0);
+            null, null, null, 0, 0);
 
     when(questService.complete(QUEST_ID, USER_ID)).thenReturn(expectedResponse);
 
@@ -55,7 +55,7 @@ class QuestOccurrenceControllerTest {
     var expectedResponse =
         new QuestResponse(
             QUEST_ID, null, null, null, null, 0, 0, null, null, null, null, null, null, null, null,
-            null, null, 0, 0);
+            null, null, null, 0, 0);
 
     when(questService.skip(QUEST_ID, USER_ID)).thenReturn(expectedResponse);
 

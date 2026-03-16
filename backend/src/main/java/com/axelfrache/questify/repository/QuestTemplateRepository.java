@@ -22,12 +22,28 @@ public interface QuestTemplateRepository extends JpaRepository<QuestTemplate, UU
 
   List<QuestTemplate> findByCategoryAndDeletedFalse(Category category);
 
+  @Query(
+      "SELECT DISTINCT qt FROM QuestTemplate qt "
+          + "LEFT JOIN FETCH qt.subquests sq "
+          + "WHERE qt.parent IS NULL "
+          + "AND qt.recurrenceRule IS NULL "
+          + "AND qt.project IS NULL "
+          + "AND qt.deleted = false "
+          + "AND qt.user IS NOT NULL")
+  List<QuestTemplate> findLegacyProjectRoots();
+
   @Query("SELECT q FROM QuestTemplate q WHERE q.id = :id AND q.user.id = :userId")
   Optional<QuestTemplate> findByIdAndUserId(@Param("id") UUID id, @Param("userId") UUID userId);
 
   @Modifying
   @Query("UPDATE QuestTemplate q SET q.parent = null WHERE q.user = :user")
   void nullifyParentForUser(@Param("user") User user);
+
+  List<QuestTemplate> findByProject_Id(UUID projectId);
+
+  @Modifying
+  @Query("UPDATE QuestTemplate q SET q.project = null WHERE q.project.id = :projectId")
+  void clearProjectByProjectId(@Param("projectId") UUID projectId);
 
   void deleteAllByUser(User user);
 }

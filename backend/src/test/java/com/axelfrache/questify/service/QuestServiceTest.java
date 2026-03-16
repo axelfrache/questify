@@ -32,6 +32,7 @@ class QuestServiceTest {
   private QuestOccurrenceRepository questOccurrenceRepository;
   private UserRepository userRepository;
   private CategoryRepository categoryRepository;
+  private ProjectService projectService;
   private ProgressionService progressionService;
   private com.axelfrache.questify.repository.QuestHistoryRepository questHistoryRepository;
 
@@ -43,6 +44,7 @@ class QuestServiceTest {
     questOccurrenceRepository = mock(QuestOccurrenceRepository.class);
     userRepository = mock(UserRepository.class);
     categoryRepository = mock(CategoryRepository.class);
+    projectService = mock(ProjectService.class);
     progressionService = mock(ProgressionService.class);
     questHistoryRepository = mock(com.axelfrache.questify.repository.QuestHistoryRepository.class);
 
@@ -52,6 +54,7 @@ class QuestServiceTest {
             questOccurrenceRepository,
             userRepository,
             categoryRepository,
+            projectService,
             progressionService,
             questHistoryRepository);
 
@@ -64,7 +67,7 @@ class QuestServiceTest {
   void create_shouldCreateTemplateOnly_whenNoRecurrenceAndNoDueDate() {
     var request =
         new CreateQuestRequest(
-            "Test Quest", "Description", Difficulty.MEDIUM, 50, null, null, null, null, null);
+            "Test Quest", "Description", Difficulty.MEDIUM, 50, null, null, null, null, null, null);
     when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
 
     var response = questService.create(USER_ID, request);
@@ -86,6 +89,7 @@ class QuestServiceTest {
             25,
             null,
             null,
+            null,
             RecurrenceType.DAILY,
             null,
             null);
@@ -102,7 +106,8 @@ class QuestServiceTest {
 
   @Test
   void create_shouldThrow_whenUserNotFound() {
-    var request = new CreateQuestRequest("Test", null, null, null, null, null, null, null, null);
+    var request =
+        new CreateQuestRequest("Test", null, null, null, null, null, null, null, null, null);
     when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
 
     assertThrows(IllegalArgumentException.class, () -> questService.create(USER_ID, request));
@@ -117,6 +122,7 @@ class QuestServiceTest {
             "Description",
             Difficulty.MEDIUM,
             50,
+            null,
             null,
             dueDate,
             null,
@@ -135,7 +141,8 @@ class QuestServiceTest {
 
   @Test
   void create_shouldUseDefaultDifficulty_whenNotProvided() {
-    var request = new CreateQuestRequest("Test", null, null, null, null, null, null, null, null);
+    var request =
+        new CreateQuestRequest("Test", null, null, null, null, null, null, null, null, null);
     when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
 
     var response = questService.create(USER_ID, request);
@@ -311,7 +318,8 @@ class QuestServiceTest {
     var occurrence = createOccurrence(template, QuestStatus.PENDING, LocalDate.now());
     occurrence.setId(occurrenceId);
 
-    var request = new UpdateQuestRequest("New Title", null, null, null, null, null, null, null);
+    var request =
+        new UpdateQuestRequest("New Title", null, null, null, null, null, null, null, null);
 
     when(questOccurrenceRepository.findByIdAndUserId(occurrenceId, USER_ID))
         .thenReturn(Optional.of(occurrence));
@@ -331,7 +339,7 @@ class QuestServiceTest {
 
     var request =
         new UpdateQuestRequest(
-            null, null, null, null, null, Instant.now().plusSeconds(86400), null, null);
+            null, null, null, null, null, null, Instant.now().plusSeconds(86400), null, null);
 
     when(questOccurrenceRepository.findByIdAndUserId(occurrenceId, USER_ID))
         .thenReturn(Optional.of(occurrence));
@@ -434,7 +442,7 @@ class QuestServiceTest {
     var quests = questService.findTodayQuests(USER_ID);
 
     assertEquals(1, quests.size());
-    assertEquals(QuestStatus.PENDING, quests.get(0).status());
+    assertEquals(QuestStatus.PENDING, quests.getFirst().status());
   }
 
   @Test
@@ -535,7 +543,7 @@ class QuestServiceTest {
     var template = createTemplate();
     template.setId(templateId);
     var dueDate = Instant.now().plusSeconds(86400);
-    var request = new UpdateQuestRequest(null, null, null, null, null, dueDate, null, null);
+    var request = new UpdateQuestRequest(null, null, null, null, null, null, dueDate, null, null);
 
     when(questOccurrenceRepository.findByIdAndUserId(templateId, USER_ID))
         .thenReturn(Optional.empty());
@@ -548,7 +556,7 @@ class QuestServiceTest {
 
     verify(questOccurrenceRepository).save(any(QuestOccurrence.class));
     assertNotNull(response);
-    assertTrue(response.id() != templateId);
+    assertNotSame(response.id(), templateId);
   }
 
   private QuestTemplate createTemplate() {
