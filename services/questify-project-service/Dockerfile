@@ -1,16 +1,7 @@
-FROM eclipse-temurin:21-jdk-alpine AS build-common
-
-WORKDIR /common
-COPY questify-common/ .
-COPY questify-project-service/.mvn/ .mvn/
-COPY questify-project-service/mvnw .
-RUN chmod +x mvnw && ./mvnw install -DskipTests -B
-
 FROM eclipse-temurin:21-jdk-alpine AS build
 
 WORKDIR /app
 
-COPY --from=build-common /root/.m2/repository/com/axelfrache /root/.m2/repository/com/axelfrache
 COPY questify-project-service/.mvn/ .mvn/
 COPY questify-project-service/mvnw questify-project-service/pom.xml ./
 
