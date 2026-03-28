@@ -15,7 +15,6 @@ public class LevelConfig {
   private int baseXp = 100;
   private double multiplier = 1.0;
 
-  // Memoized: totalXpForLevel is called on every progression read and is O(n) otherwise.
   @Getter(lombok.AccessLevel.NONE)
   private final ConcurrentHashMap<Integer, Long> totalXpCache = new ConcurrentHashMap<>();
 

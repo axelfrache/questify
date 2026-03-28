@@ -36,7 +36,6 @@ public class AchievementService {
   @Transactional
   public List<AchievementResponse> checkAndUnlock(UUID userId) {
     var allAchievements = achievementRepository.findAll();
-    // Load all already-unlocked IDs in one query instead of N existsBy calls.
     Set<UUID> alreadyUnlocked = userAchievementRepository
         .findByUserIdOrderByUnlockedAtDesc(userId).stream()
         .map(ua -> ua.getAchievement().getId())

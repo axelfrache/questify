@@ -32,6 +32,18 @@ public class RabbitMQConfig {
   }
 
   @Bean
+  public Queue projectDeletedQueue() {
+    return new Queue(QueueConstants.PROJECT_DELETED_QUEUE, true);
+  }
+
+  @Bean
+  public Binding projectDeletedBinding(Queue projectDeletedQueue, TopicExchange questifyExchange) {
+    return BindingBuilder.bind(projectDeletedQueue)
+        .to(questifyExchange)
+        .with(QueueConstants.PROJECT_DELETED_ROUTING_KEY);
+  }
+
+  @Bean
   public Jackson2JsonMessageConverter messageConverter() {
     return new Jackson2JsonMessageConverter();
   }

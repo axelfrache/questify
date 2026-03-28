@@ -14,10 +14,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-/**
- * Reads X-User-Id and X-User-Role headers injected by Envoy Gateway after JWT validation.
- * In production these headers are set by the gateway; in development pass them manually.
- */
 @Component
 public class HeaderAuthenticationFilter extends OncePerRequestFilter {
 

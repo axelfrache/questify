@@ -10,14 +10,11 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface QuestCompletionRecordRepository extends JpaRepository<QuestCompletionRecord, UUID> {
 
-  /** Used by achievement checks that need all records (e.g. total count). */
   long countByUserId(UUID userId);
 
-  /** Used for streak checks: loads only records within the relevant date window. */
   List<QuestCompletionRecord> findByUserIdAndCompletedAtBetween(
       UUID userId, Instant from, Instant to);
 
-  /** Used for category-based achievement checks. */
   long countByUserIdAndCategoryNameIgnoreCase(UUID userId, String categoryName);
 
   void deleteByUserId(UUID userId);

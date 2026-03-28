@@ -11,10 +11,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-/**
- * Reads the X-User-Id and X-User-Role headers injected by Envoy Gateway after JWT validation.
- * Services never validate JWTs directly.
- */
 public class HeaderAuthenticationFilter extends OncePerRequestFilter {
 
   @Override

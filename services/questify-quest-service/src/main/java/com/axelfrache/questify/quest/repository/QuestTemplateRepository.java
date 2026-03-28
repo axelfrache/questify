@@ -37,5 +37,9 @@ public interface QuestTemplateRepository extends JpaRepository<QuestTemplate, UU
   @Query("UPDATE QuestTemplate q SET q.category = null WHERE q.category = :category")
   void clearCategory(@Param("category") Category category);
 
+  @Modifying
+  @Query("UPDATE QuestTemplate q SET q.projectId = null WHERE q.projectId = :projectId")
+  void clearProjectByProjectId(@Param("projectId") UUID projectId);
+
   void deleteByUserId(UUID userId);
 }
