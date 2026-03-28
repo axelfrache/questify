@@ -11,7 +11,6 @@
     <description>Aggregator for all Questify microservices</description>
 
     <modules>
-        <module>questify-common</module>
         <module>questify-auth-service</module>
         <module>questify-quest-service</module>
         <module>questify-project-service</module>
