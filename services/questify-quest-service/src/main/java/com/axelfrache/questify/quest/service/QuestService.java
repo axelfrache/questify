@@ -229,7 +229,10 @@ public class QuestService {
     occurrence.setXpEarned(xpEarned);
     questOccurrenceRepository.save(occurrence);
 
-    questEventPublisher.publishQuestCompleted(userId, template.getId(), template.getTitle(), xpEarned);
+    var categoryName = template.getCategory() != null ? template.getCategory().getName() : null;
+    questEventPublisher.publishQuestCompleted(
+        userId, template.getId(), template.getTitle(), xpEarned,
+        categoryName, occurrence.getCompletedAt());
     saveToHistory(occurrence, xpEarned);
 
     return toResponse(occurrence);
