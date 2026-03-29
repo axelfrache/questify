@@ -5,6 +5,8 @@ import com.axelfrache.questify.auth.dto.AuthResponse;
 import com.axelfrache.questify.auth.dto.LoginRequest;
 import com.axelfrache.questify.auth.dto.RefreshTokenRequest;
 import com.axelfrache.questify.auth.dto.RegisterRequest;
+import com.axelfrache.questify.auth.messaging.UserEventPublisher;
+import com.axelfrache.questify.auth.messaging.UserRegisteredEvent;
 import com.axelfrache.questify.auth.model.RefreshToken;
 import com.axelfrache.questify.auth.model.User;
 import com.axelfrache.questify.auth.repository.RefreshTokenRepository;
@@ -31,6 +33,7 @@ public class AuthService {
   private final JwtService jwtService;
   private final JwtConfig jwtConfig;
   private final AuthenticationManager authenticationManager;
+  private final UserEventPublisher userEventPublisher;
 
   @Transactional
   public AuthResponse register(RegisterRequest request) {
@@ -47,6 +50,10 @@ public class AuthService {
             .build();
 
     userRepository.save(user);
+
+    userEventPublisher.publishUserRegistered(
+        new UserRegisteredEvent(user.getId(), user.getUsername(), user.getEmail(),
+            user.getRole().name(), user.getCreatedAt()));
 
     log.info("User registered: email={}", user.getEmail());
     return createAuthResponse(user);

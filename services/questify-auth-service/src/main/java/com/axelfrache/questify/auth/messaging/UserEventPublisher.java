@@ -19,4 +19,10 @@ public class UserEventPublisher {
         QueueConstants.EXCHANGE, QueueConstants.USER_DELETED_ROUTING_KEY, event);
     log.info("Published UserDeletedEvent for userId={}", userId);
   }
+
+  public void publishUserRegistered(UserRegisteredEvent event) {
+    rabbitTemplate.convertAndSend(
+        QueueConstants.EXCHANGE, QueueConstants.USER_REGISTERED_ROUTING_KEY, event);
+    log.debug("Published UserRegisteredEvent for userId={}", event.userId());
+  }
 }
