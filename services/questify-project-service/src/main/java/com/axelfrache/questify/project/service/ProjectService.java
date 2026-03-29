@@ -22,6 +22,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,10 +46,7 @@ public class ProjectService {
 
   @Transactional(readOnly = true)
   public ProjectSidebarResponse getSidebar(UUID userId) {
-    var projects = projectRepository.findAllByMemberUserId(userId).stream()
-        .filter(p -> p.getArchivedAt() == null)
-        .toList();
-
+    var projects = projectRepository.findAllByMemberUserId(userId);
     var projectById = projects.stream().collect(Collectors.toMap(Project::getId, p -> p));
 
     var pinned = userProjectPinRepository.findPinnedProjectIdsByUserIdOrderByPinnedAtDesc(userId).stream()
@@ -68,22 +69,28 @@ public class ProjectService {
   }
 
   @Transactional(readOnly = true)
-  public List<ProjectSummaryResponse> list(
-      UUID userId, String search, String sort, boolean includeArchived) {
+  public Page<ProjectSummaryResponse> list(
+      UUID userId, String search, String sort, boolean includeArchived, int page, int size) {
     var pinnedIds = new HashSet<>(userProjectPinRepository.findPinnedProjectIdsByUserIdOrderByPinnedAtDesc(userId));
-
     var normalizedSearch = search != null ? search.trim().toLowerCase() : "";
 
     Comparator<Project> comparator = "name".equalsIgnoreCase(sort)
         ? Comparator.comparing(p -> p.getName().toLowerCase())
         : Comparator.comparing(Project::getUpdatedAt).reversed();
 
-    return projectRepository.findAllByMemberUserId(userId).stream()
-        .filter(p -> includeArchived || p.getArchivedAt() == null)
-        .filter(p -> matchesSearch(p, normalizedSearch))
+    var sorted = projectRepository.findAllByMemberUserIdFiltered(userId, normalizedSearch, includeArchived)
+        .stream()
         .sorted(comparator)
+        .toList();
+
+    var pageable = PageRequest.of(page, size);
+    int start = (int) pageable.getOffset();
+    int end = Math.min(start + pageable.getPageSize(), sorted.size());
+    List<ProjectSummaryResponse> content = sorted.subList(start, end).stream()
         .map(p -> toSummary(p, pinnedIds.contains(p.getId())))
         .toList();
+
+    return new PageImpl<>(content, pageable, sorted.size());
   }
 
   @Transactional
@@ -139,10 +146,10 @@ public class ProjectService {
     var project = requireMember(projectId, userId);
     if (project.getArchivedAt() != null)
       throw new IllegalStateException("Archived projects cannot be pinned");
-    if (userProjectPinRepository.existsByUserIdAndProject(userId, project)) return;
-
-    userProjectPinRepository.save(
-        UserProjectPin.builder().userId(userId).project(project).build());
+    try {
+      userProjectPinRepository.save(UserProjectPin.builder().userId(userId).project(project).build());
+    } catch (DataIntegrityViolationException ignored) {
+    }
   }
 
   @Transactional
@@ -153,9 +160,10 @@ public class ProjectService {
 
   @Transactional
   public void delete(UUID projectId, UUID userId) {
-    var project = projectRepository.findById(projectId)
-        .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
+    var projectOpt = projectRepository.findById(projectId);
+    if (projectOpt.isEmpty()) return;
 
+    var project = projectOpt.get();
     var membership = projectMemberRepository.findByProjectAndUserId(project, userId)
         .orElseThrow(() -> new AccessDeniedException("Access denied to this project"));
 
@@ -197,11 +205,5 @@ public class ProjectService {
     if (description == null) return null;
     var trimmed = description.trim();
     return trimmed.isBlank() ? null : trimmed;
-  }
-
-  private boolean matchesSearch(Project p, String normalizedSearch) {
-    if (normalizedSearch.isBlank()) return true;
-    if (p.getName().toLowerCase().contains(normalizedSearch)) return true;
-    return p.getDescription() != null && p.getDescription().toLowerCase().contains(normalizedSearch);
   }
 }

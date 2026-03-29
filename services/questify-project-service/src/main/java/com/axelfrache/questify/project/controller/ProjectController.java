@@ -7,8 +7,8 @@ import com.axelfrache.questify.project.dto.ProjectSummaryResponse;
 import com.axelfrache.questify.project.dto.UpdateProjectRequest;
 import com.axelfrache.questify.project.service.ProjectService;
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,13 +37,15 @@ public class ProjectController {
   }
 
   @GetMapping
-  public ResponseEntity<List<ProjectSummaryResponse>> list(
+  public ResponseEntity<Page<ProjectSummaryResponse>> list(
       @AuthenticationPrincipal String userId,
       @RequestParam(required = false) String search,
       @RequestParam(defaultValue = "recent") String sort,
-      @RequestParam(defaultValue = "false") boolean includeArchived) {
+      @RequestParam(defaultValue = "false") boolean includeArchived,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size) {
     return ResponseEntity.ok(
-        projectService.list(UUID.fromString(userId), search, sort, includeArchived));
+        projectService.list(UUID.fromString(userId), search, sort, includeArchived, page, size));
   }
 
   @PostMapping

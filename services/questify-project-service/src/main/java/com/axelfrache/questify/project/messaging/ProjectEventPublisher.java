@@ -14,8 +14,13 @@ public class ProjectEventPublisher {
   private final RabbitTemplate rabbitTemplate;
 
   public void publishProjectDeleted(UUID projectId) {
-    var event = new ProjectDeletedEvent(projectId);
-    rabbitTemplate.convertAndSend(QueueConstants.EXCHANGE, QueueConstants.PROJECT_DELETED_ROUTING_KEY, event);
-    log.debug("Published ProjectDeletedEvent: projectId={}", projectId);
+    try {
+      var event = new ProjectDeletedEvent(projectId);
+      rabbitTemplate.convertAndSend(QueueConstants.EXCHANGE, QueueConstants.PROJECT_DELETED_ROUTING_KEY, event);
+      log.debug("Published ProjectDeletedEvent: projectId={}", projectId);
+    } catch (Exception e) {
+      log.warn("Failed to publish ProjectDeletedEvent for projectId={} — quest-service will not unlink quests: {}",
+          projectId, e.getMessage());
+    }
   }
 }

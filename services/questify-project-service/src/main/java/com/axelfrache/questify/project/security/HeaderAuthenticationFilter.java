@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,7 +22,7 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
     var userId = request.getHeader("X-User-Id");
     var userRole = request.getHeader("X-User-Role");
 
-    if (userId != null && !userId.isBlank()) {
+    if (userId != null && !userId.isBlank() && isValidUuid(userId)) {
       var authorities =
           userRole != null && !userRole.isBlank()
               ? List.of(new SimpleGrantedAuthority("ROLE_" + userRole))
@@ -32,5 +33,14 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
     }
 
     filterChain.doFilter(request, response);
+  }
+
+  private static boolean isValidUuid(String s) {
+    try {
+      UUID.fromString(s);
+      return true;
+    } catch (IllegalArgumentException e) {
+      return false;
+    }
   }
 }

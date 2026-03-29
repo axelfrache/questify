@@ -16,6 +16,24 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
       WHERE p.id IN (
           SELECT pm.project.id FROM ProjectMember pm WHERE pm.userId = :userId
       )
+      AND (:includeArchived = true OR p.archivedAt IS NULL)
+      AND (
+          :search = ''
+          OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))
+          OR (p.description IS NOT NULL AND LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')))
+      )
+      """)
+  List<Project> findAllByMemberUserIdFiltered(
+      @Param("userId") UUID userId,
+      @Param("search") String search,
+      @Param("includeArchived") boolean includeArchived);
+
+  @Query("""
+      SELECT p FROM Project p
+      WHERE p.id IN (
+          SELECT pm.project.id FROM ProjectMember pm WHERE pm.userId = :userId
+      )
+      AND p.archivedAt IS NULL
       """)
   List<Project> findAllByMemberUserId(@Param("userId") UUID userId);
 
