@@ -3,6 +3,7 @@ package com.axelfrache.questify.auth.config;
 import com.axelfrache.questify.auth.security.JwtAuthenticationFilter;
 import com.axelfrache.questify.auth.security.RateLimitFilter;
 import jakarta.annotation.PostConstruct;
+import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +35,7 @@ public class SecurityConfig {
   private final JwtConfig jwtConfig;
 
   @Value("${questify.cors.allowed-origins:http://localhost:5173,http://localhost:80}")
-  private List<String> allowedOrigins;
+  private String allowedOrigins;
 
   @PostConstruct
   public void validateJwtSecret() {
@@ -71,7 +72,7 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     var config = new CorsConfiguration();
-    config.setAllowedOrigins(allowedOrigins);
+    config.setAllowedOrigins(Arrays.stream(allowedOrigins.split(",")).map(String::trim).toList());
     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
     config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With", "Cookie"));
     config.setAllowCredentials(true);

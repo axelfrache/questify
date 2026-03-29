@@ -19,20 +19,32 @@ public class AdminEventListener {
   @Transactional
   public void onAdminUserDeleted(AdminUserDeletedEvent event) {
     log.info("Admin force-deleting user {}", event.userId());
-    userService.forceDeleteUser(event.userId());
+    try {
+      userService.forceDeleteUser(event.userId());
+    } catch (IllegalArgumentException e) {
+      log.warn("User {} not found during admin force-delete, skipping", event.userId());
+    }
   }
 
   @RabbitListener(queues = QueueConstants.ADMIN_USER_ROLE_CHANGED_QUEUE)
   @Transactional
   public void onAdminUserRoleChanged(AdminUserRoleChangedEvent event) {
     log.info("Admin changing role of user {} to {}", event.userId(), event.newRole());
-    userService.updateUserRole(event.userId(), Role.valueOf(event.newRole()));
+    try {
+      userService.updateUserRole(event.userId(), Role.valueOf(event.newRole()));
+    } catch (IllegalArgumentException e) {
+      log.warn("Could not apply role change for user {}: {}", event.userId(), e.getMessage());
+    }
   }
 
   @RabbitListener(queues = QueueConstants.ADMIN_USER_STATUS_CHANGED_QUEUE)
   @Transactional
   public void onAdminUserStatusChanged(AdminUserStatusChangedEvent event) {
     log.info("Admin changing status of user {} to enabled={}", event.userId(), event.enabled());
-    userService.updateUserStatus(event.userId(), event.enabled());
+    try {
+      userService.updateUserStatus(event.userId(), event.enabled());
+    } catch (IllegalArgumentException e) {
+      log.warn("Could not apply status change for user {}: {}", event.userId(), e.getMessage());
+    }
   }
 }

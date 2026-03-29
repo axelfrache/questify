@@ -14,15 +14,22 @@ public class UserEventPublisher {
   private final RabbitTemplate rabbitTemplate;
 
   public void publishUserDeleted(UUID userId) {
-    var event = new UserDeletedEvent(userId);
-    rabbitTemplate.convertAndSend(
-        QueueConstants.EXCHANGE, QueueConstants.USER_DELETED_ROUTING_KEY, event);
-    log.info("Published UserDeletedEvent for userId={}", userId);
+    try {
+      rabbitTemplate.convertAndSend(
+          QueueConstants.EXCHANGE, QueueConstants.USER_DELETED_ROUTING_KEY, new UserDeletedEvent(userId));
+      log.info("Published UserDeletedEvent for userId={}", userId);
+    } catch (Exception e) {
+      log.warn("Failed to publish UserDeletedEvent for userId={}: {}", userId, e.getMessage());
+    }
   }
 
   public void publishUserRegistered(UserRegisteredEvent event) {
-    rabbitTemplate.convertAndSend(
-        QueueConstants.EXCHANGE, QueueConstants.USER_REGISTERED_ROUTING_KEY, event);
-    log.debug("Published UserRegisteredEvent for userId={}", event.userId());
+    try {
+      rabbitTemplate.convertAndSend(
+          QueueConstants.EXCHANGE, QueueConstants.USER_REGISTERED_ROUTING_KEY, event);
+      log.debug("Published UserRegisteredEvent for userId={}", event.userId());
+    } catch (Exception e) {
+      log.warn("Failed to publish UserRegisteredEvent for userId={}: {}", event.userId(), e.getMessage());
+    }
   }
 }
