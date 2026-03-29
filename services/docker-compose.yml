@@ -10,6 +10,7 @@ services:
       POSTGRES_PASSWORD: questify
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U questify -d questify"]
       interval: 10s
@@ -279,6 +280,29 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    networks:
+      - questify-network
+
+  gateway:
+    image: nginx:alpine
+    container_name: questify-gateway
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      quest-service:
+        condition: service_healthy
+      project-service:
+        condition: service_healthy
+      progression-service:
+        condition: service_healthy
+      stats-service:
+        condition: service_healthy
+      admin-service:
+        condition: service_healthy
     networks:
       - questify-network
 

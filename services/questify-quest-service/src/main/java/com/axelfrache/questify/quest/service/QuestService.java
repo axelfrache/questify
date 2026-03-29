@@ -421,10 +421,11 @@ public class QuestService {
         if (template.getRecurrenceRule() == null) continue;
         if (!shouldGenerate(template, date)) continue;
 
+        final var capturedDate = date;
         var response = questOccurrenceRepository
-            .findByQuestTemplateAndScheduledDate(template, date)
+            .findByQuestTemplateAndScheduledDate(template, capturedDate)
             .map(this::toResponse)
-            .orElseGet(() -> toGhostResponse(template, date));
+            .orElseGet(() -> toGhostResponse(template, capturedDate));
         upcoming.add(response);
       }
     }

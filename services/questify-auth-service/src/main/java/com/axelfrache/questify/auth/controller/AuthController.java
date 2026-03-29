@@ -88,6 +88,20 @@ public class AuthController {
     return ResponseEntity.ok().build();
   }
 
+  @GetMapping("/validate")
+  public ResponseEntity<Void> validate(@AuthenticationPrincipal UserDetails userDetails) {
+    if (userDetails == null) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+    return userRepository.findByEmail(userDetails.getUsername())
+        .filter(user -> user.isEnabled())
+        .map(user -> ResponseEntity.ok()
+            .header("X-User-Id", user.getId().toString())
+            .header("X-User-Role", user.getRole().name())
+            .<Void>build())
+        .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+  }
+
   @GetMapping("/me")
   public ResponseEntity<UserDto> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
     if (userDetails == null) {
