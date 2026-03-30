@@ -27,8 +27,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class UserSnapshot {
 
-  @Id
-  private UUID id;
+  @Id private UUID id;
 
   @Column(nullable = false)
   private String username;

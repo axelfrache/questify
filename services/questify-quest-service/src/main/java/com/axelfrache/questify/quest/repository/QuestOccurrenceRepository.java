@@ -29,7 +29,8 @@ public interface QuestOccurrenceRepository extends JpaRepository<QuestOccurrence
           + "WHERE qt.userId = :userId")
   List<QuestOccurrence> findAllByUserIdWithSubquests(@Param("userId") UUID userId);
 
-  boolean existsByQuestTemplateAndScheduledDate(QuestTemplate questTemplate, LocalDate scheduledDate);
+  boolean existsByQuestTemplateAndScheduledDate(
+      QuestTemplate questTemplate, LocalDate scheduledDate);
 
   Optional<QuestOccurrence> findByQuestTemplateAndScheduledDate(
       QuestTemplate template, LocalDate scheduledDate);

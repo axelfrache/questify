@@ -22,11 +22,13 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(ConstraintViolationException.class)
-  public ResponseEntity<Map<String, String>> handleConstraintViolation(ConstraintViolationException ex) {
-    var message = ex.getConstraintViolations().stream()
-        .map(v -> v.getPropertyPath() + ": " + v.getMessage())
-        .findFirst()
-        .orElse(ex.getMessage());
+  public ResponseEntity<Map<String, String>> handleConstraintViolation(
+      ConstraintViolationException ex) {
+    var message =
+        ex.getConstraintViolations().stream()
+            .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+            .findFirst()
+            .orElse(ex.getMessage());
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", message));
   }
 }

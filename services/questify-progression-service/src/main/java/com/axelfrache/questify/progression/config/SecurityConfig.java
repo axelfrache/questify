@@ -1,6 +1,8 @@
 package com.axelfrache.questify.progression.config;
 
 import com.axelfrache.questify.progression.security.HeaderAuthenticationFilter;
+import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -15,9 +17,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
-import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -28,14 +27,17 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    return http
-        .csrf(AbstractHttpConfigurer::disable)
+    return http.csrf(AbstractHttpConfigurer::disable)
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .addFilterBefore(new HeaderAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/actuator/health", "/actuator/prometheus").permitAll()
-            .anyRequest().authenticated())
+        .addFilterBefore(
+            new HeaderAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+        .authorizeHttpRequests(
+            auth ->
+                auth.requestMatchers("/actuator/health", "/actuator/prometheus")
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated())
         .build();
   }
 

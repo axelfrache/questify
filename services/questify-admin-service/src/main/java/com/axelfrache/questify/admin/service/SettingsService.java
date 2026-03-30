@@ -14,35 +14,39 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class SettingsService {
 
-    private final InstanceSettingsRepository instanceSettingsRepository;
+  private final InstanceSettingsRepository instanceSettingsRepository;
 
-    @Transactional(readOnly = true)
-    public InstanceSettingsResponse getSettings() {
-        var settings = getOrCreate();
-        return toResponse(settings);
-    }
+  @Transactional(readOnly = true)
+  public InstanceSettingsResponse getSettings() {
+    var settings = getOrCreate();
+    return toResponse(settings);
+  }
 
-    @Transactional
-    public InstanceSettingsResponse updateSettings(UpdateSettingsRequest request) {
-        var settings = getOrCreate();
-        if (request.registrationEnabled() != null) {
-            settings.setRegistrationEnabled(request.registrationEnabled());
-        }
-        if (request.maintenanceMode() != null) {
-            settings.setMaintenanceMode(request.maintenanceMode());
-        }
-        var saved = instanceSettingsRepository.save(settings);
-        log.info("Instance settings updated: registrationEnabled={} maintenanceMode={}",
-            saved.isRegistrationEnabled(), saved.isMaintenanceMode());
-        return toResponse(saved);
+  @Transactional
+  public InstanceSettingsResponse updateSettings(UpdateSettingsRequest request) {
+    var settings = getOrCreate();
+    if (request.registrationEnabled() != null) {
+      settings.setRegistrationEnabled(request.registrationEnabled());
     }
+    if (request.maintenanceMode() != null) {
+      settings.setMaintenanceMode(request.maintenanceMode());
+    }
+    var saved = instanceSettingsRepository.save(settings);
+    log.info(
+        "Instance settings updated: registrationEnabled={} maintenanceMode={}",
+        saved.isRegistrationEnabled(),
+        saved.isMaintenanceMode());
+    return toResponse(saved);
+  }
 
-    private InstanceSettings getOrCreate() {
-        return instanceSettingsRepository.findFirst()
-            .orElseGet(() -> instanceSettingsRepository.save(InstanceSettings.builder().build()));
-    }
+  private InstanceSettings getOrCreate() {
+    return instanceSettingsRepository
+        .findFirst()
+        .orElseGet(() -> instanceSettingsRepository.save(InstanceSettings.builder().build()));
+  }
 
-    private InstanceSettingsResponse toResponse(InstanceSettings s) {
-        return new InstanceSettingsResponse(s.isRegistrationEnabled(), s.isMaintenanceMode(), s.getUpdatedAt());
-    }
+  private InstanceSettingsResponse toResponse(InstanceSettings s) {
+    return new InstanceSettingsResponse(
+        s.isRegistrationEnabled(), s.isMaintenanceMode(), s.getUpdatedAt());
+  }
 }

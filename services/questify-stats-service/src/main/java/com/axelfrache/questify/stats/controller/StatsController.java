@@ -28,8 +28,7 @@ public class StatsController {
   private final StatsService statsService;
 
   @GetMapping("/overview")
-  public ResponseEntity<OverallStatsResponse> getOverview(
-      @AuthenticationPrincipal String userId) {
+  public ResponseEntity<OverallStatsResponse> getOverview(@AuthenticationPrincipal String userId) {
     return ResponseEntity.ok(statsService.getOverallStats(UUID.fromString(userId)));
   }
 

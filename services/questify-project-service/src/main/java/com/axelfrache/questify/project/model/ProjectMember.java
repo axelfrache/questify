@@ -24,9 +24,10 @@ import org.hibernate.annotations.CreationTimestamp;
 @Entity
 @Table(
     name = "project_members",
-    uniqueConstraints = @UniqueConstraint(
-        name = "uk_project_members_project_user",
-        columnNames = {"project_id", "user_id"}),
+    uniqueConstraints =
+        @UniqueConstraint(
+            name = "uk_project_members_project_user",
+            columnNames = {"project_id", "user_id"}),
     indexes = {
       @Index(name = "idx_project_members_user_id", columnList = "user_id"),
       @Index(name = "idx_project_members_project_id", columnList = "project_id")

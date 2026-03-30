@@ -48,5 +48,4 @@ public class CookieConfig {
     cookie.setAttribute("SameSite", sameSite);
     return cookie;
   }
-
 }

@@ -24,18 +24,13 @@ public class User {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
-  @NotBlank
-  @Size(min = 3, max = 50)
-  @Column(unique = true, nullable = false)
+  @NotBlank @Size(min = 3, max = 50) @Column(unique = true, nullable = false)
   private String username;
 
-  @Email
-  @NotBlank
-  @Column(unique = true, nullable = false)
+  @Email @NotBlank @Column(unique = true, nullable = false)
   private String email;
 
-  @NotBlank
-  @Column(nullable = false)
+  @NotBlank @Column(nullable = false)
   private String password;
 
   @Enumerated(EnumType.STRING)

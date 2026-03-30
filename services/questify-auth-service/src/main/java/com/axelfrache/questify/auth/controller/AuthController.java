@@ -93,12 +93,15 @@ public class AuthController {
     if (userDetails == null) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
-    return userRepository.findByEmail(userDetails.getUsername())
+    return userRepository
+        .findByEmail(userDetails.getUsername())
         .filter(user -> user.isEnabled())
-        .map(user -> ResponseEntity.ok()
-            .header("X-User-Id", user.getId().toString())
-            .header("X-User-Role", user.getRole().name())
-            .<Void>build())
+        .map(
+            user ->
+                ResponseEntity.ok()
+                    .header("X-User-Id", user.getId().toString())
+                    .header("X-User-Role", user.getRole().name())
+                    .<Void>build())
         .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
   }
 
@@ -107,17 +110,21 @@ public class AuthController {
     if (userDetails == null) {
       return ResponseEntity.status(401).build();
     }
-    return userRepository.findByEmail(userDetails.getUsername())
-        .map(user -> ResponseEntity.ok(new UserDto(
-            user.getId(),
-            user.getUsername(),
-            user.getEmail(),
-            user.getTimezone(),
-            user.getProfilePictureUrl(),
-            user.getCreatedAt(),
-            user.getUpdatedAt(),
-            user.getRole(),
-            user.isEnabled())))
+    return userRepository
+        .findByEmail(userDetails.getUsername())
+        .map(
+            user ->
+                ResponseEntity.ok(
+                    new UserDto(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getEmail(),
+                        user.getTimezone(),
+                        user.getProfilePictureUrl(),
+                        user.getCreatedAt(),
+                        user.getUpdatedAt(),
+                        user.getRole(),
+                        user.isEnabled())))
         .orElse(ResponseEntity.status(401).build());
   }
 

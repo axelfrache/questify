@@ -23,10 +23,12 @@ public class LevelConfig {
   }
 
   public long totalXpForLevel(int level) {
-    return totalXpCache.computeIfAbsent(level, l -> {
-      var total = 0L;
-      for (var i = 1; i <= l; i++) total += requiredXpForLevel(i);
-      return total;
-    });
+    return totalXpCache.computeIfAbsent(
+        level,
+        l -> {
+          var total = 0L;
+          for (var i = 1; i <= l; i++) total += requiredXpForLevel(i);
+          return total;
+        });
   }
 }

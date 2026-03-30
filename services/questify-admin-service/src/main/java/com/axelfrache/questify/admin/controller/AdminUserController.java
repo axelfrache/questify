@@ -27,38 +27,36 @@ import org.springframework.web.bind.annotation.RestController;
 @Validated
 public class AdminUserController {
 
-    private final AdminUserService adminUserService;
+  private final AdminUserService adminUserService;
 
-    @GetMapping
-    public Page<UserSummaryResponse> listUsers(
-        @RequestParam(required = false) String search,
-        @RequestParam(defaultValue = "0") @Min(0) int page,
-        @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
-        return adminUserService.listUsers(search, page, size);
-    }
+  @GetMapping
+  public Page<UserSummaryResponse> listUsers(
+      @RequestParam(required = false) String search,
+      @RequestParam(defaultValue = "0") @Min(0) int page,
+      @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
+    return adminUserService.listUsers(search, page, size);
+  }
 
-    @GetMapping("/{id}")
-    public UserSummaryResponse getUser(@PathVariable UUID id) {
-        return adminUserService.getUser(id);
-    }
+  @GetMapping("/{id}")
+  public UserSummaryResponse getUser(@PathVariable UUID id) {
+    return adminUserService.getUser(id);
+  }
 
-    @PatchMapping("/{id}/role")
-    public UserSummaryResponse updateRole(
-        @PathVariable UUID id,
-        @Valid @RequestBody UpdateRoleRequest request) {
-        return adminUserService.updateRole(id, request.role());
-    }
+  @PatchMapping("/{id}/role")
+  public UserSummaryResponse updateRole(
+      @PathVariable UUID id, @Valid @RequestBody UpdateRoleRequest request) {
+    return adminUserService.updateRole(id, request.role());
+  }
 
-    @PatchMapping("/{id}/status")
-    public UserSummaryResponse updateStatus(
-        @PathVariable UUID id,
-        @Valid @RequestBody UpdateStatusRequest request) {
-        return adminUserService.updateStatus(id, request.enabled());
-    }
+  @PatchMapping("/{id}/status")
+  public UserSummaryResponse updateStatus(
+      @PathVariable UUID id, @Valid @RequestBody UpdateStatusRequest request) {
+    return adminUserService.updateStatus(id, request.enabled());
+  }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
-        adminUserService.deleteUser(id);
-        return ResponseEntity.noContent().build();
-    }
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
+    adminUserService.deleteUser(id);
+    return ResponseEntity.noContent().build();
+  }
 }

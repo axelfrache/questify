@@ -25,7 +25,8 @@ public class RabbitMQConfig {
   }
 
   @Bean
-  public Binding userDeletedQuestBinding(Queue userDeletedQuestQueue, TopicExchange questifyExchange) {
+  public Binding userDeletedQuestBinding(
+      Queue userDeletedQuestQueue, TopicExchange questifyExchange) {
     return BindingBuilder.bind(userDeletedQuestQueue)
         .to(questifyExchange)
         .with(QueueConstants.USER_DELETED_ROUTING_KEY);

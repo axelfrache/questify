@@ -30,10 +30,12 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
     var userId = request.getHeader(USER_ID_HEADER);
     var userRole = request.getHeader(USER_ROLE_HEADER);
 
-    if (StringUtils.hasText(userId) && SecurityContextHolder.getContext().getAuthentication() == null) {
+    if (StringUtils.hasText(userId)
+        && SecurityContextHolder.getContext().getAuthentication() == null) {
       var role = StringUtils.hasText(userRole) ? userRole : "ROLE_USER";
-      var auth = new UsernamePasswordAuthenticationToken(
-          userId, null, List.of(new SimpleGrantedAuthority(role)));
+      var auth =
+          new UsernamePasswordAuthenticationToken(
+              userId, null, List.of(new SimpleGrantedAuthority(role)));
       SecurityContextHolder.getContext().setAuthentication(auth);
     }
 

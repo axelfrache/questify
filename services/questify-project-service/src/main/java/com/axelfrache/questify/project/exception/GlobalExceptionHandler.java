@@ -1,6 +1,5 @@
 package com.axelfrache.questify.project.exception;
 
-import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,9 +28,10 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
-    var errors = ex.getBindingResult().getFieldErrors().stream()
-        .map(e -> "%s: %s".formatted(e.getField(), e.getDefaultMessage()))
-        .toList();
+    var errors =
+        ex.getBindingResult().getFieldErrors().stream()
+            .map(e -> "%s: %s".formatted(e.getField(), e.getDefaultMessage()))
+            .toList();
     return ResponseEntity.badRequest().body(Map.of("errors", errors));
   }
 }

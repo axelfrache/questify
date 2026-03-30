@@ -112,30 +112,35 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
   private boolean checkRateLimit(String key, int tokensPerMinute) {
     var now = System.currentTimeMillis();
-    var entry = buckets.compute(
-        key,
-        (k, existing) -> existing != null
-            ? new BucketEntry(existing.bucket(), now)
-            : new BucketEntry(
-                Bucket.builder()
-                    .addLimit(
-                        Bandwidth.builder()
-                            .capacity(tokensPerMinute)
-                            .refillGreedy(tokensPerMinute, Duration.ofMinutes(1))
-                            .build())
-                    .build(),
-                now));
+    var entry =
+        buckets.compute(
+            key,
+            (k, existing) ->
+                existing != null
+                    ? new BucketEntry(existing.bucket(), now)
+                    : new BucketEntry(
+                        Bucket.builder()
+                            .addLimit(
+                                Bandwidth.builder()
+                                    .capacity(tokensPerMinute)
+                                    .refillGreedy(tokensPerMinute, Duration.ofMinutes(1))
+                                    .build())
+                            .build(),
+                        now));
     return entry.bucket().tryConsume(1);
   }
 
-  private void sendRateLimitResponse(
-      HttpServletResponse response, String clientIp, String endpoint) throws IOException {
+  private void sendRateLimitResponse(HttpServletResponse response, String clientIp, String endpoint)
+      throws IOException {
     log.warn("Rate limit exceeded for endpoint={} ip={}", endpoint, maskIp(clientIp));
     response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     response.setHeader("Retry-After", "60");
-    response.getWriter()
-        .write(objectMapper.writeValueAsString(Map.of("code", "RATE_LIMITED", "message", "Too many requests")));
+    response
+        .getWriter()
+        .write(
+            objectMapper.writeValueAsString(
+                Map.of("code", "RATE_LIMITED", "message", "Too many requests")));
   }
 
   private String extractEmailFromBody(byte[] body) {
@@ -181,10 +186,23 @@ public class RateLimitFilter extends OncePerRequestFilter {
       this.inputStream = new ByteArrayInputStream(body);
     }
 
-    @Override public int read() { return inputStream.read(); }
-    @Override public boolean isFinished() { return inputStream.available() == 0; }
-    @Override public boolean isReady() { return true; }
-    @Override public void setReadListener(ReadListener listener) {
+    @Override
+    public int read() {
+      return inputStream.read();
+    }
+
+    @Override
+    public boolean isFinished() {
+      return inputStream.available() == 0;
+    }
+
+    @Override
+    public boolean isReady() {
+      return true;
+    }
+
+    @Override
+    public void setReadListener(ReadListener listener) {
       throw new UnsupportedOperationException();
     }
   }

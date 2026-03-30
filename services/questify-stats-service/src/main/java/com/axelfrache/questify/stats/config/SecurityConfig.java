@@ -25,14 +25,17 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    return http
-        .csrf(AbstractHttpConfigurer::disable)
+    return http.csrf(AbstractHttpConfigurer::disable)
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .addFilterBefore(new HeaderAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/actuator/health", "/actuator/prometheus").permitAll()
-            .anyRequest().authenticated())
+        .addFilterBefore(
+            new HeaderAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+        .authorizeHttpRequests(
+            auth ->
+                auth.requestMatchers("/actuator/health", "/actuator/prometheus")
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated())
         .build();
   }
 

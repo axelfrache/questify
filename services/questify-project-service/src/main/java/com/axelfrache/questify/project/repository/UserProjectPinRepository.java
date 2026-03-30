@@ -13,7 +13,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserProjectPinRepository extends JpaRepository<UserProjectPin, UUID> {
 
-  @Query("SELECT pin.project.id FROM UserProjectPin pin WHERE pin.userId = :userId ORDER BY pin.pinnedAt DESC")
+  @Query(
+      "SELECT pin.project.id FROM UserProjectPin pin WHERE pin.userId = :userId ORDER BY pin.pinnedAt DESC")
   List<UUID> findPinnedProjectIdsByUserIdOrderByPinnedAtDesc(@Param("userId") UUID userId);
 
   boolean existsByUserIdAndProject(UUID userId, Project project);

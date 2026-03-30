@@ -11,7 +11,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, UUID> {
 
-  @Query("""
+  @Query(
+      """
       SELECT p FROM Project p
       WHERE p.id IN (
           SELECT pm.project.id FROM ProjectMember pm WHERE pm.userId = :userId
@@ -28,7 +29,8 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
       @Param("search") String search,
       @Param("includeArchived") boolean includeArchived);
 
-  @Query("""
+  @Query(
+      """
       SELECT p FROM Project p
       WHERE p.id IN (
           SELECT pm.project.id FROM ProjectMember pm WHERE pm.userId = :userId

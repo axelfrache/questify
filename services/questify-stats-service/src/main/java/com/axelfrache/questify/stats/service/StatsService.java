@@ -36,9 +36,14 @@ public class StatsService {
   public Page<QuestHistoryResponse> getHistory(UUID userId, int page, int size) {
     return repository
         .findByUserIdOrderByCompletedAtDesc(userId, PageRequest.of(page, size))
-        .map(e -> new QuestHistoryResponse(
-            e.getQuestId(), e.getQuestTitle(), e.getXpEarned(),
-            e.getCategoryName(), e.getCompletedAt()));
+        .map(
+            e ->
+                new QuestHistoryResponse(
+                    e.getQuestId(),
+                    e.getQuestTitle(),
+                    e.getXpEarned(),
+                    e.getCategoryName(),
+                    e.getCompletedAt()));
   }
 
   @Transactional(readOnly = true)
@@ -53,13 +58,16 @@ public class StatsService {
     var to = today.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
 
     return repository.findByUserIdAndCompletedAtBetween(userId, from, to).stream()
-        .collect(Collectors.groupingBy(
-            e -> e.getCompletedAt().atZone(ZoneOffset.UTC).toLocalDate()))
-        .entrySet().stream()
-        .map(entry -> new DailyStatsResponse(
-            entry.getKey(),
-            entry.getValue().size(),
-            entry.getValue().stream().mapToInt(QuestCompletionEntry::getXpEarned).sum()))
+        .collect(
+            Collectors.groupingBy(e -> e.getCompletedAt().atZone(ZoneOffset.UTC).toLocalDate()))
+        .entrySet()
+        .stream()
+        .map(
+            entry ->
+                new DailyStatsResponse(
+                    entry.getKey(),
+                    entry.getValue().size(),
+                    entry.getValue().stream().mapToInt(QuestCompletionEntry::getXpEarned).sum()))
         .sorted(Comparator.comparing(DailyStatsResponse::date).reversed())
         .toList();
   }
@@ -69,9 +77,10 @@ public class StatsService {
     var from = today.minusDays(365).atStartOfDay(ZoneOffset.UTC).toInstant();
     var to = today.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
 
-    var activeDays = repository.findCompletedAtByUserIdBetween(userId, from, to).stream()
-        .map(instant -> instant.atZone(ZoneOffset.UTC).toLocalDate())
-        .collect(Collectors.toSet());
+    var activeDays =
+        repository.findCompletedAtByUserIdBetween(userId, from, to).stream()
+            .map(instant -> instant.atZone(ZoneOffset.UTC).toLocalDate())
+            .collect(Collectors.toSet());
 
     var start = activeDays.contains(today) ? today : today.minusDays(1);
     var streak = 0;

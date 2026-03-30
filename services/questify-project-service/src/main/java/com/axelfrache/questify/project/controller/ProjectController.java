@@ -31,8 +31,7 @@ public class ProjectController {
   private final ProjectService projectService;
 
   @GetMapping("/sidebar")
-  public ResponseEntity<ProjectSidebarResponse> getSidebar(
-      @AuthenticationPrincipal String userId) {
+  public ResponseEntity<ProjectSidebarResponse> getSidebar(@AuthenticationPrincipal String userId) {
     return ResponseEntity.ok(projectService.getSidebar(UUID.fromString(userId)));
   }
 
@@ -48,8 +47,7 @@ public class ProjectController {
 
   @PostMapping
   public ResponseEntity<ProjectDetailResponse> create(
-      @AuthenticationPrincipal String userId,
-      @Valid @RequestBody CreateProjectRequest request) {
+      @AuthenticationPrincipal String userId, @Valid @RequestBody CreateProjectRequest request) {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(projectService.create(UUID.fromString(userId), request));
   }
@@ -69,15 +67,13 @@ public class ProjectController {
   }
 
   @PostMapping("/{id}/pin")
-  public ResponseEntity<Void> pin(
-      @AuthenticationPrincipal String userId, @PathVariable UUID id) {
+  public ResponseEntity<Void> pin(@AuthenticationPrincipal String userId, @PathVariable UUID id) {
     projectService.pin(id, UUID.fromString(userId));
     return ResponseEntity.noContent().build();
   }
 
   @DeleteMapping("/{id}/pin")
-  public ResponseEntity<Void> unpin(
-      @AuthenticationPrincipal String userId, @PathVariable UUID id) {
+  public ResponseEntity<Void> unpin(@AuthenticationPrincipal String userId, @PathVariable UUID id) {
     projectService.unpin(id, UUID.fromString(userId));
     return ResponseEntity.noContent().build();
   }

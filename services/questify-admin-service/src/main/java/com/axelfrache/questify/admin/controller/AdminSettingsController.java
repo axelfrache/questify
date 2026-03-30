@@ -16,15 +16,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AdminSettingsController {
 
-    private final SettingsService settingsService;
+  private final SettingsService settingsService;
 
-    @GetMapping
-    public InstanceSettingsResponse getSettings() {
-        return settingsService.getSettings();
-    }
+  @GetMapping
+  public InstanceSettingsResponse getSettings() {
+    return settingsService.getSettings();
+  }
 
-    @PatchMapping
-    public InstanceSettingsResponse updateSettings(@Valid @RequestBody UpdateSettingsRequest request) {
-        return settingsService.updateSettings(request);
-    }
+  @PatchMapping
+  public InstanceSettingsResponse updateSettings(
+      @Valid @RequestBody UpdateSettingsRequest request) {
+    return settingsService.updateSettings(request);
+  }
 }

@@ -24,12 +24,13 @@ public class CategoryService {
 
   @Transactional
   public CategoryResponse create(UUID userId, CreateCategoryRequest request) {
-    var category = Category.builder()
-        .name(request.name())
-        .icon(request.icon())
-        .color(request.color())
-        .userId(userId)
-        .build();
+    var category =
+        Category.builder()
+            .name(request.name())
+            .icon(request.icon())
+            .color(request.color())
+            .userId(userId)
+            .build();
     categoryRepository.save(category);
     return toResponse(category);
   }
@@ -77,7 +78,8 @@ public class CategoryService {
   }
 
   private Category findOrThrow(UUID id) {
-    return categoryRepository.findById(id)
+    return categoryRepository
+        .findById(id)
         .orElseThrow(() -> new IllegalArgumentException("Category not found: " + id));
   }
 

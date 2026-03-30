@@ -31,8 +31,7 @@ public class QuestController {
 
   @PostMapping
   public ResponseEntity<QuestResponse> create(
-      @AuthenticationPrincipal String userId,
-      @Valid @RequestBody CreateQuestRequest request) {
+      @AuthenticationPrincipal String userId, @Valid @RequestBody CreateQuestRequest request) {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(questService.create(UUID.fromString(userId), request));
   }
@@ -51,9 +50,10 @@ public class QuestController {
       case "inbox" -> ResponseEntity.ok(questService.findInboxQuests(uid));
       case "upcoming" -> ResponseEntity.ok(questService.findUpcomingQuests(uid));
       case "recurring" -> ResponseEntity.ok(questService.findRecurringTemplates(uid));
-      default -> status != null
-          ? ResponseEntity.ok(questService.findByUserAndStatus(uid, status))
-          : ResponseEntity.ok(questService.findByUser(uid));
+      default ->
+          status != null
+              ? ResponseEntity.ok(questService.findByUserAndStatus(uid, status))
+              : ResponseEntity.ok(questService.findByUser(uid));
     };
   }
 

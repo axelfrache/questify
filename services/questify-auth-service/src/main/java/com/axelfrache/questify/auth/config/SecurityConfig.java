@@ -74,7 +74,8 @@ public class SecurityConfig {
     var config = new CorsConfiguration();
     config.setAllowedOrigins(Arrays.stream(allowedOrigins.split(",")).map(String::trim).toList());
     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With", "Cookie"));
+    config.setAllowedHeaders(
+        List.of("Authorization", "Content-Type", "X-Requested-With", "Cookie"));
     config.setAllowCredentials(true);
     config.setMaxAge(3600L);
 

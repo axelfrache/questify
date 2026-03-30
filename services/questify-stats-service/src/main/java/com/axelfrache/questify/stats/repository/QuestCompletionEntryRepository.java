@@ -20,7 +20,8 @@ public interface QuestCompletionEntryRepository extends JpaRepository<QuestCompl
   List<QuestCompletionEntry> findByUserIdAndCompletedAtBetween(
       UUID userId, Instant from, Instant to);
 
-  @Query("SELECT e.completedAt FROM QuestCompletionEntry e WHERE e.userId = :userId AND e.completedAt BETWEEN :from AND :to")
+  @Query(
+      "SELECT e.completedAt FROM QuestCompletionEntry e WHERE e.userId = :userId AND e.completedAt BETWEEN :from AND :to")
   List<Instant> findCompletedAtByUserIdBetween(
       @Param("userId") UUID userId, @Param("from") Instant from, @Param("to") Instant to);
 
@@ -30,7 +31,8 @@ public interface QuestCompletionEntryRepository extends JpaRepository<QuestCompl
   @Query("SELECT COALESCE(SUM(e.xpEarned), 0) FROM QuestCompletionEntry e WHERE e.userId = :userId")
   long sumXpByUserId(@Param("userId") UUID userId);
 
-  @Query("""
+  @Query(
+      """
       SELECT new com.axelfrache.questify.stats.dto.CategoryStatsResponse(
           e.categoryName, COUNT(e), SUM(e.xpEarned)
       )

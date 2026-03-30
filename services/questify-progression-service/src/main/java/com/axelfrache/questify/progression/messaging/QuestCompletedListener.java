@@ -20,8 +20,12 @@ public class QuestCompletedListener {
   @Transactional
   public void onQuestCompleted(QuestCompletedEvent event) {
     log.debug("Received QuestCompletedEvent: userId={} xp={}", event.userId(), event.xpEarned());
-    progressionService.awardXp(event.userId(), event.xpEarned(), event.questId(),
-        event.categoryName(), event.completedAt());
+    progressionService.awardXp(
+        event.userId(),
+        event.xpEarned(),
+        event.questId(),
+        event.categoryName(),
+        event.completedAt());
     achievementService.checkAndUnlock(event.userId());
   }
 }

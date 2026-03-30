@@ -52,8 +52,12 @@ public class AuthService {
     userRepository.saveAndFlush(user);
 
     userEventPublisher.publishUserRegistered(
-        new UserRegisteredEvent(user.getId(), user.getUsername(), user.getEmail(),
-            user.getRole().name(), user.getCreatedAt()));
+        new UserRegisteredEvent(
+            user.getId(),
+            user.getUsername(),
+            user.getEmail(),
+            user.getRole().name(),
+            user.getCreatedAt()));
 
     log.info("User registered: email={}", user.getEmail());
     return createAuthResponse(user);

@@ -19,8 +19,7 @@ public class AchievementController {
   private final AchievementService achievementService;
 
   @GetMapping
-  public ResponseEntity<List<AchievementResponse>> getAll(
-      @AuthenticationPrincipal String userId) {
+  public ResponseEntity<List<AchievementResponse>> getAll(@AuthenticationPrincipal String userId) {
     return ResponseEntity.ok(achievementService.getAllAchievements(UUID.fromString(userId)));
   }
 

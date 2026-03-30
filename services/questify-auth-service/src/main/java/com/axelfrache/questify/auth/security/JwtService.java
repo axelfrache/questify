@@ -27,10 +27,12 @@ public class JwtService {
 
     return Jwts.builder()
         .subject(userDetails.getUsername())
-        .claim("role", userDetails.getAuthorities().stream()
-            .map(GrantedAuthority::getAuthority)
-            .findFirst()
-            .orElseThrow(() -> new IllegalStateException("User has no authority")))
+        .claim(
+            "role",
+            userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("User has no authority")))
         .issuedAt(now)
         .expiration(expiry)
         .signWith(signingKey)

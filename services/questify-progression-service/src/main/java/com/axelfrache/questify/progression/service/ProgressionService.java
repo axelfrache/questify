@@ -24,7 +24,8 @@ public class ProgressionService {
   private final LevelConfig levelConfig;
 
   @Transactional
-  public void awardXp(UUID userId, int amount, UUID questId, String categoryName, Instant completedAt) {
+  public void awardXp(
+      UUID userId, int amount, UUID questId, String categoryName, Instant completedAt) {
     var progression = findOrCreate(userId);
 
     var previousLevel = progression.getLevel();
@@ -58,7 +59,8 @@ public class ProgressionService {
   }
 
   private UserProgression findOrCreate(UUID userId) {
-    return userProgressionRepository.findByUserId(userId)
+    return userProgressionRepository
+        .findByUserId(userId)
         .orElseGet(() -> UserProgression.builder().userId(userId).build());
   }
 
@@ -79,9 +81,8 @@ public class ProgressionService {
     var grade = p.getGrade();
     var xpIntoCurrentLevel = p.getTotalXp() - levelConfig.totalXpForLevel(level - 1);
     var xpNeededForNext = levelConfig.requiredXpForLevel(level);
-    var progressPercent = xpNeededForNext > 0
-        ? Math.min(100.0, xpIntoCurrentLevel * 100.0 / xpNeededForNext)
-        : 100.0;
+    var progressPercent =
+        xpNeededForNext > 0 ? Math.min(100.0, xpIntoCurrentLevel * 100.0 / xpNeededForNext) : 100.0;
 
     return new ProgressionResponse(
         p.getUserId(),

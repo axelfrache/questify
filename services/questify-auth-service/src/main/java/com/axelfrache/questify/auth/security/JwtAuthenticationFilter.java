@@ -50,14 +50,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         var role = jwtService.extractRole(token);
 
         if (username != null && role != null && !jwtService.isTokenExpired(token)) {
-          var userDetails = User.builder()
-              .username(username)
-              .password("")
-              .authorities(List.of(new SimpleGrantedAuthority(role)))
-              .build();
+          var userDetails =
+              User.builder()
+                  .username(username)
+                  .password("")
+                  .authorities(List.of(new SimpleGrantedAuthority(role)))
+                  .build();
 
-          var authToken = new UsernamePasswordAuthenticationToken(
-              userDetails, null, userDetails.getAuthorities());
+          var authToken =
+              new UsernamePasswordAuthenticationToken(
+                  userDetails, null, userDetails.getAuthorities());
           authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
           SecurityContextHolder.getContext().setAuthentication(authToken);
         }

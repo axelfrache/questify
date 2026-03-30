@@ -30,8 +30,7 @@ public class CategoryController {
 
   @PostMapping
   public ResponseEntity<CategoryResponse> create(
-      @AuthenticationPrincipal String userId,
-      @Valid @RequestBody CreateCategoryRequest request) {
+      @AuthenticationPrincipal String userId, @Valid @RequestBody CreateCategoryRequest request) {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(categoryService.create(UUID.fromString(userId), request));
   }

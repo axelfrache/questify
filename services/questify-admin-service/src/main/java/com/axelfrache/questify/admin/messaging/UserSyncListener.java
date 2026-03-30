@@ -35,7 +35,6 @@ public class UserSyncListener {
   @Transactional
   public void onUserDeleted(UserDeletedEvent event) {
     log.debug("Removing user snapshot: userId={}", event.userId());
-    userSnapshotRepository.findById(event.userId())
-        .ifPresent(userSnapshotRepository::delete);
+    userSnapshotRepository.findById(event.userId()).ifPresent(userSnapshotRepository::delete);
   }
 }

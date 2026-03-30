@@ -46,21 +46,23 @@ public class ProjectService {
     var projects = projectRepository.findAllByMemberUserId(userId);
     var projectById = projects.stream().collect(Collectors.toMap(Project::getId, p -> p));
 
-    var pinned = userProjectPinRepository.findPinnedProjectIdsByUserIdOrderByPinnedAtDesc(userId).stream()
-        .map(projectById::get)
-        .filter(Objects::nonNull)
-        .limit(SIDEBAR_PINNED_LIMIT)
-        .map(p -> toSummary(p, true))
-        .toList();
+    var pinned =
+        userProjectPinRepository.findPinnedProjectIdsByUserIdOrderByPinnedAtDesc(userId).stream()
+            .map(projectById::get)
+            .filter(Objects::nonNull)
+            .limit(SIDEBAR_PINNED_LIMIT)
+            .map(p -> toSummary(p, true))
+            .toList();
 
     var pinnedIds = pinned.stream().map(ProjectSummaryResponse::id).collect(Collectors.toSet());
 
-    var recent = projects.stream()
-        .filter(p -> !pinnedIds.contains(p.getId()))
-        .sorted(Comparator.comparing(Project::getUpdatedAt).reversed())
-        .limit(SIDEBAR_RECENT_LIMIT)
-        .map(p -> toSummary(p, false))
-        .toList();
+    var recent =
+        projects.stream()
+            .filter(p -> !pinnedIds.contains(p.getId()))
+            .sorted(Comparator.comparing(Project::getUpdatedAt).reversed())
+            .limit(SIDEBAR_RECENT_LIMIT)
+            .map(p -> toSummary(p, false))
+            .toList();
 
     return new ProjectSidebarResponse(pinned, recent);
   }
@@ -68,14 +70,18 @@ public class ProjectService {
   @Transactional(readOnly = true)
   public List<ProjectSummaryResponse> list(
       UUID userId, String search, String sort, boolean includeArchived) {
-    var pinnedIds = new HashSet<>(userProjectPinRepository.findPinnedProjectIdsByUserIdOrderByPinnedAtDesc(userId));
+    var pinnedIds =
+        new HashSet<>(
+            userProjectPinRepository.findPinnedProjectIdsByUserIdOrderByPinnedAtDesc(userId));
     var normalizedSearch = search != null ? search.trim().toLowerCase() : "";
 
-    Comparator<Project> comparator = "name".equalsIgnoreCase(sort)
-        ? Comparator.comparing(p -> p.getName().toLowerCase())
-        : Comparator.comparing(Project::getUpdatedAt).reversed();
+    Comparator<Project> comparator =
+        "name".equalsIgnoreCase(sort)
+            ? Comparator.comparing(p -> p.getName().toLowerCase())
+            : Comparator.comparing(Project::getUpdatedAt).reversed();
 
-    return projectRepository.findAllByMemberUserIdFiltered(userId, normalizedSearch, includeArchived)
+    return projectRepository
+        .findAllByMemberUserIdFiltered(userId, normalizedSearch, includeArchived)
         .stream()
         .sorted(comparator)
         .map(p -> toSummary(p, pinnedIds.contains(p.getId())))
@@ -84,20 +90,17 @@ public class ProjectService {
 
   @Transactional
   public ProjectDetailResponse create(UUID userId, CreateProjectRequest request) {
-    var project = projectRepository.save(
-        Project.builder()
-            .ownerUserId(userId)
-            .name(request.name().trim())
-            .description(normalizeDescription(request.description()))
-            .icon(resolveIcon(request.icon()))
-            .build());
+    var project =
+        projectRepository.save(
+            Project.builder()
+                .ownerUserId(userId)
+                .name(request.name().trim())
+                .description(normalizeDescription(request.description()))
+                .icon(resolveIcon(request.icon()))
+                .build());
 
     projectMemberRepository.save(
-        ProjectMember.builder()
-            .project(project)
-            .userId(userId)
-            .role(ProjectRole.OWNER)
-            .build());
+        ProjectMember.builder().project(project).userId(userId).role(ProjectRole.OWNER).build());
 
     return toDetail(project, false);
   }
@@ -120,8 +123,7 @@ public class ProjectService {
     }
     if (request.description() != null)
       project.setDescription(normalizeDescription(request.description()));
-    if (request.icon() != null)
-      project.setIcon(resolveIcon(request.icon()));
+    if (request.icon() != null) project.setIcon(resolveIcon(request.icon()));
     if (request.archived() != null)
       project.setArchivedAt(request.archived() ? Instant.now() : null);
 
@@ -136,7 +138,8 @@ public class ProjectService {
     if (project.getArchivedAt() != null)
       throw new IllegalStateException("Archived projects cannot be pinned");
     try {
-      userProjectPinRepository.save(UserProjectPin.builder().userId(userId).project(project).build());
+      userProjectPinRepository.save(
+          UserProjectPin.builder().userId(userId).project(project).build());
     } catch (DataIntegrityViolationException ignored) {
     }
   }
@@ -153,8 +156,10 @@ public class ProjectService {
     if (projectOpt.isEmpty()) return;
 
     var project = projectOpt.get();
-    var membership = projectMemberRepository.findByProjectAndUserId(project, userId)
-        .orElseThrow(() -> new AccessDeniedException("Access denied to this project"));
+    var membership =
+        projectMemberRepository
+            .findByProjectAndUserId(project, userId)
+            .orElseThrow(() -> new AccessDeniedException("Access denied to this project"));
 
     if (membership.getRole() != ProjectRole.OWNER)
       throw new AccessDeniedException("Only the project owner can delete this project");
@@ -167,8 +172,10 @@ public class ProjectService {
   }
 
   private Project requireMember(UUID projectId, UUID userId) {
-    var project = projectRepository.findById(projectId)
-        .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
+    var project =
+        projectRepository
+            .findById(projectId)
+            .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
     if (!projectMemberRepository.existsByProjectAndUserId(project, userId))
       throw new AccessDeniedException("Access denied to this project");
     return project;
@@ -176,14 +183,25 @@ public class ProjectService {
 
   private ProjectSummaryResponse toSummary(Project p, boolean pinned) {
     return new ProjectSummaryResponse(
-        p.getId(), p.getName(), p.getDescription(),
-        resolveIcon(p.getIcon()), pinned, p.getArchivedAt() != null, p.getUpdatedAt());
+        p.getId(),
+        p.getName(),
+        p.getDescription(),
+        resolveIcon(p.getIcon()),
+        pinned,
+        p.getArchivedAt() != null,
+        p.getUpdatedAt());
   }
 
   private ProjectDetailResponse toDetail(Project p, boolean pinned) {
     return new ProjectDetailResponse(
-        p.getId(), p.getName(), p.getDescription(),
-        resolveIcon(p.getIcon()), pinned, p.getArchivedAt(), p.getCreatedAt(), p.getUpdatedAt());
+        p.getId(),
+        p.getName(),
+        p.getDescription(),
+        resolveIcon(p.getIcon()),
+        pinned,
+        p.getArchivedAt(),
+        p.getCreatedAt(),
+        p.getUpdatedAt());
   }
 
   private String resolveIcon(String icon) {

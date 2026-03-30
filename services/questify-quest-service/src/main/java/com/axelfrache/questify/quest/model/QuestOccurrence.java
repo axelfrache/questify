@@ -26,9 +26,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Entity
 @Table(
     name = "quest_occurrences",
-    uniqueConstraints = {
-      @UniqueConstraint(columnNames = {"quest_template_id", "scheduled_date"})
-    })
+    uniqueConstraints = {@UniqueConstraint(columnNames = {"quest_template_id", "scheduled_date"})})
 @Getter
 @Setter
 @Builder

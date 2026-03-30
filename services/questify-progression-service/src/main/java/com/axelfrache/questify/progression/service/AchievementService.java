@@ -36,10 +36,10 @@ public class AchievementService {
   @Transactional
   public List<AchievementResponse> checkAndUnlock(UUID userId) {
     var allAchievements = achievementRepository.findAll();
-    Set<UUID> alreadyUnlocked = userAchievementRepository
-        .findByUserIdOrderByUnlockedAtDesc(userId).stream()
-        .map(ua -> ua.getAchievement().getId())
-        .collect(Collectors.toSet());
+    Set<UUID> alreadyUnlocked =
+        userAchievementRepository.findByUserIdOrderByUnlockedAtDesc(userId).stream()
+            .map(ua -> ua.getAchievement().getId())
+            .collect(Collectors.toSet());
 
     var toSave = new ArrayList<UserAchievement>();
     var responses = new ArrayList<AchievementResponse>();
@@ -62,10 +62,11 @@ public class AchievementService {
     var allAchievements = achievementRepository.findAll();
     var unlockedMap = unlockedMap(userId);
     return allAchievements.stream()
-        .map(a -> {
-          var ua = unlockedMap.get(a.getId());
-          return toResponse(a, ua != null, ua != null ? ua.getUnlockedAt() : null);
-        })
+        .map(
+            a -> {
+              var ua = unlockedMap.get(a.getId());
+              return toResponse(a, ua != null, ua != null ? ua.getUnlockedAt() : null);
+            })
         .toList();
   }
 
@@ -90,24 +91,26 @@ public class AchievementService {
         var from = today.minusDays(6).atStartOfDay(ZoneOffset.UTC).toInstant();
         var to = today.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
         yield distinctActiveDays(
-            questCompletionRecordRepository.findByUserIdAndCompletedAtBetween(userId, from, to))
+                questCompletionRecordRepository.findByUserIdAndCompletedAtBetween(userId, from, to))
             >= 7;
       }
       case CODE_MONTHLY_MASTER -> {
         var from = today.withDayOfMonth(1).atStartOfDay(ZoneOffset.UTC).toInstant();
         var to = today.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
         yield distinctActiveDays(
-            questCompletionRecordRepository.findByUserIdAndCompletedAtBetween(userId, from, to))
+                questCompletionRecordRepository.findByUserIdAndCompletedAtBetween(userId, from, to))
             >= 30;
       }
-      default -> questCompletionRecordRepository.countByUserId(userId) >= achievement.getThreshold();
+      default ->
+          questCompletionRecordRepository.countByUserId(userId) >= achievement.getThreshold();
     };
   }
 
   private boolean checkCategory(Achievement achievement, UUID userId) {
     if (achievement.getCategoryName() == null) return false;
     return questCompletionRecordRepository.countByUserIdAndCategoryNameIgnoreCase(
-        userId, achievement.getCategoryName()) >= achievement.getThreshold();
+            userId, achievement.getCategoryName())
+        >= achievement.getThreshold();
   }
 
   private long distinctActiveDays(List<QuestCompletionRecord> records) {
@@ -124,7 +127,15 @@ public class AchievementService {
 
   private AchievementResponse toResponse(Achievement a, boolean unlocked, Instant unlockedAt) {
     return new AchievementResponse(
-        a.getId(), a.getCode(), a.getName(), a.getDescription(), a.getIcon(),
-        a.getType(), a.getThreshold(), a.getCategoryName(), unlocked, unlockedAt);
+        a.getId(),
+        a.getCode(),
+        a.getName(),
+        a.getDescription(),
+        a.getIcon(),
+        a.getType(),
+        a.getThreshold(),
+        a.getCategoryName(),
+        unlocked,
+        unlockedAt);
   }
 }

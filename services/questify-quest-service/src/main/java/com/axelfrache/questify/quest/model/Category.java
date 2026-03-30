@@ -28,16 +28,12 @@ public class Category {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
-  @NotBlank
-  @Size(min = 1, max = 50)
-  @Column(nullable = false)
+  @NotBlank @Size(min = 1, max = 50) @Column(nullable = false)
   private String name;
 
-  @Size(max = 10)
-  private String icon;
+  @Size(max = 10) private String icon;
 
-  @Size(max = 7)
-  private String color;
+  @Size(max = 7) private String color;
 
   @Column(name = "user_id")
   private UUID userId;

@@ -14,7 +14,8 @@ public final class QueueConstants {
   public static final String ADMIN_USER_ROLE_CHANGED_QUEUE = "auth-service.admin-user-role-changed";
 
   public static final String ADMIN_USER_STATUS_CHANGED_ROUTING_KEY = "admin.user.status-changed";
-  public static final String ADMIN_USER_STATUS_CHANGED_QUEUE = "auth-service.admin-user-status-changed";
+  public static final String ADMIN_USER_STATUS_CHANGED_QUEUE =
+      "auth-service.admin-user-status-changed";
 
   private QueueConstants() {}
 }
