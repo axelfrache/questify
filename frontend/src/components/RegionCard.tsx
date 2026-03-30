@@ -28,7 +28,6 @@ function getRegionIcon(stats: CategoryResponse): string {
 }
 
 export function RegionCard({ stats, onClick, onEdit, onDelete }: RegionCardProps) {
-
   return (
     <Card
       className={cn(

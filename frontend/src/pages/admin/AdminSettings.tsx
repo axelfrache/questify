@@ -244,7 +244,6 @@ export function AdminSettings() {
           </Card>
         </section>
       </div>
-
     </div>
   );
 }

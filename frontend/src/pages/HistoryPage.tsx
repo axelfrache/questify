@@ -79,7 +79,10 @@ export function HistoryPage() {
         {sortedDates.map((dateKey) => {
           const items = groupedHistory![dateKey];
           const date = new Date(dateKey);
-          const totalXp = items.reduce((sum: number, item: QuestHistoryResponse) => sum + item.xpEarned, 0);
+          const totalXp = items.reduce(
+            (sum: number, item: QuestHistoryResponse) => sum + item.xpEarned,
+            0
+          );
 
           let dateLabel = format(date, 'EEEE, MMMM d');
           if (isToday(date)) dateLabel = 'Today';
@@ -120,11 +123,15 @@ export function HistoryPage() {
 
                         <div className="min-w-0 flex-1 space-y-0.5">
                           <div className="flex items-center gap-2 min-w-0">
-                            <span className="truncate font-medium leading-none">{quest.questTitle}</span>
+                            <span className="truncate font-medium leading-none">
+                              {quest.questTitle}
+                            </span>
                           </div>
 
                           {quest.categoryName && (
-                            <div className="text-xs text-muted-foreground">{quest.categoryName}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {quest.categoryName}
+                            </div>
                           )}
                         </div>
                       </div>

@@ -67,7 +67,9 @@ function getGradeProgress(level: number, currentGrade: string): number {
 
 export function ProgressPage() {
   const { user: currentUser } = useAuth();
-  const { data: progression, isLoading: isLoadingProgression } = useUserProgression(currentUser?.id);
+  const { data: progression, isLoading: isLoadingProgression } = useUserProgression(
+    currentUser?.id
+  );
   const { data: statsOverview, isLoading: isLoadingStats } = useStatsOverview();
 
   const isLoading = isLoadingProgression || isLoadingStats;

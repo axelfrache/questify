@@ -89,7 +89,12 @@ export function StatsPage() {
               const dayDate = new Date(day.date);
               const isFuture = dayDate > today;
               const maxQuests = Math.max(...(dailyStats.map((d) => d.questsCompleted) ?? [1]), 1);
-              const heightPct = isFuture ? 20 : Math.max((day.questsCompleted / maxQuests) * 100, day.questsCompleted > 0 ? 8 : 8);
+              const heightPct = isFuture
+                ? 20
+                : Math.max(
+                    (day.questsCompleted / maxQuests) * 100,
+                    day.questsCompleted > 0 ? 8 : 8
+                  );
 
               return (
                 <TooltipProvider key={index}>
