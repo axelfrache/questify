@@ -3,7 +3,7 @@
 [![CI](https://github.com/axelfrache/questify/actions/workflows/ci.yml/badge.svg)](https://github.com/axelfrache/questify/actions/workflows/ci.yml)
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-6DB33F?logo=spring-boot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.x-6DB33F?logo=spring-boot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
@@ -22,67 +22,78 @@ Instead of treating tasks as simple checklists, Questify reframes them as quests
 - **Transparency**: simple XP rules, predictable progression.
 - **Extensible architecture**: designed for long-term evolution.
 
-## Getting Started
+## Architecture
 
-The application is divided in 2 parts: **backend** and **frontend**.
+Questify is built as a **microservices** application:
+
+| Service | Role | Port |
+|---------|------|------|
+| `questify-auth-service` | Authentication, JWT, user management | 8081 |
+| `questify-quest-service` | Quests, templates, recurrence | 8082 |
+| `questify-project-service` | Projects | 8083 |
+| `questify-progression-service` | XP, levels, achievements | 8084 |
+| `questify-stats-service` | Statistics | 8085 |
+| `questify-admin-service` | Admin panel | 8086 |
+| `gateway` | Nginx reverse proxy | 8080 |
+| `frontend` | React/Vite UI | 80 |
+
+## Getting Started
 
 ### Prerequisites
 
-- Java 21
-- Node.js 20
-- pnpm
 - Docker & Docker Compose
+- Node.js 20 + pnpm (frontend development only)
+- Java 21 (service development only)
 
 ## Running
 
-### Locally (development mode)
+### Fully dockerized (recommended)
 
-**Backend:**
+Copy the environment file and start all services:
+
 ```bash
-cd backend
-./mvnw spring-boot:run
+cp .env.example .env
+docker compose up -d --build
 ```
 
-**Frontend:**
+Then go to:
+- Frontend: http://localhost:80
+- Gateway API: http://localhost:8080
+- Swagger UI: http://localhost:8080/swagger-ui.html (per service)
+
+To stop:
+```bash
+docker compose down
+```
+
+Use `-v` to also remove volumes.
+
+### Frontend only (development mode)
+
 ```bash
 cd frontend
 pnpm install
 pnpm run dev
 ```
 
-Then go to:
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:8080
-- Swagger UI: http://localhost:8080/swagger-ui.html
+→ http://localhost:5173
 
-### Locally (fully dockerized)
+### Individual service (development mode)
 
 ```bash
-docker compose up -d --build
+cd services/questify-<service-name>
+./mvnw spring-boot:run
 ```
-
-Then go to:
-- Frontend: http://localhost:80
-- Backend API: http://localhost:8080
-
-To stop the application:
-```bash
-docker compose down
-```
-
-Use `-v` if you want to remove volumes too.
 
 ## Code Quality
 
-For code quality, we use:
-- **Backend**: Spotless with Google Java Format
+- **Services**: Spotless with Google Java Format
 - **Frontend**: ESLint and Prettier
 
 ### Commands
 
-**Backend:**
+**Service (run from `services/questify-<service-name>`):**
 ```bash
-cd backend
 ./mvnw spotless:check  # Check formatting
 ./mvnw spotless:apply  # Fix formatting
 ```
@@ -95,7 +106,7 @@ pnpm run format:check  # Check formatting
 pnpm run format        # Fix formatting
 ```
 
-> **Warning**: Those are mandatory before pushing code, if it is not done the CI will fail.
+> **Warning**: Formatting and linting are checked by CI on every push. Fix them before pushing.
 
 ## License
 

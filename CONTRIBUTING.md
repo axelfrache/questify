@@ -1,6 +1,6 @@
 # Contributing to Questify
 
-Thanks for your interest in contributing to Questify!  
+Thanks for your interest in contributing to Questify!
 This guide explains how to contribute efficiently and consistently.
 
 ## Code of Conduct
@@ -40,27 +40,30 @@ For **new features or architectural changes**, please open an issue first to dis
 ### Prerequisites
 - Java 21
 - Node.js 20+
+- pnpm
 - Docker & Docker Compose
 
 ### Run locally
 
-**Backend**
+**All services (dockerized)**
 ```bash
-cd backend && ./mvnw spring-boot:run
+cp .env.example .env
+docker compose up -d --build
 ```
-→ http://localhost:8080  
-→ Swagger: http://localhost:8080/swagger-ui.html
+→ Gateway: http://localhost:8080
+→ Frontend: http://localhost:80
+
+**Individual service**
+```bash
+cd services/questify-<service-name>
+./mvnw spring-boot:run
+```
 
 **Frontend**
 ```bash
-cd frontend && npm install && npm run dev
+cd frontend && pnpm install && pnpm run dev
 ```
 → http://localhost:5173
-
-**Full stack**
-```bash
-docker compose up -d --build
-```
 
 ## Code Quality (Mandatory)
 
@@ -68,16 +71,16 @@ CI will fail if formatting or linting is incorrect.
 
 | Component | Check | Fix |
 |----------|------|-----|
-| Backend | `./mvnw spotless:check` | `./mvnw spotless:apply` |
-| Frontend | `npm run format:check && npm run lint` | `npm run format` |
+| Service | `./mvnw spotless:check` | `./mvnw spotless:apply` |
+| Frontend | `pnpm run format:check && pnpm run lint` | `pnpm run format` |
 
 Before pushing:
 ```bash
-# Backend
-cd backend && ./mvnw spotless:apply && ./mvnw verify
+# In each modified service
+cd services/questify-<service-name> && ./mvnw spotless:apply && ./mvnw verify
 
 # Frontend
-cd frontend && npm run format && npm run lint && npm run build
+cd frontend && pnpm run format && pnpm run lint && pnpm run build
 ```
 
 ## Commit Conventions
@@ -88,12 +91,12 @@ We use **Conventional Commits**.
 <type>(<scope>): <description>
 ```
 
-Common scopes: `backend`, `frontend`, `infra`, `docs`
+Common scopes: `auth`, `quest`, `project`, `progression`, `stats`, `admin`, `frontend`, `infra`, `docs`
 
 Examples:
 ```
-feat(frontend): add quest filters
-fix(backend): prevent duplicate quest completion
+feat(quest): add recurrence support for templates
+fix(auth): prevent duplicate user registration
 docs: improve contributing guide
 chore(deps): update Spring Boot
 ```
