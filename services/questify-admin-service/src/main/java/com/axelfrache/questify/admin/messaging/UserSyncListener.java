@@ -2,6 +2,7 @@ package com.axelfrache.questify.admin.messaging;
 
 import com.axelfrache.questify.admin.model.UserSnapshot;
 import com.axelfrache.questify.admin.repository.UserSnapshotRepository;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -26,7 +27,7 @@ public class UserSyncListener {
             .email(event.email())
             .role(event.role())
             .enabled(true)
-            .createdAt(event.createdAt())
+            .createdAt(event.createdAt() != null ? event.createdAt() : Instant.now())
             .build());
   }
 

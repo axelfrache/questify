@@ -23,9 +23,6 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,8 +66,8 @@ public class ProjectService {
   }
 
   @Transactional(readOnly = true)
-  public Page<ProjectSummaryResponse> list(
-      UUID userId, String search, String sort, boolean includeArchived, int page, int size) {
+  public List<ProjectSummaryResponse> list(
+      UUID userId, String search, String sort, boolean includeArchived) {
     var pinnedIds = new HashSet<>(userProjectPinRepository.findPinnedProjectIdsByUserIdOrderByPinnedAtDesc(userId));
     var normalizedSearch = search != null ? search.trim().toLowerCase() : "";
 
@@ -78,19 +75,11 @@ public class ProjectService {
         ? Comparator.comparing(p -> p.getName().toLowerCase())
         : Comparator.comparing(Project::getUpdatedAt).reversed();
 
-    var sorted = projectRepository.findAllByMemberUserIdFiltered(userId, normalizedSearch, includeArchived)
+    return projectRepository.findAllByMemberUserIdFiltered(userId, normalizedSearch, includeArchived)
         .stream()
         .sorted(comparator)
-        .toList();
-
-    var pageable = PageRequest.of(page, size);
-    int start = (int) pageable.getOffset();
-    int end = Math.min(start + pageable.getPageSize(), sorted.size());
-    List<ProjectSummaryResponse> content = sorted.subList(start, end).stream()
         .map(p -> toSummary(p, pinnedIds.contains(p.getId())))
         .toList();
-
-    return new PageImpl<>(content, pageable, sorted.size());
   }
 
   @Transactional

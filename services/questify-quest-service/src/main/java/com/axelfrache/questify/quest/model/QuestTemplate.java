@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -61,7 +62,12 @@ public class QuestTemplate {
   private int baseXpReward = 50;
 
   @Embedded
+  @Getter(AccessLevel.NONE)
   private RecurrenceRule recurrenceRule;
+
+  public RecurrenceRule getRecurrenceRule() {
+    return (recurrenceRule != null && recurrenceRule.getType() != null) ? recurrenceRule : null;
+  }
 
   @Builder.Default
   @Column(nullable = false)

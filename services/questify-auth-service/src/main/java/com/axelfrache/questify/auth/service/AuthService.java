@@ -49,7 +49,7 @@ public class AuthService {
             .password(passwordEncoder.encode(request.password()))
             .build();
 
-    userRepository.save(user);
+    userRepository.saveAndFlush(user);
 
     userEventPublisher.publishUserRegistered(
         new UserRegisteredEvent(user.getId(), user.getUsername(), user.getEmail(),

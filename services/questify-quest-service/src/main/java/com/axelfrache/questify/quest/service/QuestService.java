@@ -341,7 +341,7 @@ public class QuestService {
 
   private boolean shouldGenerate(QuestTemplate template, LocalDate date) {
     var rule = template.getRecurrenceRule();
-    if (rule == null) return false;
+    if (rule == null || rule.getType() == null) return false;
     return switch (rule.getType()) {
       case DAILY -> true;
       case WEEKLY -> rule.getDaysOfWeek() == null || rule.getDaysOfWeek().isEmpty()
