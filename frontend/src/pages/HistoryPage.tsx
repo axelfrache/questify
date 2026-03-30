@@ -1,15 +1,7 @@
 import { useState } from 'react';
 import { useHistory } from '@/hooks/use-api';
 import { format, isToday, isYesterday, isSameYear } from 'date-fns';
-import {
-  CheckCircle2,
-  Calendar,
-  Filter,
-  Trophy,
-  Repeat,
-  LayoutList,
-  ArrowRight,
-} from 'lucide-react';
+import { CheckCircle2, Calendar, Filter, Trophy, LayoutList } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,8 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { DifficultyChip } from '@/components/ui/quest-meta-chip';
-import type { QuestHistory } from '@/lib/api';
+import type { QuestHistoryResponse } from '@/lib/api';
 
 export function HistoryPage() {
   const { data: history, isLoading } = useHistory();
@@ -44,16 +35,11 @@ export function HistoryPage() {
     );
   }
 
-  const filteredHistory = history?.filter((item) => {
-    if (filterType === 'ALL') return true;
-    if (filterType === 'DAILY') return item.recurrenceType === 'DAILY';
-    if (filterType === 'HABIT') return item.recurrenceType !== 'NONE';
-    if (filterType === 'PROJECT') return false;
-    if (filterType === 'SUBQUEST') return !!item.parentTitle;
-    return true;
-  });
+  const items = history?.content ?? [];
 
-  const groupedHistory = filteredHistory?.reduce(
+  const filteredHistory = filterType === 'ALL' ? items : [];
+
+  const groupedHistory = filteredHistory.reduce(
     (groups, item) => {
       const date = new Date(item.completedAt);
       const key = format(date, 'yyyy-MM-dd');
@@ -63,7 +49,7 @@ export function HistoryPage() {
       groups[key].push(item);
       return groups;
     },
-    {} as Record<string, QuestHistory[]>
+    {} as Record<string, QuestHistoryResponse[]>
   );
 
   const sortedDates = Object.keys(groupedHistory || {}).sort((a, b) => b.localeCompare(a));
@@ -83,10 +69,7 @@ export function HistoryPage() {
               <SelectValue placeholder="Filter" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">All Types</SelectItem>
-              <SelectItem value="DAILY">Daily</SelectItem>
-              <SelectItem value="HABIT">Habits</SelectItem>
-              <SelectItem value="SUBQUEST">Subquests</SelectItem>
+              <SelectItem value="ALL">All</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -96,7 +79,7 @@ export function HistoryPage() {
         {sortedDates.map((dateKey) => {
           const items = groupedHistory![dateKey];
           const date = new Date(dateKey);
-          const totalXp = items.reduce((sum, item) => sum + item.xpEarned, 0);
+          const totalXp = items.reduce((sum: number, item: QuestHistoryResponse) => sum + item.xpEarned, 0);
 
           let dateLabel = format(date, 'EEEE, MMMM d');
           if (isToday(date)) dateLabel = 'Today';
@@ -125,9 +108,9 @@ export function HistoryPage() {
               <div className="space-y-2">
                 {items.map((quest) => (
                   <Card
-                    key={quest.id}
+                    key={quest.questId}
                     className="group overflow-hidden border-l-[3px] transition-all hover:bg-muted/30"
-                    style={{ borderLeftColor: quest.categoryColor || 'transparent' }}
+                    style={{ borderLeftColor: 'transparent' }}
                   >
                     <CardContent className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-3 min-w-0">
@@ -137,37 +120,16 @@ export function HistoryPage() {
 
                         <div className="min-w-0 flex-1 space-y-0.5">
                           <div className="flex items-center gap-2 min-w-0">
-                            {quest.categoryIcon && (
-                              <span className="text-sm shrink-0">{quest.categoryIcon}</span>
-                            )}
-                            <span className="truncate font-medium leading-none">{quest.title}</span>
+                            <span className="truncate font-medium leading-none">{quest.questTitle}</span>
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            {quest.parentTitle && (
-                              <span className="flex items-center gap-1 rounded bg-primary/5 px-1.5 py-0.5 text-primary">
-                                <ArrowRight className="h-3 w-3 shrink-0" />
-                                <span className="truncate max-w-[120px]">
-                                  Part of {quest.parentTitle}
-                                </span>
-                              </span>
-                            )}
-                            {quest.recurrenceType === 'DAILY' && (
-                              <span className="flex items-center gap-1">
-                                <Repeat className="h-3 w-3" /> Daily
-                              </span>
-                            )}
-                            {quest.recurrenceType === 'WEEKLY' && (
-                              <span className="flex items-center gap-1">
-                                <Repeat className="h-3 w-3" /> Weekly
-                              </span>
-                            )}
-                          </div>
+                          {quest.categoryName && (
+                            <div className="text-xs text-muted-foreground">{quest.categoryName}</div>
+                          )}
                         </div>
                       </div>
 
                       <div className="flex shrink-0 items-center gap-2 pl-11 sm:pl-0">
-                        <DifficultyChip difficulty={quest.difficulty} />
                         <Badge
                           variant="secondary"
                           className="bg-amber-500/10 text-amber-600 hover:bg-amber-500/20"

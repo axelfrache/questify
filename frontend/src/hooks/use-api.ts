@@ -7,8 +7,6 @@ import {
 } from '@tanstack/react-query';
 import {
   api,
-  type AdminCreateUserRequest,
-  type AdminUpdateUserRequest,
   type CreateCategoryRequest,
   type CreateProjectRequest,
   type CreateQuestRequest,
@@ -35,16 +33,9 @@ export const queryKeys = {
   },
   stats: {
     all: ['stats'] as const,
-    daily: ['stats', 'daily'] as const,
-    weekly: ['stats', 'weekly'] as const,
-    monthly: ['stats', 'monthly'] as const,
-    summary: ['stats', 'summary'] as const,
+    overview: ['stats', 'overview'] as const,
     categories: ['stats', 'categories'] as const,
-    completionRate: ['stats', 'completion-rate'] as const,
-    regionActivity: ['stats', 'region-activity'] as const,
-    weeklyCompletion: ['stats', 'weekly-completion'] as const,
-    monthlyCompletion: (year: number, month: number) =>
-      ['stats', 'monthly-completion', year, month] as const,
+    daily: (days: number) => ['stats', 'daily', days] as const,
   },
   history: {
     all: ['history'] as const,
@@ -340,7 +331,7 @@ export function useCreateCategory() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats.categories });
-      queryClient.invalidateQueries({ queryKey: queryKeys.stats.regionActivity });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stats.categories });
       queryClient.invalidateQueries({ queryKey: queryKeys.quests.all });
     },
   });
@@ -355,7 +346,7 @@ export function useUpdateCategory() {
       queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.quests.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats.categories });
-      queryClient.invalidateQueries({ queryKey: queryKeys.stats.regionActivity });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stats.categories });
     },
   });
 }
@@ -373,7 +364,7 @@ export function useDeleteCategory() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats.categories });
-      queryClient.invalidateQueries({ queryKey: queryKeys.stats.regionActivity });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stats.categories });
       queryClient.invalidateQueries({ queryKey: queryKeys.quests.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
     },
@@ -466,73 +457,40 @@ export function useDeleteProject() {
   });
 }
 
-export function useDailyStats() {
+export function useStatsOverview() {
   return useQuery({
-    queryKey: queryKeys.stats.daily,
-    queryFn: ({ signal }) => api.getDailyStats(signal),
+    queryKey: queryKeys.stats.overview,
+    queryFn: ({ signal }) => api.getStatsOverview(signal),
   });
 }
 
-export function useWeeklyStats() {
-  return useQuery({
-    queryKey: queryKeys.stats.weekly,
-    queryFn: ({ signal }) => api.getWeeklyStats(signal),
-  });
-}
-
-export function useMonthlyStats() {
-  return useQuery({
-    queryKey: queryKeys.stats.monthly,
-    queryFn: ({ signal }) => api.getMonthlyStats(signal),
-  });
-}
-
-export function useProgressSummary() {
-  return useQuery({
-    queryKey: queryKeys.stats.summary,
-    queryFn: ({ signal }) => api.getProgressSummary(signal),
-  });
-}
-
-export function useCategoryStats() {
+export function useStatsByCategory() {
   return useQuery({
     queryKey: queryKeys.stats.categories,
-    queryFn: ({ signal }) => api.getCategoryStats(signal),
+    queryFn: ({ signal }) => api.getStatsByCategory(signal),
   });
 }
 
-export function useCompletionRate() {
+export function useStatsByDay(days: number = 30) {
   return useQuery({
-    queryKey: queryKeys.stats.completionRate,
-    queryFn: ({ signal }) => api.getCompletionRate(signal),
+    queryKey: queryKeys.stats.daily(days),
+    queryFn: ({ signal }) => api.getStatsByDay(days, signal),
   });
 }
 
-export function useRegionActivity() {
+export function useHistory(page: number = 0, size: number = 20) {
   return useQuery({
-    queryKey: queryKeys.stats.regionActivity,
-    queryFn: ({ signal }) => api.getRegionActivity(signal),
+    queryKey: [...queryKeys.history.all, page, size],
+    queryFn: ({ signal }) => api.getHistory(page, size, signal),
+    placeholderData: keepPreviousData,
   });
 }
 
-export function useWeeklyCompletionRates() {
+export function useUserProgression(id?: string) {
   return useQuery({
-    queryKey: queryKeys.stats.weeklyCompletion,
-    queryFn: ({ signal }) => api.getWeeklyCompletionRates(signal),
-  });
-}
-
-export function useMonthlyCompletionRates(year: number, month: number) {
-  return useQuery({
-    queryKey: queryKeys.stats.monthlyCompletion(year, month),
-    queryFn: ({ signal }) => api.getMonthlyCompletionRates(year, month, signal),
-  });
-}
-
-export function useHistory() {
-  return useQuery({
-    queryKey: queryKeys.history.all,
-    queryFn: ({ signal }) => api.getHistory(signal),
+    queryKey: ['users', 'progression', id ?? ''],
+    queryFn: () => api.getUserProgression(id ?? ''),
+    enabled: !!id,
   });
 }
 
@@ -601,10 +559,10 @@ export function useAdminSettings() {
   });
 }
 
-export function useAdminUsers(page = 0, query = '') {
+export function useAdminUsers(page = 0, search = '') {
   return useQuery({
-    queryKey: queryKeys.admin.users(page, query),
-    queryFn: ({ signal }) => api.getUsers(page, query || undefined, signal),
+    queryKey: queryKeys.admin.users(page, search),
+    queryFn: ({ signal }) => api.getUsers(page, search || undefined, signal),
     placeholderData: keepPreviousData,
   });
 }
@@ -612,30 +570,10 @@ export function useAdminUsers(page = 0, query = '') {
 export function useUpdateAdminSettings() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (updates: { registrationEnabled: boolean }) => api.updateSettings(updates),
+    mutationFn: (updates: { registrationEnabled?: boolean; maintenanceMode?: boolean }) =>
+      api.updateSettings(updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.settings });
-    },
-  });
-}
-
-export function useAdminCreateUser() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data: AdminCreateUserRequest) => api.adminCreateUser(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.usersAll });
-    },
-  });
-}
-
-export function useAdminUpdateUser() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: AdminUpdateUserRequest }) =>
-      api.adminUpdateUser(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.usersAll });
     },
   });
 }
@@ -643,8 +581,8 @@ export function useAdminUpdateUser() {
 export function useAdminUpdateUserStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, isEnabled }: { id: string; isEnabled: boolean }) =>
-      api.adminUpdateUserStatus(id, isEnabled),
+    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
+      api.adminUpdateUserStatus(id, enabled),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.usersAll });
     },

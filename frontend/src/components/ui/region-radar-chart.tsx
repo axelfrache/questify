@@ -7,10 +7,10 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 import { Map } from 'lucide-react';
-import type { RegionActivityStats } from '@/lib/api';
+import type { CategoryStatsResponse } from '@/lib/api';
 
 interface RegionRadarChartProps {
-  data: RegionActivityStats[];
+  data: CategoryStatsResponse[];
 }
 
 const chartConfig = {
@@ -25,8 +25,8 @@ export function RegionRadarChart({ data }: RegionRadarChartProps) {
 
   const chartData = hasData
     ? data.map((region) => ({
-        region: region.name,
-        activity: region.completedThisMonth,
+        region: region.categoryName,
+        activity: region.questsCompleted,
       }))
     : [];
 

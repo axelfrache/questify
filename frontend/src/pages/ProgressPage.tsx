@@ -1,4 +1,5 @@
-import { useProgressSummary } from '@/hooks/use-api';
+import { useUserProgression, useStatsOverview } from '@/hooks/use-api';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -65,7 +66,11 @@ function getGradeProgress(level: number, currentGrade: string): number {
 }
 
 export function ProgressPage() {
-  const { data: summary, isLoading } = useProgressSummary();
+  const { user: currentUser } = useAuth();
+  const { data: progression, isLoading: isLoadingProgression } = useUserProgression(currentUser?.id);
+  const { data: statsOverview, isLoading: isLoadingStats } = useStatsOverview();
+
+  const isLoading = isLoadingProgression || isLoadingStats;
 
   if (isLoading) {
     return (
@@ -77,14 +82,13 @@ export function ProgressPage() {
     );
   }
 
-  const levelProgress = summary?.levelProgress;
-  const currentGrade = levelProgress?.gradeLabel || 'Initiate';
-  const currentLevel = levelProgress?.level || 1;
-  const totalXp = levelProgress?.totalXp || 0;
+  const currentGrade = progression?.gradeLabel || 'Initiate';
+  const currentLevel = progression?.level || 1;
+  const totalXp = progression?.totalXp || 0;
   const currentGradeIndex = getGradeIndex(currentGrade);
   const nextGrade = getNextGrade(currentGrade);
   const gradeProgress = getGradeProgress(currentLevel, currentGrade);
-  const totalCompleted = summary?.totalQuestsCompleted || 0;
+  const totalCompleted = statsOverview?.totalCompleted || 0;
 
   return (
     <div className="space-y-8 pb-24">
@@ -265,10 +269,10 @@ export function ProgressPage() {
               <div className="flex justify-between text-sm">
                 <span>To next level</span>
                 <span>
-                  {levelProgress?.currentLevelXp || 0} / {levelProgress?.nextLevelXp || 100}
+                  {progression?.currentLevelXp || 0} / {progression?.nextLevelXp || 100}
                 </span>
               </div>
-              <Progress value={levelProgress?.progressPercent || 0} className="h-2" />
+              <Progress value={progression?.progressPercent || 0} className="h-2" />
             </div>
           </CardContent>
         </Card>

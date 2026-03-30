@@ -218,7 +218,7 @@ export function InboxPage() {
                 description: editingQuest.description,
                 difficulty: editingQuest.difficulty,
                 categoryId: editingQuest.category?.id,
-                projectId: editingQuest.project?.id,
+                projectId: editingQuest.projectId,
                 dueDate: editingQuest.dueDate,
                 recurrenceInterval: editingQuest.recurrenceInterval,
                 recurrenceDays: editingQuest.recurrenceDays,

@@ -119,7 +119,7 @@ export function groupByProject(
   const projectMap = new Map<string, QuestResponse[]>();
 
   for (const quest of quests) {
-    const projectId = quest.project?.id;
+    const projectId = quest.projectId;
     if (!projectId) {
       looseQuests.push(quest);
       continue;
@@ -133,11 +133,10 @@ export function groupByProject(
 
   const projectGroups: GroupedQuests[] = [];
   for (const [projectId, projectQuests] of projectMap) {
-    const firstQuest = projectQuests[0];
     projectGroups.push({
       regionId: projectId,
-      regionName: firstQuest.project?.name ?? 'Project',
-      regionIcon: firstQuest.project?.icon ?? '📁',
+      regionName: 'Project',
+      regionIcon: '📁',
       regionColor: '#0ea5e9',
       quests: projectQuests,
       totalCount: projectQuests.length,

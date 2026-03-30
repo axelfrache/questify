@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { type CreateCategoryRequest, type CategoryStats } from '@/lib/api';
+import { type CreateCategoryRequest, type CategoryResponse } from '@/lib/api';
 import { useCreateCategory, useUpdateCategory } from '@/hooks/use-api';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,7 +22,7 @@ const DEFAULT_COLOR = '#10b981';
 interface CreateCategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  categoryToEdit?: CategoryStats;
+  categoryToEdit?: CategoryResponse;
 }
 
 export function CreateCategoryDialog({
@@ -74,7 +74,7 @@ export function CreateCategoryDialog({
   const onSubmit = (data: CreateCategoryRequest) => {
     if (isEditMode) {
       updateCategoryMutation.mutate(
-        { id: categoryToEdit.categoryId, data },
+        { id: categoryToEdit.id, data },
         {
           onSuccess: () => {
             onOpenChange(false);

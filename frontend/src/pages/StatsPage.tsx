@@ -1,9 +1,4 @@
-import {
-  useWeeklyStats,
-  useMonthlyStats,
-  useRegionActivity,
-  useWeeklyCompletionRates,
-} from '@/hooks/use-api';
+import { useStatsOverview, useStatsByCategory, useStatsByDay } from '@/hooks/use-api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -13,12 +8,11 @@ import { Calendar, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function StatsPage() {
-  const { data: weeklyStats, isLoading: isLoadingWeekly } = useWeeklyStats();
-  const { data: monthlyStats, isLoading: isLoadingMonthly } = useMonthlyStats();
-  const { data: regionActivity, isLoading: isLoadingRegion } = useRegionActivity();
-  const { data: weeklyCompletion, isLoading: isLoadingCompletion } = useWeeklyCompletionRates();
+  const { data: overview, isLoading: isLoadingOverview } = useStatsOverview();
+  const { data: categoryStats, isLoading: isLoadingCategories } = useStatsByCategory();
+  const { data: dailyStats, isLoading: isLoadingDaily } = useStatsByDay(7);
 
-  const isLoading = isLoadingWeekly || isLoadingMonthly || isLoadingRegion || isLoadingCompletion;
+  const isLoading = isLoadingOverview || isLoadingCategories || isLoadingDaily;
 
   if (isLoading) {
     return (
@@ -32,10 +26,6 @@ export function StatsPage() {
       </div>
     );
   }
-
-  const getCompletionFillHeight = (rate: number) => {
-    return Math.min(rate, 100);
-  };
 
   const getCompletionColor = (rate: number) => {
     if (rate >= 100) return 'bg-success';
@@ -80,12 +70,14 @@ export function StatsPage() {
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span>
                 <span className="font-medium text-foreground">
-                  {weeklyStats?.questsCompleted || 0}
+                  {dailyStats?.reduce((sum, d) => sum + d.questsCompleted, 0) || 0}
                 </span>{' '}
                 quests
               </span>
               <span>
-                <span className="font-medium text-foreground">+{weeklyStats?.xpEarned || 0}</span>{' '}
+                <span className="font-medium text-foreground">
+                  +{dailyStats?.reduce((sum, d) => sum + d.xpEarned, 0) || 0}
+                </span>{' '}
                 XP
               </span>
             </div>
@@ -93,11 +85,11 @@ export function StatsPage() {
         </CardHeader>
         <CardContent className="pb-4">
           <div className="flex items-end gap-2 h-24">
-            {weeklyCompletion?.map((day, index) => {
+            {dailyStats?.map((day, index) => {
               const dayDate = new Date(day.date);
               const isFuture = dayDate > today;
-              const rate = day.completionRate;
-              const hasPlanned = day.plannedQuests > 0;
+              const maxQuests = Math.max(...(dailyStats.map((d) => d.questsCompleted) ?? [1]), 1);
+              const heightPct = isFuture ? 20 : Math.max((day.questsCompleted / maxQuests) * 100, day.questsCompleted > 0 ? 8 : 8);
 
               return (
                 <TooltipProvider key={index}>
@@ -110,17 +102,11 @@ export function StatsPage() {
                               'w-full max-w-8 rounded-t transition-all',
                               isFuture
                                 ? 'bg-muted/30'
-                                : hasPlanned
-                                  ? getCompletionColor(rate)
+                                : day.questsCompleted > 0
+                                  ? getCompletionColor(heightPct)
                                   : 'bg-muted/50'
                             )}
-                            style={{
-                              height: isFuture
-                                ? '20%'
-                                : hasPlanned
-                                  ? `${Math.max(getCompletionFillHeight(rate), 8)}%`
-                                  : '8%',
-                            }}
+                            style={{ height: `${heightPct}%` }}
                           />
                         </div>
                         <span className="text-[10px] text-muted-foreground">
@@ -131,12 +117,10 @@ export function StatsPage() {
                     <TooltipContent>
                       {isFuture ? (
                         <p className="text-xs">Upcoming</p>
-                      ) : hasPlanned ? (
-                        <p className="text-xs">
-                          {day.completedQuests} of {day.plannedQuests} ({rate}%)
-                        </p>
                       ) : (
-                        <p className="text-xs">No planned quests</p>
+                        <p className="text-xs">
+                          {day.questsCompleted} quests · +{day.xpEarned} XP
+                        </p>
                       )}
                     </TooltipContent>
                   </Tooltip>
@@ -163,12 +147,12 @@ export function StatsPage() {
 
       <div className="grid gap-4 lg:grid-cols-2 items-stretch">
         <MonthlyActivityGraph
-          xpEarned={monthlyStats?.xpEarned || 0}
-          activeDays={monthlyStats?.activeDays || 0}
-          questsCompleted={monthlyStats?.questsCompleted || 0}
+          xpEarned={overview?.totalXp || 0}
+          activeDays={overview?.currentStreak || 0}
+          questsCompleted={overview?.totalCompleted || 0}
         />
 
-        {regionActivity && <RegionRadarChart data={regionActivity} />}
+        {categoryStats && <RegionRadarChart data={categoryStats} />}
       </div>
     </div>
   );
