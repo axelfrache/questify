@@ -164,7 +164,8 @@ EOF
 chmod +x db/init.sh
 
 echo "Creating Garage S3 configuration..."
-mkdir -p garage
+mkdir -p garage/data/meta garage/data/data
+sudo chown -R 1000:1000 garage/data
 cat > garage/garage.toml << 'TOML'
 metadata_dir = "/var/lib/garage/meta"
 data_dir = "/var/lib/garage/data"
@@ -379,7 +380,7 @@ services:
     volumes:
       - ./garage/garage.toml:/etc/garage.toml:ro
       - ./garage/entrypoint.sh:/entrypoint.sh:ro
-      - garage-data:/var/lib/garage
+      - ./garage/data:/var/lib/garage
     entrypoint: ["/bin/sh", "/entrypoint.sh"]
     healthcheck:
       test: ["CMD-SHELL", "test -f /tmp/garage-ready"]
@@ -622,7 +623,6 @@ networks:
 volumes:
   postgres-data:
   rabbitmq-data:
-  garage-data:
 EOF
 
 echo "Starting Docker containers..."
