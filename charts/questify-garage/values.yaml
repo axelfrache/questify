@@ -39,10 +39,17 @@ persistence:
     - ReadWriteOnce
 
 service:
-  type: NodePort
+  type: ClusterIP
   s3Port: 3900
-  s3NodePort: 32596
   adminPort: 3903
+
+ingress:
+  enabled: true
+  className: nginx
+  host: s3.getquestify.com
+  path: /
+  pathType: Prefix
+  tls: []
 
 podSecurityContext:
   runAsNonRoot: true

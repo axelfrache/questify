@@ -11,9 +11,6 @@ spec:
       port: {{ .Values.service.s3Port }}
       targetPort: s3
       protocol: TCP
-      {{- if .Values.service.s3NodePort }}
-      nodePort: {{ .Values.service.s3NodePort }}
-      {{- end }}
     - name: admin
       port: {{ .Values.service.adminPort }}
       targetPort: admin
