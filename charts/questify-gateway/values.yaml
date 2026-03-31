@@ -1,0 +1,67 @@
+image:
+  repository: nginx
+  tag: "alpine"
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+services:
+  auth:
+    host: questify-auth-service
+    port: 8081
+  quest:
+    host: questify-quest-service
+    port: 8082
+  project:
+    host: questify-project-service
+    port: 8083
+  progression:
+    host: questify-progression-service
+    port: 8084
+  stats:
+    host: questify-stats-service
+    port: 8085
+  admin:
+    host: questify-admin-service
+    port: 8086
+
+resources:
+  requests:
+    memory: "32Mi"
+    cpu: "25m"
+  limits:
+    memory: "64Mi"
+    cpu: "100m"
+
+service:
+  type: ClusterIP
+  port: 8080
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 101
+  runAsGroup: 101
+  fsGroup: 101
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  periodSeconds: 15
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

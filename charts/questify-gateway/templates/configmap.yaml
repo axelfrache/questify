@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "questify-gateway.fullname" . }}-config
+  labels:
+    {{- include "questify-gateway.labels" . | nindent 4 }}
+data:
+  nginx.conf: |
+    events {
+        worker_connections 1024;
+    }
+
+    http {
+        resolver kube-dns.kube-system.svc.cluster.local valid=10s;
+        keepalive_timeout 65;
+
+        upstream auth_svc        { server {{ .Values.services.auth.host }}:{{ .Values.services.auth.port }}; }
+        upstream quest_svc       { server {{ .Values.services.quest.host }}:{{ .Values.services.quest.port }}; }
+        upstream project_svc     { server {{ .Values.services.project.host }}:{{ .Values.services.project.port }}; }
+        upstream progression_svc { server {{ .Values.services.progression.host }}:{{ .Values.services.progression.port }}; }
+        upstream stats_svc       { server {{ .Values.services.stats.host }}:{{ .Values.services.stats.port }}; }
+        upstream admin_svc       { server {{ .Values.services.admin.host }}:{{ .Values.services.admin.port }}; }
+
+        server {
+            listen 8080;
+
+            location = /_auth/validate {
+                internal;
+                proxy_pass              http://auth_svc/api/auth/validate;
+                proxy_pass_request_body off;
+                proxy_set_header        Content-Length  "";
+                proxy_set_header        Host            $host;
+                proxy_set_header        Cookie          $http_cookie;
+                proxy_set_header        Authorization   $http_authorization;
+            }
+
+            location /api/auth/ {
+                proxy_pass         http://auth_svc;
+                proxy_set_header   Host              $host;
+                proxy_set_header   X-Real-IP         $remote_addr;
+                proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+                proxy_set_header   X-Forwarded-Proto $scheme;
+            }
+
+            location ~ ^/api/users/[^/]+/progression {
+                auth_request     /_auth/validate;
+                auth_request_set $x_user_id   $upstream_http_x_user_id;
+                auth_request_set $x_user_role $upstream_http_x_user_role;
+                rewrite ^/api/users/[^/]+/progression(.*)$ /api/progression$1 break;
+                proxy_pass       http://progression_svc;
+                proxy_set_header X-User-Id   $x_user_id;
+                proxy_set_header X-User-Role $x_user_role;
+                proxy_set_header Host        $host;
+            }
+
+            location /api/users/ {
+                auth_request     /_auth/validate;
+                auth_request_set $x_user_id   $upstream_http_x_user_id;
+                auth_request_set $x_user_role $upstream_http_x_user_role;
+                proxy_pass       http://auth_svc;
+                proxy_set_header X-User-Id   $x_user_id;
+                proxy_set_header X-User-Role $x_user_role;
+                proxy_set_header Host        $host;
+            }
+
+            location ~ ^/api/(quests|occurrences|categories|history) {
+                auth_request     /_auth/validate;
+                auth_request_set $x_user_id   $upstream_http_x_user_id;
+                auth_request_set $x_user_role $upstream_http_x_user_role;
+                proxy_pass       http://quest_svc;
+                proxy_set_header X-User-Id   $x_user_id;
+                proxy_set_header X-User-Role $x_user_role;
+                proxy_set_header Host        $host;
+            }
+
+            location /api/projects {
+                auth_request     /_auth/validate;
+                auth_request_set $x_user_id   $upstream_http_x_user_id;
+                auth_request_set $x_user_role $upstream_http_x_user_role;
+                proxy_pass       http://project_svc;
+                proxy_set_header X-User-Id   $x_user_id;
+                proxy_set_header X-User-Role $x_user_role;
+                proxy_set_header Host        $host;
+            }
+
+            location /api/stats {
+                auth_request     /_auth/validate;
+                auth_request_set $x_user_id   $upstream_http_x_user_id;
+                auth_request_set $x_user_role $upstream_http_x_user_role;
+                proxy_pass       http://stats_svc;
+                proxy_set_header X-User-Id   $x_user_id;
+                proxy_set_header X-User-Role $x_user_role;
+                proxy_set_header Host        $host;
+            }
+
+            location /api/admin {
+                auth_request     /_auth/validate;
+                auth_request_set $x_user_id   $upstream_http_x_user_id;
+                auth_request_set $x_user_role $upstream_http_x_user_role;
+                proxy_pass       http://admin_svc;
+                proxy_set_header X-User-Id   $x_user_id;
+                proxy_set_header X-User-Role $x_user_role;
+                proxy_set_header Host        $host;
+            }
+        }
+    }
