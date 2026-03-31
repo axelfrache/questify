@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "questify-garage.fullname" . }}-cors-setup
+  labels:
+    {{- include "questify-garage.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: cors-setup
+          image: amazon/aws-cli
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.credentials.existingSecret }}
+                  key: {{ .Values.credentials.secretKeys.accessKeyKey }}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.credentials.existingSecret }}
+                  key: {{ .Values.credentials.secretKeys.secretKeyKey }}
+            - name: AWS_DEFAULT_REGION
+              value: {{ .Values.config.s3Region | quote }}
+          command:
+            - aws
+            - --endpoint-url
+            - "http://{{ include "questify-garage.fullname" . }}:{{ .Values.service.s3Port }}"
+            - s3api
+            - put-bucket-cors
+            - --bucket
+            - {{ .Values.config.bucket | quote }}
+            - --cors-configuration
+            - |
+              {"CORSRules":[{"AllowedOrigins":{{ .Values.cors.allowedOrigins | toJson }},"AllowedMethods":["GET","HEAD"],"AllowedHeaders":["*"],"MaxAgeSeconds":3600}]}

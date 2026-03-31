@@ -72,6 +72,12 @@ readinessProbe:
   timeoutSeconds: 5
   failureThreshold: 6
 
+cors:
+  allowedOrigins:
+    - "https://app.getquestify.com"
+    - "http://localhost:5173"
+    - "http://localhost:4173"
+
 nodeSelector: {}
 tolerations: []
 affinity: {}
