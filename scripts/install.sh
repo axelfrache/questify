@@ -609,11 +609,11 @@ services:
     container_name: questify-frontend
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "80:8080"
     depends_on:
       - gateway
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/"]
       interval: 30s
       timeout: 5s
       retries: 3
