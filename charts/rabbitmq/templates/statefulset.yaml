@@ -53,6 +53,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.auth.existingSecret }}
                   key: {{ .Values.auth.secretKeys.passwordKey }}
+            - name: RABBITMQ_ERLANG_COOKIE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.auth.existingSecret }}
+                  key: {{ .Values.auth.secretKeys.erlangCookieKey }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             exec:

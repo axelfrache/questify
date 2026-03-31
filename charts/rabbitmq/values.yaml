@@ -10,6 +10,7 @@ auth:
   secretKeys:
     usernameKey: username
     passwordKey: password
+    erlangCookieKey: erlang-cookie
 
 resources:
   requests:
