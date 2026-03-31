@@ -43,6 +43,8 @@ data:
         garage -c /etc/garage/garage.toml bucket allow \
             --read --write --owner {{ .Values.config.bucket }} \
             --key questify-key || true
+        garage -c /etc/garage/garage.toml bucket website \
+            --allow {{ .Values.config.bucket }} || true
         touch /var/lib/garage/meta/.setup-done
         echo "Garage setup complete"
     fi
