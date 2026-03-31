@@ -1,0 +1,15 @@
+apiVersion: v2
+name: questify-quest-service
+description: Questify Quest Service
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+keywords:
+  - questify
+  - quest
+  - spring-boot
+
+maintainers:
+  - name: Axel Frache
+    url: https://github.com/axelfrache

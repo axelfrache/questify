@@ -1,0 +1,117 @@
+image:
+  repository: axelfrache/questify-auth-service
+  tag: "latest"
+  pullPolicy: Always
+
+imagePullSecrets:
+  - name: regcred
+
+replicaCount: 1
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+spring:
+  profile: production
+  jpa:
+    ddlAuto: update
+
+database:
+  host: questify-postgresql
+  port: 5432
+  name: questify
+  existingSecret: questify-auth-db
+  secretKeys:
+    usernameKey: username
+    passwordKey: password
+
+rabbitmq:
+  host: questify-rabbitmq
+  port: 5672
+  existingSecret: questify-rabbitmq
+  secretKeys:
+    usernameKey: username
+    passwordKey: password
+
+jwt:
+  accessExpiration: "900000"
+  refreshExpiration: "604800000"
+  existingSecret: "questify-auth-jwt"
+  secretKey: jwt-secret
+
+s3:
+  endpoint: "http://questify-garage:3900"
+  publicUrl: "https://s3.getquestify.com"
+  bucket: "questify-profiles"
+  region: "garage"
+  existingSecret: questify-garage
+  secretKeys:
+    accessKeyKey: access-key
+    secretKeyKey: secret-key
+
+admin:
+  existingSecret: questify-auth-admin
+  secretKeys:
+    emailKey: admin-email
+    passwordKey: admin-password
+
+cookie:
+  secure: "true"
+
+rateLimit:
+  loginIpPerMinute: 10
+  loginEmailPerMinute: 5
+  registerIpPerMinute: 3
+  refreshIpPerMinute: 30
+
+cors:
+  allowedOrigins: "https://app.getquestify.com,https://getquestify.com"
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+service:
+  type: ClusterIP
+  port: 8081
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+livenessProbe:
+  enabled: true
+  path: /actuator/health
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  path: /actuator/health
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
