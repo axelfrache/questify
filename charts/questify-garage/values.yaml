@@ -39,8 +39,9 @@ persistence:
     - ReadWriteOnce
 
 service:
-  type: ClusterIP
+  type: NodePort
   s3Port: 3900
+  s3NodePort: 32596
   adminPort: 3903
 
 podSecurityContext:
