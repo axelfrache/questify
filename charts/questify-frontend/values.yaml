@@ -13,8 +13,8 @@ serviceAccount:
   annotations: {}
   name: ""
 
-backend:
-  serviceName: questify-backend
+gateway:
+  serviceName: questify-gateway
   servicePort: 8080
 
 resources:
