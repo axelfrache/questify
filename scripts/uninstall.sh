@@ -17,7 +17,7 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit 0
 fi
 
-read -p "Do you also want to delete all application data (database, uploaded files)? This CANNOT be undone! (y/N): " -n 1 -r
+read -p "Do you also want to delete all application data (database, S3 files)? This CANNOT be undone! (y/N): " -n 1 -r
 echo
 REMOVE_DATA=0
 if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -53,14 +53,16 @@ if [ -d "$INSTALL_DIR" ]; then
             echo "Removing containers, networks, and ALL data volumes..."
             sudo -E "${COMPOSE[@]}" down -v
         else
-            echo "Removing containers and networks (keeping data volumes)..."
+            echo "Removing containers and networks (keeping database volumes)..."
             sudo -E "${COMPOSE[@]}" down
+            echo "Note: PostgreSQL and RabbitMQ volumes are preserved."
+            echo "Note: Garage S3 data (bind mount) will be removed with the installation directory."
         fi
     fi
 
     # Prevent "device or resource busy" error by leaving directory
     cd /
-    
+
     echo "Removing installation directory ($INSTALL_DIR)..."
     sudo rm -rf "$INSTALL_DIR"
 else
