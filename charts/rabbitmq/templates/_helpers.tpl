@@ -1,5 +1,5 @@
 {{- define "rabbitmq.fullname" -}}
-{{- printf "%s-%s" .Release.Name "rabbitmq" | trunc 63 | trimSuffix "-" }}
+{{- printf "%s" .Release.Name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{- define "rabbitmq.labels" -}}

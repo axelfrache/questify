@@ -1,5 +1,5 @@
 image:
-  repository: nginx
+  repository: nginxinc/nginx-unprivileged
   tag: "alpine"
   pullPolicy: IfNotPresent
 

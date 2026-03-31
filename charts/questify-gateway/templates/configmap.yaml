@@ -6,11 +6,19 @@ metadata:
     {{- include "questify-gateway.labels" . | nindent 4 }}
 data:
   nginx.conf: |
+    pid /tmp/nginx.pid;
+
     events {
         worker_connections 1024;
     }
 
     http {
+        client_body_temp_path /tmp/client_temp;
+        proxy_temp_path        /tmp/proxy_temp;
+        fastcgi_temp_path      /tmp/fastcgi_temp;
+        uwsgi_temp_path        /tmp/uwsgi_temp;
+        scgi_temp_path         /tmp/scgi_temp;
+
         resolver kube-dns.kube-system.svc.cluster.local valid=10s;
         keepalive_timeout 65;
 
