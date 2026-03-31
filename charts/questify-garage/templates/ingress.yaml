@@ -38,8 +38,7 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
     nginx.ingress.kubernetes.io/rewrite-target: /$2
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      proxy_set_header Host questify-profiles{{ .Values.config.webRootDomain }};
+    nginx.ingress.kubernetes.io/upstream-vhost: "questify-profiles{{ .Values.config.webRootDomain }}"
 spec:
   ingressClassName: {{ .Values.ingress.className }}
   {{- if .Values.ingress.tls }}
