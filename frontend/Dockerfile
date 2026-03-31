@@ -29,7 +29,7 @@ RUN echo 'server { \
     add_header X-Frame-Options "DENY" always; \
     add_header Referrer-Policy "strict-origin-when-cross-origin" always; \
     add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always; \
-    add_header Content-Security-Policy "default-src '"'"'self'"'"'; script-src '"'"'self'"'"'; worker-src '"'"'self'"'"' blob:; style-src '"'"'self'"'"' '"'"'unsafe-inline'"'"'; img-src '"'"'self'"'"' data: https:; font-src '"'"'self'"'"' data:; connect-src '"'"'self'"'"'" always; \
+    add_header Content-Security-Policy "default-src '"'"'self'"'"'; script-src '"'"'self'"'"' '"'"'unsafe-eval'"'"'; worker-src '"'"'self'"'"' blob:; style-src '"'"'self'"'"' '"'"'unsafe-inline'"'"'; img-src '"'"'self'"'"' data: https:; font-src '"'"'self'"'"' data:; connect-src '"'"'self'"'"'" always; \
     \
     gzip on; \
     gzip_vary on; \
@@ -37,7 +37,7 @@ RUN echo 'server { \
     gzip_types text/plain text/css text/xml text/javascript application/javascript application/json application/xml; \
     \
     location /api/ { \
-    proxy_pass http://questify-backend:8080/api/; \
+    proxy_pass http://questify-gateway:8080/api/; \
     proxy_http_version 1.1; \
     proxy_set_header Host $host; \
     proxy_set_header X-Real-IP $remote_addr; \

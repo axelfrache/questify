@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useMonthlyCompletionRates } from '@/hooks/use-api';
+import { useStatsByDay } from '@/hooks/use-api';
 import { cn } from '@/lib/utils';
 import { format, startOfMonth, getDay, getDaysInMonth } from 'date-fns';
 
@@ -24,7 +24,14 @@ export function MonthlyActivityGraph({
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
 
-  const { data: monthlyData, isLoading } = useMonthlyCompletionRates(year, month);
+  const { data: dailyData, isLoading } = useStatsByDay(31);
+  const monthlyData = dailyData?.reduce(
+    (acc, d) => {
+      acc[d.date] = d;
+      return acc;
+    },
+    {} as Record<string, (typeof dailyData)[number]>
+  );
 
   const goToPreviousMonth = () => {
     setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
@@ -42,12 +49,11 @@ export function MonthlyActivityGraph({
     return nextMonth <= new Date();
   };
 
-  const getCompletionColor = (rate: number | null, plannedQuests: number) => {
-    if (plannedQuests === 0 || rate === null) return 'bg-muted/40';
-    if (rate >= 100) return 'bg-primary';
-    if (rate >= 50) return 'bg-primary/60';
-    if (rate > 0) return 'bg-primary/30';
-    return 'bg-muted/50';
+  const getCompletionColor = (questsCompleted: number) => {
+    if (questsCompleted === 0) return 'bg-muted/40';
+    if (questsCompleted >= 5) return 'bg-primary';
+    if (questsCompleted >= 3) return 'bg-primary/60';
+    return 'bg-primary/30';
   };
 
   const firstDayOfMonth = startOfMonth(currentDate);
@@ -118,10 +124,9 @@ export function MonthlyActivityGraph({
                     return <div key={index} className="w-4 h-4 sm:w-5 sm:h-5" />;
                   }
 
-                  const dayData = monthlyData?.[day - 1];
-                  const rate = dayData?.completionRate ?? null;
-                  const plannedQuests = dayData?.plannedQuests ?? 0;
-                  const completedQuests = dayData?.completedQuests ?? 0;
+                  const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                  const dayData = monthlyData?.[dateKey];
+                  const questsCompleted = dayData?.questsCompleted ?? 0;
 
                   const dayDate = new Date(year, month - 1, day);
                   const isFuture = dayDate > today;
@@ -135,7 +140,7 @@ export function MonthlyActivityGraph({
                             className={cn(
                               'w-4 h-4 sm:w-5 sm:h-5 rounded-[3px] cursor-default transition-all',
                               'hover:ring-1 hover:ring-foreground/30',
-                              isFuture ? 'bg-muted/30' : getCompletionColor(rate, plannedQuests),
+                              isFuture ? 'bg-muted/30' : getCompletionColor(questsCompleted),
                               isToday && 'ring-2 ring-primary/60'
                             )}
                           />
@@ -144,12 +149,10 @@ export function MonthlyActivityGraph({
                           <p className="font-medium">{format(dayDate, 'EEE, MMM d')}</p>
                           {isFuture ? (
                             <p className="text-muted-foreground">Upcoming</p>
-                          ) : plannedQuests === 0 ? (
-                            <p className="text-muted-foreground">No required quests</p>
+                          ) : questsCompleted === 0 ? (
+                            <p className="text-muted-foreground">No quests completed</p>
                           ) : (
-                            <p className="text-muted-foreground">
-                              {rate}% ({completedQuests}/{plannedQuests})
-                            </p>
+                            <p className="text-muted-foreground">{questsCompleted} completed</p>
                           )}
                         </TooltipContent>
                       </Tooltip>

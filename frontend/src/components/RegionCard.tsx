@@ -8,16 +8,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Edit, MoreVertical, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { CategoryStats } from '@/lib/api';
+import type { CategoryResponse } from '@/lib/api';
 
 interface RegionCardProps {
-  stats: CategoryStats;
+  stats: CategoryResponse;
   onClick?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
 }
 
-function getRegionIcon(stats: CategoryStats): string {
+function getRegionIcon(stats: CategoryResponse): string {
   if (stats.icon.trim().length > 0) return stats.icon;
 
   const normalizedName = stats.name.toLowerCase();
@@ -28,11 +28,6 @@ function getRegionIcon(stats: CategoryStats): string {
 }
 
 export function RegionCard({ stats, onClick, onEdit, onDelete }: RegionCardProps) {
-  const activeLabel =
-    stats.activeQuests === 0
-      ? 'No active quests'
-      : `${stats.activeQuests} active ${stats.activeQuests === 1 ? 'quest' : 'quests'}`;
-
   return (
     <Card
       className={cn(
@@ -65,7 +60,7 @@ export function RegionCard({ stats, onClick, onEdit, onDelete }: RegionCardProps
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1 space-y-1">
                 <h3 className="text-base font-semibold leading-tight truncate">{stats.name}</h3>
-                <p className="text-sm text-foreground/90">{activeLabel}</p>
+                <p className="text-sm text-foreground/90">{stats.isGlobal ? 'Global' : 'Custom'}</p>
               </div>
 
               <div className="flex items-start gap-1">

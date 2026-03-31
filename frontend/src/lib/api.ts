@@ -547,47 +547,16 @@ class ApiClient {
     });
   }
 
-  async getDailyStats(signal?: AbortSignal): Promise<DailyStats> {
-    return this.request<DailyStats>('/api/stats/today', { signal });
+  async getStatsOverview(signal?: AbortSignal): Promise<OverallStatsResponse> {
+    return this.request<OverallStatsResponse>('/api/stats/overview', { signal });
   }
 
-  async getWeeklyStats(signal?: AbortSignal): Promise<WeeklyStats> {
-    return this.request<WeeklyStats>('/api/stats/week', { signal });
+  async getStatsByCategory(signal?: AbortSignal): Promise<CategoryStatsResponse[]> {
+    return this.request<CategoryStatsResponse[]>('/api/stats/categories', { signal });
   }
 
-  async getMonthlyStats(signal?: AbortSignal): Promise<MonthlyStats> {
-    return this.request<MonthlyStats>('/api/stats/month', { signal });
-  }
-
-  async getProgressSummary(signal?: AbortSignal): Promise<ProgressSummary> {
-    return this.request<ProgressSummary>('/api/stats/summary', { signal });
-  }
-
-  async getCategoryStats(signal?: AbortSignal): Promise<CategoryStats[]> {
-    return this.request<CategoryStats[]>('/api/stats/categories', { signal });
-  }
-
-  async getCompletionRate(signal?: AbortSignal): Promise<DailyCompletionRate> {
-    return this.request<DailyCompletionRate>('/api/stats/completion-rate', { signal });
-  }
-
-  async getRegionActivity(signal?: AbortSignal): Promise<RegionActivityStats[]> {
-    return this.request<RegionActivityStats[]>('/api/stats/region-activity', { signal });
-  }
-
-  async getWeeklyCompletionRates(signal?: AbortSignal): Promise<DailyCompletionRate[]> {
-    return this.request<DailyCompletionRate[]>('/api/stats/weekly-completion', { signal });
-  }
-
-  async getMonthlyCompletionRates(
-    year: number,
-    month: number,
-    signal?: AbortSignal
-  ): Promise<DailyCompletionRate[]> {
-    return this.request<DailyCompletionRate[]>(
-      `/api/stats/monthly-completion?year=${year}&month=${month}`,
-      { signal }
-    );
+  async getStatsByDay(days: number = 30, signal?: AbortSignal): Promise<DailyStatsResponse[]> {
+    return this.request<DailyStatsResponse[]>(`/api/stats/daily?days=${days}`, { signal });
   }
 
   async getUserProfile(id: string, signal?: AbortSignal): Promise<UserDto> {
@@ -641,60 +610,52 @@ class ApiClient {
     });
   }
 
-  async getSettings(
-    signal?: AbortSignal
-  ): Promise<{ registrationEnabled: boolean; initialized: boolean }> {
+  async getSettings(signal?: AbortSignal): Promise<InstanceSettingsResponse> {
     return this.request('/api/admin/settings', { signal });
   }
 
   async updateSettings(updates: {
-    registrationEnabled: boolean;
-  }): Promise<{ registrationEnabled: boolean; initialized: boolean }> {
+    registrationEnabled?: boolean;
+    maintenanceMode?: boolean;
+  }): Promise<InstanceSettingsResponse> {
     return this.request('/api/admin/settings', {
       method: 'PATCH',
       body: JSON.stringify(updates),
     });
   }
 
-  async getUsers(page: number = 0, query?: string, signal?: AbortSignal): Promise<Page<UserDto>> {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      size: '20',
-      sort: 'createdAt,desc',
-    });
-    if (query) {
-      params.append('query', query);
-    }
-    return this.request<Page<UserDto>>(`/api/admin/users?${params.toString()}`, { signal });
-  }
-
-  async getHistory(signal?: AbortSignal): Promise<QuestHistory[]> {
-    return this.request<QuestHistory[]>('/api/history', { signal });
-  }
-
-  async adminCreateUser(data: AdminCreateUserRequest): Promise<UserDto> {
-    return this.request<UserDto>('/api/admin/users', {
-      method: 'POST',
-      body: JSON.stringify(data),
+  async getUsers(
+    page: number = 0,
+    search?: string,
+    signal?: AbortSignal
+  ): Promise<Page<UserSummaryResponse>> {
+    const params = new URLSearchParams({ page: page.toString(), size: '20' });
+    if (search) params.append('search', search);
+    return this.request<Page<UserSummaryResponse>>(`/api/admin/users?${params.toString()}`, {
+      signal,
     });
   }
 
-  async adminUpdateUser(id: string, data: AdminUpdateUserRequest): Promise<UserDto> {
-    return this.request<UserDto>(`/api/admin/users/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
+  async getHistory(
+    page: number = 0,
+    size: number = 20,
+    signal?: AbortSignal
+  ): Promise<Page<QuestHistoryResponse>> {
+    return this.request<Page<QuestHistoryResponse>>(
+      `/api/stats/history?page=${page}&size=${size}`,
+      { signal }
+    );
   }
 
-  async adminUpdateUserStatus(id: string, isEnabled: boolean): Promise<UserDto> {
-    return this.request<UserDto>(`/api/admin/users/${id}/status`, {
+  async adminUpdateUserStatus(id: string, enabled: boolean): Promise<UserSummaryResponse> {
+    return this.request<UserSummaryResponse>(`/api/admin/users/${id}/status`, {
       method: 'PATCH',
-      body: JSON.stringify({ isEnabled }),
+      body: JSON.stringify({ enabled }),
     });
   }
 
-  async adminUpdateUserRole(id: string, role: string): Promise<UserDto> {
-    return this.request<UserDto>(`/api/admin/users/${id}/role`, {
+  async adminUpdateUserRole(id: string, role: string): Promise<UserSummaryResponse> {
+    return this.request<UserSummaryResponse>(`/api/admin/users/${id}/role`, {
       method: 'PATCH',
       body: JSON.stringify({ role }),
     });
@@ -723,11 +684,13 @@ export interface QuestResponse {
   difficulty: 'EASY' | 'MEDIUM' | 'HARD' | 'EPIC';
   status: 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'SKIPPED';
   category?: CategoryResponse;
-  project?: ProjectReferenceResponse;
+  projectId?: string;
   dueDate?: string;
   baseXpReward: number;
   totalXpReward: number;
   createdAt: string;
+  completedAt?: string;
+  updatedAt?: string;
   recurrenceInterval: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
   recurrenceDays?: number[];
   parentId?: string;
@@ -767,12 +730,7 @@ export interface CategoryResponse {
   name: string;
   color: string;
   icon: string;
-}
-
-export interface ProjectReferenceResponse {
-  id: string;
-  name: string;
-  icon: string;
+  isGlobal: boolean;
 }
 
 export interface ProjectSummaryResponse {
@@ -820,37 +778,30 @@ export interface CreateCategoryRequest {
   icon: string;
 }
 
-export interface QuestHistory {
-  id: string;
-  title: string;
-  description: string;
-  difficulty: 'EASY' | 'MEDIUM' | 'HARD' | 'EPIC';
+export interface QuestHistoryResponse {
+  questId: string;
+  questTitle: string;
   xpEarned: number;
-  completedAt: string;
   categoryName?: string;
-  categoryIcon?: string;
-  categoryColor?: string;
-  recurrenceType: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
-  parentTitle?: string;
+  completedAt: string;
 }
 
-export interface DailyStats {
+export interface OverallStatsResponse {
+  totalCompleted: number;
+  totalXp: number;
+  currentStreak: number;
+}
+
+export interface CategoryStatsResponse {
+  categoryName: string;
+  questsCompleted: number;
+  xpEarned: number;
+}
+
+export interface DailyStatsResponse {
   date: string;
   questsCompleted: number;
   xpEarned: number;
-}
-
-export interface WeeklyStats {
-  questsCompleted: number;
-  xpEarned: number;
-  averagePerDay: number;
-  dailyBreakdown: DailyStats[];
-}
-
-export interface MonthlyStats {
-  questsCompleted: number;
-  xpEarned: number;
-  activeDays: number;
 }
 
 export interface UserProgressionDto {
@@ -865,29 +816,19 @@ export interface UserProgressionDto {
   progressPercent: number;
 }
 
-export interface ProgressSummary {
-  today: DailyStats;
-  thisWeek: WeeklyStats;
-  thisMonth: MonthlyStats;
-  totalQuestsCompleted: number;
-  favoriteCategory: string | null;
-  levelProgress: UserProgressionDto;
-}
-
-export interface AdminCreateUserRequest {
+export interface UserSummaryResponse {
+  id: string;
   username: string;
   email: string;
-  password?: string;
   role: 'USER' | 'ADMIN';
-  isEnabled: boolean;
+  enabled: boolean;
+  createdAt: string;
 }
 
-export interface AdminUpdateUserRequest {
-  username?: string;
-  email?: string;
-  password?: string;
-  role?: 'USER' | 'ADMIN';
-  isEnabled?: boolean;
+export interface InstanceSettingsResponse {
+  registrationEnabled: boolean;
+  maintenanceMode: boolean;
+  updatedAt: string;
 }
 
 export interface UserDto {
@@ -900,33 +841,6 @@ export interface UserDto {
   isEnabled: boolean;
   createdAt?: string;
   updatedAt?: string;
-}
-
-export interface CategoryStats {
-  categoryId: string;
-  name: string;
-  icon: string;
-  color: string;
-  activeQuests: number;
-  totalQuests: number;
-  completedQuests: number;
-  progress: number;
-  grade: string;
-}
-
-export interface DailyCompletionRate {
-  date: string;
-  plannedQuests: number;
-  completedQuests: number;
-  completionRate: number;
-}
-
-export interface RegionActivityStats {
-  categoryId: string;
-  name: string;
-  icon: string;
-  color: string;
-  completedThisMonth: number;
 }
 
 export const api = new ApiClient(API_BASE_URL);

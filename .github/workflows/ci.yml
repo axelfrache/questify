@@ -9,31 +9,39 @@ on:
 env:
   JAVA_VERSION: '21'
   NODE_VERSION: '20'
-  BACKEND_IMAGE: 'axelfrache/questify-backend'
-  FRONTEND_IMAGE: 'axelfrache/questify-frontend'
+  IMAGE_PREFIX: axelfrache/questify
 
 jobs:
 
-  # Format stage
-  format-backend:
-    name: Format Backend
+  # ── Format ────────────────────────────────────────────────────────────────
+
+  format-services:
+    name: Format ${{ matrix.service }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - auth-service
+          - quest-service
+          - project-service
+          - progression-service
+          - stats-service
+          - admin-service
     defaults:
       run:
-        working-directory: backend
+        working-directory: services/questify-${{ matrix.service }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up JDK ${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin'
-          cache: 'maven'
+          distribution: temurin
+          cache: maven
 
       - name: Check code formatting
-        run: ./mvnw spotless:check
+        run: mvn spotless:check --no-transfer-progress
 
   format-frontend:
     name: Format Frontend
@@ -42,59 +50,65 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v4
         with:
           version: 10.30.3
           run_install: false
 
-      - name: Set up Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Check code formatting
+      - name: Check formatting
         run: pnpm run format:check
 
-      - name: Lint code
+      - name: Lint
         run: pnpm run lint
 
-  # Test stage
-  test-backend:
-    name: Test Backend
+  # ── Test ──────────────────────────────────────────────────────────────────
+
+  test-services:
+    name: Test ${{ matrix.service }}
     runs-on: ubuntu-latest
-    needs: format-backend
+    needs: format-services
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - auth-service
+          - quest-service
+          - project-service
+          - progression-service
+          - stats-service
+          - admin-service
     defaults:
       run:
-        working-directory: backend
+        working-directory: services/questify-${{ matrix.service }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up JDK ${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin'
-          cache: 'maven'
+          distribution: temurin
+          cache: maven
 
       - name: Run tests
-        run: ./mvnw verify
+        run: mvn verify --no-transfer-progress
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: backend-test-results
-          path: backend/target/surefire-reports/
+          name: test-results-${{ matrix.service }}
+          path: services/questify-${{ matrix.service }}/target/surefire-reports/
           retention-days: 7
 
   test-frontend:
@@ -105,20 +119,17 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v4
         with:
           version: 10.30.3
           run_install: false
 
-      - name: Set up Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
@@ -127,124 +138,103 @@ jobs:
       - name: Build (type check)
         run: pnpm run build
 
-  # Build stage
-  build-backend:
-    name: Build Backend Image
+  # ── Build & Push ──────────────────────────────────────────────────────────
+
+  build-services:
+    name: Build ${{ matrix.service }}
     runs-on: ubuntu-latest
-    needs: test-backend
+    needs: test-services
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - auth-service
+          - quest-service
+          - project-service
+          - progression-service
+          - stats-service
+          - admin-service
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Extract metadata for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.BACKEND_IMAGE }}
-          tags: |
-            type=sha,prefix=sha-,format=short
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./backend
-          push: false
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          outputs: type=docker,dest=/tmp/backend-image.tar
-
-      - name: Upload image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-image
-          path: /tmp/backend-image.tar
-          retention-days: 1
-
-  build-frontend:
-    name: Build Frontend Image
-    runs-on: ubuntu-latest
-    needs: test-frontend
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Extract metadata for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.FRONTEND_IMAGE }}
-          tags: |
-            type=sha,prefix=sha-,format=short
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend
-          push: false
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          outputs: type=docker,dest=/tmp/frontend-image.tar
-
-      - name: Upload image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-image
-          path: /tmp/frontend-image.tar
-          retention-days: 1
-
-  # Deploy stage
-  deploy:
-    name: Deploy to Docker Hub
-    runs-on: ubuntu-latest
-    needs: [build-backend, build-frontend]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment: production
-    steps:
-      - name: Download backend image
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-image
-          path: /tmp
-
-      - name: Download frontend image
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-image
-          path: /tmp
-
-      - name: Load Docker images
-        run: |
-          docker load --input /tmp/backend-image.tar
-          docker load --input /tmp/frontend-image.tar
+      - uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Push images to Docker Hub
-        run: |
-          docker push --all-tags ${{ env.BACKEND_IMAGE }}
-          docker push --all-tags ${{ env.FRONTEND_IMAGE }}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}
+          tags: |
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Summary
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services
+          file: ./services/questify-${{ matrix.service }}/Dockerfile
+          push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    needs: test-frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}-frontend
+          tags: |
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+  # ── Summary (main only) ───────────────────────────────────────────────────
+
+  summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [build-services, build-frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Write summary
         run: |
           echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Backend Image:** \`docker.io/${{ env.BACKEND_IMAGE }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Frontend Image:** \`docker.io/${{ env.FRONTEND_IMAGE }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Images successfully pushed to Docker Hub." >> $GITHUB_STEP_SUMMARY
+          echo "| Image | Registry |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|----------|" >> $GITHUB_STEP_SUMMARY
+          for svc in auth-service quest-service project-service progression-service stats-service admin-service frontend; do
+            echo "| \`${{ env.IMAGE_PREFIX }}-${svc}\` | docker.io |" >> $GITHUB_STEP_SUMMARY
+          done

@@ -1,11 +1,5 @@
 import { useState } from 'react';
-import {
-  useQuests,
-  useCompleteQuest,
-  useDeleteQuest,
-  useSkipQuest,
-  useCompletionRate,
-} from '@/hooks/use-api';
+import { useQuests, useCompleteQuest, useDeleteQuest, useSkipQuest } from '@/hooks/use-api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { type QuestResponse } from '@/lib/api';
@@ -35,7 +29,6 @@ const fireConfettiFromElement = (element: HTMLElement) => {
 };
 
 export function TodayPage() {
-  const { data: completionRate, isLoading: isLoadingCompletion } = useCompletionRate();
   const { data: quests, isLoading: isLoadingQuests } = useQuests(undefined, 'today');
   const completeQuestMutation = useCompleteQuest();
   const deleteQuestMutation = useDeleteQuest();
@@ -60,7 +53,7 @@ export function TodayPage() {
     skipQuestMutation.mutate(id);
   };
 
-  if (isLoadingCompletion || isLoadingQuests) {
+  if (isLoadingQuests) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-24 w-full" />
@@ -75,9 +68,9 @@ export function TodayPage() {
     quests?.filter((q) => q.status !== 'COMPLETED' && q.status !== 'CANCELLED') || [];
   const completedQuests = quests?.filter((q) => q.status === 'COMPLETED').reverse() || [];
 
-  const planned = completionRate?.plannedQuests || 0;
-  const completed = completionRate?.completedQuests || 0;
-  const completionPercent = completionRate?.completionRate || 0;
+  const planned = quests?.length || 0;
+  const completed = quests?.filter((q) => q.status === 'COMPLETED').length || 0;
+  const completionPercent = planned > 0 ? Math.round((completed / planned) * 100) : 0;
 
   const hasPlannedQuests = planned > 0;
 
@@ -167,7 +160,7 @@ export function TodayPage() {
                 description: editingQuest.description,
                 difficulty: editingQuest.difficulty,
                 categoryId: editingQuest.category?.id,
-                projectId: editingQuest.project?.id,
+                projectId: editingQuest.projectId,
                 dueDate: editingQuest.dueDate,
                 recurrenceInterval: editingQuest.recurrenceInterval,
                 recurrenceDays: editingQuest.recurrenceDays,

@@ -101,10 +101,9 @@ function QuestCardInner({
                   <span className="text-muted-foreground">{quest.category.name}</span>
                 </span>
               )}
-              {quest.project && (
-                <span className="inline-flex max-w-[180px] items-center gap-1 truncate rounded-full bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary">
-                  <span>{quest.project.icon || '📁'}</span>
-                  <span className="truncate">{quest.project.name}</span>
+              {quest.projectId && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary">
+                  <span>📁</span>
                 </span>
               )}
               <h3

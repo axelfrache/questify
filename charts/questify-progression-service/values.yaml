@@ -1,0 +1,86 @@
+image:
+  repository: axelfrache/questify-progression-service
+  tag: "latest"
+  pullPolicy: Always
+
+imagePullSecrets:
+  - name: regcred
+
+replicaCount: 1
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+spring:
+  profile: production
+  jpa:
+    ddlAuto: update
+
+database:
+  host: questify-postgresql
+  port: 5432
+  name: questify
+  existingSecret: questify-progression-db
+  secretKeys:
+    usernameKey: username
+    passwordKey: password
+
+rabbitmq:
+  host: questify-rabbitmq
+  port: 5672
+  existingSecret: questify-rabbitmq
+  secretKeys:
+    usernameKey: username
+    passwordKey: password
+
+cors:
+  allowedOrigins: "https://app.getquestify.com,https://getquestify.com"
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+service:
+  type: ClusterIP
+  port: 8084
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+livenessProbe:
+  enabled: true
+  path: /actuator/health
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  path: /actuator/health
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

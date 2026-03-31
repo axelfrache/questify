@@ -30,7 +30,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { UserDto, AdminCreateUserRequest, AdminUpdateUserRequest } from '@/lib/api';
+import type { UserDto } from '@/lib/api';
+
+interface AdminCreateUserRequest {
+  username: string;
+  email: string;
+  role: 'USER' | 'ADMIN';
+  isEnabled: boolean;
+  password?: string;
+}
+
+interface AdminUpdateUserRequest {
+  username?: string;
+  email?: string;
+  role?: 'USER' | 'ADMIN';
+  isEnabled?: boolean;
+  password?: string;
+}
 
 const userSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters'),
