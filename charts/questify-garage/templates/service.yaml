@@ -11,6 +11,10 @@ spec:
       port: {{ .Values.service.s3Port }}
       targetPort: s3
       protocol: TCP
+    - name: web
+      port: {{ .Values.service.webPort }}
+      targetPort: web
+      protocol: TCP
     - name: admin
       port: {{ .Values.service.adminPort }}
       targetPort: admin

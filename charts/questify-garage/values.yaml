@@ -14,6 +14,8 @@ config:
   s3Region: garage
   s3ApiBindAddr: "0.0.0.0:3900"
   adminApiBindAddr: "0.0.0.0:3903"
+  webApiBindAddr: "0.0.0.0:3902"
+  webRootDomain: ".s3.getquestify.com"
   bucket: questify-profiles
 
 credentials:
@@ -41,6 +43,7 @@ persistence:
 service:
   type: ClusterIP
   s3Port: 3900
+  webPort: 3902
   adminPort: 3903
 
 ingress:

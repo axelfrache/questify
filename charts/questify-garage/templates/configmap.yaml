@@ -16,6 +16,11 @@ data:
     s3_region = {{ .Values.config.s3Region | quote }}
     api_bind_addr = {{ .Values.config.s3ApiBindAddr | quote }}
 
+    [s3_web]
+    bind_addr = {{ .Values.config.webApiBindAddr | quote }}
+    root_domain = {{ .Values.config.webRootDomain | quote }}
+    index = "index.html"
+
     [admin]
     api_bind_addr = {{ .Values.config.adminApiBindAddr | quote }}
 
