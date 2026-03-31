@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ include "postgresql.fullname" . }}
+  name: {{ include "questify-garage.fullname" . }}
   labels:
-    {{- include "postgresql.labels" . | nindent 4 }}
+    {{- include "questify-garage.labels" . | nindent 4 }}
 spec:
-  serviceName: {{ include "postgresql.fullname" . }}
+  serviceName: {{ include "questify-garage.fullname" . }}
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "postgresql.selectorLabels" . | nindent 6 }}
+      {{- include "questify-garage.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "postgresql.selectorLabels" . | nindent 8 }}
+        {{- include "questify-garage.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.nodeSelector }}
       nodeSelector:
@@ -23,45 +23,53 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: postgresql
+        - name: garage
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext:
             {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          command: ["/bin/sh", "/etc/garage/entrypoint.sh"]
           ports:
-            - name: postgresql
-              containerPort: 5432
+            - name: s3
+              containerPort: 3900
+              protocol: TCP
+            - name: admin
+              containerPort: 3903
               protocol: TCP
           env:
-            - name: POSTGRES_DB
-              value: {{ .Values.auth.database | quote }}
-            - name: POSTGRES_USER
+            - name: GARAGE_RPC_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "postgresql.secretName" . }}
-                  key: {{ .Values.auth.secretKeys.usernameKey }}
-            - name: POSTGRES_PASSWORD
+                  name: {{ .Values.credentials.existingSecret }}
+                  key: {{ .Values.credentials.secretKeys.rpcSecretKey }}
+            - name: GARAGE_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "postgresql.secretName" . }}
-                  key: {{ .Values.auth.secretKeys.passwordKey }}
-            - name: PGDATA
-              value: /var/lib/postgresql/data/pgdata
+                  name: {{ .Values.credentials.existingSecret }}
+                  key: {{ .Values.credentials.secretKeys.accessKeyKey }}
+            - name: GARAGE_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.credentials.existingSecret }}
+                  key: {{ .Values.credentials.secretKeys.secretKeyKey }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             exec:
               command:
                 - /bin/sh
                 - -c
-                - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+                - "test -f /tmp/garage-ready"
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
             timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
-            successThreshold: {{ .Values.livenessProbe.successThreshold }}
           {{- end }}
           {{- if .Values.readinessProbe.enabled }}
           readinessProbe:
@@ -69,39 +77,30 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+                - "test -f /tmp/garage-ready"
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
             timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
             failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
-            successThreshold: {{ .Values.readinessProbe.successThreshold }}
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: data
-              mountPath: /var/lib/postgresql/data
-            {{- if .Values.initDb.existingSecret }}
-            - name: initdb
-              mountPath: /docker-entrypoint-initdb.d
-              readOnly: true
-            {{- end }}
-      {{- if .Values.initDb.existingSecret }}
+              mountPath: /var/lib/garage
+            - name: config
+              mountPath: /etc/garage
       volumes:
-        - name: initdb
-          secret:
-            secretName: {{ .Values.initDb.existingSecret }}
-            items:
-              - key: {{ .Values.initDb.scriptKey }}
-                path: init.sh
-                mode: 0755
-      {{- end }}
+        - name: config
+          configMap:
+            name: {{ include "questify-garage.fullname" . }}-config
+            defaultMode: 0755
   {{- if .Values.persistence.enabled }}
   volumeClaimTemplates:
     - metadata:
         name: data
         labels:
-          {{- include "postgresql.labels" . | nindent 10 }}
+          {{- include "questify-garage.labels" . | nindent 10 }}
       spec:
         accessModes:
           {{- toYaml .Values.persistence.accessModes | nindent 10 }}

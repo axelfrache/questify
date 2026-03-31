@@ -1,0 +1,74 @@
+image:
+  repository: axelfrache/questify-garage
+  tag: "latest"
+  pullPolicy: Always
+
+replicaCount: 1
+
+config:
+  metadataDir: /var/lib/garage/meta
+  dataDir: /var/lib/garage/data
+  dbEngine: lmdb
+  replicationFactor: 1
+  rpcBindAddr: "0.0.0.0:3901"
+  s3Region: garage
+  s3ApiBindAddr: "0.0.0.0:3900"
+  adminApiBindAddr: "0.0.0.0:3903"
+  bucket: questify-profiles
+
+credentials:
+  existingSecret: questify-garage
+  secretKeys:
+    rpcSecretKey: rpc-secret
+    accessKeyKey: access-key
+    secretKeyKey: secret-key
+
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "50m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+persistence:
+  enabled: true
+  storageClass: "longhorn"
+  size: 10Gi
+  accessModes:
+    - ReadWriteOnce
+
+service:
+  type: ClusterIP
+  s3Port: 3900
+  adminPort: 3903
+
+podSecurityContext:
+  runAsNonRoot: false
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 60
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 6
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

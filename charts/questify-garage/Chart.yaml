@@ -1,0 +1,6 @@
+apiVersion: v2
+name: questify-garage
+description: Garage S3-compatible distributed storage for Questify
+type: application
+version: 0.1.0
+appVersion: "1.3.1"

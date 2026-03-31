@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "questify-garage.fullname" . }}-config
+  labels:
+    {{- include "questify-garage.labels" . | nindent 4 }}
+data:
+  garage.toml: |
+    metadata_dir = {{ .Values.config.metadataDir | quote }}
+    data_dir = {{ .Values.config.dataDir | quote }}
+    db_engine = {{ .Values.config.dbEngine | quote }}
+    replication_factor = {{ .Values.config.replicationFactor }}
+    rpc_bind_addr = {{ .Values.config.rpcBindAddr | quote }}
+
+    [s3_api]
+    s3_region = {{ .Values.config.s3Region | quote }}
+    api_bind_addr = {{ .Values.config.s3ApiBindAddr | quote }}
+
+    [admin]
+    api_bind_addr = {{ .Values.config.adminApiBindAddr | quote }}
+
+  entrypoint.sh: |
+    #!/bin/sh
+
+    garage -c /etc/garage/garage.toml server &
+
+    echo "Waiting for Garage to be ready..."
+    until garage -c /etc/garage/garage.toml status >/dev/null 2>&1; do
+        sleep 2
+    done
+
+    if [ ! -f /var/lib/garage/meta/.setup-done ]; then
+        echo "Running initial Garage setup..."
+        NODE_ID=$(garage -c /etc/garage/garage.toml node id | awk '{print $1}')
+        garage -c /etc/garage/garage.toml layout assign "$NODE_ID" -z dc1 -c 10G || true
+        garage -c /etc/garage/garage.toml layout apply --version 1 || true
+        garage -c /etc/garage/garage.toml bucket create {{ .Values.config.bucket }} || true
+        garage -c /etc/garage/garage.toml key import \
+            --yes \
+            -n questify-key \
+            "$GARAGE_ACCESS_KEY_ID" \
+            "$GARAGE_SECRET_ACCESS_KEY" || true
+        garage -c /etc/garage/garage.toml bucket allow \
+            --read --write --owner {{ .Values.config.bucket }} \
+            --key questify-key || true
+        touch /var/lib/garage/meta/.setup-done
+        echo "Garage setup complete"
+    fi
+
+    touch /tmp/garage-ready
+    wait

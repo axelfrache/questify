@@ -1,13 +1,12 @@
 image:
-  repository: postgres
-  tag: "16-alpine"
+  repository: rabbitmq
+  tag: "3-management-alpine"
   pullPolicy: IfNotPresent
 
+replicaCount: 1
+
 auth:
-  database: questify
-  username: ""
-  password: ""
-  existingSecret: "questify-postgresql"
+  existingSecret: questify-rabbitmq
   secretKeys:
     usernameKey: username
     passwordKey: password
@@ -18,34 +17,25 @@ resources:
     cpu: "50m"
   limits:
     memory: "256Mi"
-    cpu: "250m"
+    cpu: "200m"
 
 persistence:
   enabled: true
   storageClass: "longhorn"
-  size: 5Gi
+  size: 2Gi
   accessModes:
     - ReadWriteOnce
 
 service:
   type: ClusterIP
-  port: 5432
-
-initDb:
-  existingSecret: questify-db-init
-  scriptKey: init.sh
-
-replicaCount: 1
-
-nodeSelector: {}
-
-tolerations: []
+  amqpPort: 5672
+  managementPort: 15672
 
 podSecurityContext:
   runAsNonRoot: true
-  runAsUser: 70
-  runAsGroup: 70
-  fsGroup: 70
+  runAsUser: 999
+  runAsGroup: 999
+  fsGroup: 999
   seccompProfile:
     type: RuntimeDefault
 
@@ -62,12 +52,14 @@ livenessProbe:
   periodSeconds: 10
   timeoutSeconds: 5
   failureThreshold: 6
-  successThreshold: 1
 
 readinessProbe:
   enabled: true
-  initialDelaySeconds: 5
+  initialDelaySeconds: 10
   periodSeconds: 10
   timeoutSeconds: 5
   failureThreshold: 6
-  successThreshold: 1
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
