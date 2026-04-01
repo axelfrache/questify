@@ -1,5 +1,11 @@
 #!/bin/sh
 
+if [ "$(id -u)" -eq 0 ]; then
+    mkdir -p /var/lib/garage/meta /var/lib/garage/data
+    chown -R 1000:1000 /var/lib/garage
+    exec su-exec garage /bin/sh "$0" "$@"
+fi
+
 garage -c /etc/garage.toml server &
 
 echo "Waiting for Garage to be ready..."
