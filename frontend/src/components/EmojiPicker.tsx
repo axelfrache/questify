@@ -1,130 +1,55 @@
 import * as React from 'react';
+import { EmojiPicker as FrimousseEmojiPicker, type EmojiPickerListComponents } from 'frimousse';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Input } from '@/components/ui/input';
 import { ChevronDown, X, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const PRESET_EMOJIS = ['💼', '🧠', '🏃', '❤️', '📚', '🏠', '💰', '💻', '🎯', '🍃', '🎵', '✈️'];
-
-const CATEGORY_EMOJIS: Record<string, string[]> = {
-  work: ['💼', '📊', '📈', '💡', '🖥️', '📋'],
-  health: ['❤️', '🏥', '💊', '🩺', '🧘', '😊'],
-  fitness: ['🏃', '💪', '🏋️', '🚴', '⚽', '🎾'],
-  learning: ['📚', '🎓', '✏️', '📖', '🔬', '🧪'],
-  home: ['🏠', '🛋️', '🧹', '🍳', '🛏️', '🪴'],
-  finance: ['💰', '💵', '💳', '📈', '🏦', '🪙'],
-  tech: ['💻', '📱', '🖥️', '⌨️', '🔧', '🤖'],
-  creative: ['🎨', '🎭', '🎬', '📷', '✍️', '🎤'],
-  nature: ['🍃', '🌳', '🌸', '🌊', '⛰️', '🌅'],
-  travel: ['✈️', '🚗', '🗺️', '🏖️', '🌍', '🏕️'],
-  social: ['👥', '🎉', '💬', '🤝', '❤️', '🎁'],
-  food: ['🍽️', '🍕', '🥗', '☕', '🍰', '🍎'],
-};
-
-const NAME_TO_EMOJI: Record<string, string> = {
-  work: '💼',
-  job: '💼',
-  career: '💼',
-  health: '❤️',
-  wellness: '❤️',
-  fitness: '🏃',
-  exercise: '🏃',
-  gym: '💪',
-  study: '📚',
-  learning: '📚',
-  education: '📚',
-  school: '🎓',
-  home: '🏠',
-  house: '🏠',
-  family: '👨‍👩‍👧‍👦',
-  finance: '💰',
-  money: '💰',
-  budget: '💵',
-  code: '💻',
-  coding: '💻',
-  dev: '💻',
-  programming: '💻',
-  goals: '🎯',
-  target: '🎯',
-  nature: '🍃',
-  outdoor: '🌳',
-  music: '🎵',
-  travel: '✈️',
-  trip: '✈️',
-  vacation: '🏖️',
-  food: '🍽️',
-  cooking: '🍳',
-  creative: '🎨',
-  art: '🎨',
-  social: '👥',
-  friends: '👥',
-};
 
 interface EmojiPickerProps {
   value?: string;
   onChange: (emoji: string) => void;
-  regionName?: string;
 }
 
-export function EmojiPicker({ value, onChange, regionName }: EmojiPickerProps) {
-  const [open, setOpen] = React.useState(false);
-  const [search, setSearch] = React.useState('');
-  const [showMore, setShowMore] = React.useState(false);
-  const [hasManuallySelected, setHasManuallySelected] = React.useState(false);
+const LIST_COMPONENTS: Partial<EmojiPickerListComponents> = {
+  CategoryHeader: ({ category, className, ...props }) => (
+    <div
+      {...props}
+      className={cn(
+        'px-2 py-1.5 text-xs font-medium text-muted-foreground bg-background/95 border-b',
+        className
+      )}
+    >
+      {category.label}
+    </div>
+  ),
+  Row: ({ className, ...props }) => <div {...props} className={cn('flex px-1', className)} />,
+  Emoji: ({ emoji, className, ...props }) => (
+    <button
+      type="button"
+      {...props}
+      className={cn(
+        'h-8 w-8 flex items-center justify-center rounded-md text-lg transition-colors hover:bg-accent',
+        'data-[active]:bg-accent data-[active]:ring-1 data-[active]:ring-primary',
+        className
+      )}
+    >
+      {emoji.emoji}
+    </button>
+  ),
+};
 
-  React.useEffect(() => {
-    if (regionName && !hasManuallySelected && !value) {
-      const normalizedName = regionName.toLowerCase().trim();
-      for (const [key, emoji] of Object.entries(NAME_TO_EMOJI)) {
-        if (normalizedName.includes(key)) {
-          onChange(emoji);
-          break;
-        }
-      }
-    }
-  }, [regionName, hasManuallySelected, value, onChange]);
+export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
+  const [open, setOpen] = React.useState(false);
 
   const handleSelect = (emoji: string) => {
     onChange(emoji);
-    setHasManuallySelected(true);
     setOpen(false);
-    setSearch('');
-    setShowMore(false);
   };
 
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
     onChange('');
-    setHasManuallySelected(false);
   };
-
-  const allEmojis = React.useMemo(() => {
-    const all = new Set<string>(PRESET_EMOJIS);
-    Object.values(CATEGORY_EMOJIS).forEach((emojis) => {
-      emojis.forEach((emoji) => all.add(emoji));
-    });
-    return Array.from(all);
-  }, []);
-
-  const filteredEmojis = React.useMemo(() => {
-    if (!search) return showMore ? allEmojis : PRESET_EMOJIS;
-    const searchLower = search.toLowerCase();
-    const matching: string[] = [];
-    for (const [key, emoji] of Object.entries(NAME_TO_EMOJI)) {
-      if (key.includes(searchLower) && !matching.includes(emoji)) {
-        matching.push(emoji);
-      }
-    }
-    for (const [category, emojis] of Object.entries(CATEGORY_EMOJIS)) {
-      if (category.includes(searchLower)) {
-        emojis.forEach((emoji) => {
-          if (!matching.includes(emoji)) matching.push(emoji);
-        });
-      }
-    }
-    return matching.length > 0 ? matching : allEmojis;
-  }, [search, showMore, allEmojis]);
 
   return (
     <Popover open={open} onOpenChange={setOpen} modal={true}>
@@ -150,7 +75,8 @@ export function EmojiPicker({ value, onChange, regionName }: EmojiPickerProps) {
                 tabIndex={0}
                 onClick={handleClear}
                 onKeyDown={(e) =>
-                  e.key === 'Enter' && handleClear(e as unknown as React.MouseEvent)
+                  (e.key === 'Enter' || e.key === ' ') &&
+                  handleClear(e as unknown as React.MouseEvent)
                 }
                 className="h-4 w-4 rounded-sm hover:bg-muted flex items-center justify-center"
               >
@@ -161,43 +87,45 @@ export function EmojiPicker({ value, onChange, regionName }: EmojiPickerProps) {
           </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-3" align="start">
-        <div className="space-y-3">
-          <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search emojis..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 h-9"
-            />
+      <PopoverContent className="w-80 p-3" align="start">
+        <FrimousseEmojiPicker.Root
+          columns={8}
+          locale="en"
+          emojibaseUrl="/emojibase-data"
+          onEmojiSelect={({ emoji }) => handleSelect(emoji)}
+        >
+          <div className="space-y-2">
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <FrimousseEmojiPicker.Search
+                placeholder="Search emojis..."
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none transition-[color,box-shadow] pl-8 file:inline-flex file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Emoji picker</span>
+              <FrimousseEmojiPicker.SkinToneSelector
+                className="h-7 w-7 rounded-md border bg-background text-sm hover:bg-accent"
+                aria-label="Change skin tone"
+              />
+            </div>
           </div>
-          <div className="grid grid-cols-6 gap-1">
-            {filteredEmojis.slice(0, showMore || search ? 24 : 12).map((emoji) => (
-              <button
-                key={emoji}
-                type="button"
-                onClick={() => handleSelect(emoji)}
-                className={cn(
-                  'h-8 w-8 flex items-center justify-center rounded-md text-lg hover:bg-accent transition-colors',
-                  value === emoji && 'bg-accent ring-1 ring-primary'
-                )}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-          {!search && !showMore && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full text-xs text-muted-foreground"
-              onClick={() => setShowMore(true)}
-            >
-              Show more emojis...
-            </Button>
-          )}
-        </div>
+          <FrimousseEmojiPicker.Viewport className="h-72 rounded-md border mt-2">
+            <FrimousseEmojiPicker.Loading>
+              <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                Loading emojis...
+              </div>
+            </FrimousseEmojiPicker.Loading>
+            <FrimousseEmojiPicker.Empty>
+              {({ search }) => (
+                <div className="h-full flex items-center justify-center text-sm text-muted-foreground px-3 text-center">
+                  {search ? `No emoji found for "${search}"` : 'No emoji available.'}
+                </div>
+              )}
+            </FrimousseEmojiPicker.Empty>
+            <FrimousseEmojiPicker.List components={LIST_COMPONENTS} />
+          </FrimousseEmojiPicker.Viewport>
+        </FrimousseEmojiPicker.Root>
       </PopoverContent>
     </Popover>
   );

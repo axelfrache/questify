@@ -156,7 +156,7 @@ export function CreateCategoryDialog({
 
           <div className="grid gap-1.5 min-w-0">
             <Label className="text-xs font-medium text-muted-foreground ml-1">Icon</Label>
-            <EmojiPicker value={selectedIcon} onChange={setSelectedIcon} regionName={regionName} />
+            <EmojiPicker value={selectedIcon} onChange={setSelectedIcon} />
             <input type="hidden" {...register('icon', { required: true })} />
             {errors.icon && <span className="text-xs text-destructive">Icon is required</span>}
           </div>

@@ -630,17 +630,17 @@ function CreateProjectDialog({
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const [name, setName] = useState('');
-  const [icon, setIcon] = useState('📁');
+  const [icon, setIcon] = useState('');
   const [description, setDescription] = useState('');
 
   const isEditMode = !!projectToEdit;
   const isPending = createProject.isPending || updateProject.isPending;
-  const isDisabled = !name.trim() || isPending;
+  const isDisabled = !name.trim() || !icon.trim() || isPending;
 
   useEffect(() => {
     if (open) {
       setName(projectToEdit?.name ?? initialName ?? '');
-      setIcon(projectToEdit?.icon ?? '📁');
+      setIcon(projectToEdit?.icon ?? '');
       setDescription(projectToEdit?.description ?? '');
     }
   }, [open, projectToEdit, initialName]);
@@ -654,7 +654,7 @@ function CreateProjectDialog({
           id: projectToEdit.id,
           data: {
             name: name.trim(),
-            icon: icon.trim() || '📁',
+            icon: icon.trim(),
             description: description.trim(),
           },
         },
@@ -670,7 +670,7 @@ function CreateProjectDialog({
     createProject.mutate(
       {
         name: name.trim(),
-        icon: icon.trim() || '📁',
+        icon: icon.trim(),
         description: description.trim() || undefined,
       },
       {
@@ -684,7 +684,7 @@ function CreateProjectDialog({
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       setName('');
-      setIcon('📁');
+      setIcon('');
       setDescription('');
     }
     onOpenChange(nextOpen);
@@ -713,7 +713,7 @@ function CreateProjectDialog({
           </div>
           <div className="space-y-1.5">
             <Label>Icon</Label>
-            <EmojiPicker value={icon} onChange={setIcon} regionName={name} />
+            <EmojiPicker value={icon} onChange={setIcon} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="project-description">Description</Label>
