@@ -585,7 +585,7 @@ class ApiClient {
 
   async updateUserProfile(
     id: string,
-    data: { username?: string; timezone?: string }
+    data: { username?: string; timezone?: string; bio?: string }
   ): Promise<UserDto> {
     return this.request<UserDto>(`/api/users/${id}`, {
       method: 'PUT',
@@ -837,6 +837,7 @@ export interface UserDto {
   username: string;
   email: string;
   timezone: string;
+  bio?: string | null;
   profilePictureUrl: string | null;
   role: 'USER' | 'ADMIN';
   isEnabled: boolean;

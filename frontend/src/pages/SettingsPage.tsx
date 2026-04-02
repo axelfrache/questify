@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { ApiError } from '@/lib/api';
 import {
@@ -148,6 +149,7 @@ export function SettingsPage() {
   const uploadProfilePictureMutation = useUploadProfilePicture();
   const deleteProfilePictureMutation = useDeleteProfilePicture();
   const [username, setUsername] = useState(user?.username || '');
+  const [bio, setBio] = useState('');
   const [timezone, setTimezone] = useState('UTC');
   const [profileError, setProfileError] = useState<string | null>(null);
   const [profileSuccess, setProfileSuccess] = useState(false);
@@ -163,6 +165,10 @@ export function SettingsPage() {
   useEffect(() => {
     setUsername(user?.username || '');
   }, [user?.username]);
+
+  useEffect(() => {
+    setBio(profile?.bio ?? '');
+  }, [profile?.bio]);
 
   const getInitials = () => {
     if (user?.username) {
@@ -181,6 +187,7 @@ export function SettingsPage() {
       const updatedUser = await uploadProfilePictureMutation.mutateAsync({ id: user.id, file });
       updateUser({
         username: updatedUser.username,
+        bio: updatedUser.bio,
         profilePictureUrl: updatedUser.profilePictureUrl,
       });
     } catch (error) {
@@ -205,6 +212,7 @@ export function SettingsPage() {
       const updatedUser = await deleteProfilePictureMutation.mutateAsync(user.id);
       updateUser({
         username: updatedUser.username,
+        bio: updatedUser.bio,
         profilePictureUrl: updatedUser.profilePictureUrl,
       });
     } catch (error) {
@@ -225,10 +233,11 @@ export function SettingsPage() {
     try {
       const updatedUser = await updateUserProfileMutation.mutateAsync({
         id: user.id,
-        data: { username, timezone },
+        data: { username, timezone, bio },
       });
       updateUser({
         username: updatedUser.username,
+        bio: updatedUser.bio,
         profilePictureUrl: updatedUser.profilePictureUrl,
       });
       setProfileSuccess(true);
@@ -252,6 +261,7 @@ export function SettingsPage() {
         onSuccess: (updatedUser) => {
           updateUser({
             username: updatedUser.username,
+            bio: updatedUser.bio,
             profilePictureUrl: updatedUser.profilePictureUrl,
           });
         },
@@ -269,6 +279,8 @@ export function SettingsPage() {
   const isUploading = uploadProfilePictureMutation.isPending;
   const isDeleting = deleteProfilePictureMutation.isPending;
   const isSavingProfile = updateUserProfileMutation.isPending;
+  const isProfileUnchanged =
+    username.trim() === (user?.username ?? '') && bio === (profile?.bio ?? '');
 
   return (
     <div className="space-y-6">
@@ -394,13 +406,28 @@ export function SettingsPage() {
                     <Input id="email" value={user?.email || ''} disabled className="bg-muted" />
                     <p className="text-xs text-muted-foreground">Email cannot be changed.</p>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bio">Bio</Label>
+                    <Textarea
+                      id="bio"
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      rows={4}
+                      maxLength={280}
+                      placeholder="A short line about your focus, interests, or current quest."
+                    />
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>This bio will be displayed on your profile page.</span>
+                      <span>{bio.length}/280</span>
+                    </div>
+                  </div>
                   {profileError && <p className="text-sm text-destructive">{profileError}</p>}
                   {profileSuccess && (
                     <p className="text-sm text-green-600">Profile updated successfully!</p>
                   )}
                   <Button
                     onClick={handleSaveProfile}
-                    disabled={isSavingProfile || username === user?.username}
+                    disabled={isSavingProfile || isProfileUnchanged}
                   >
                     {isSavingProfile ? (
                       <>

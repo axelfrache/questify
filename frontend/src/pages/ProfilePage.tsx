@@ -1,40 +1,132 @@
-import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { ArrowRight, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  useCategories,
+  useStatsByCategory,
+  useStatsByDay,
+  useStatsOverview,
+  useUserProgression,
+} from '@/hooks/use-api';
+import { Button } from '@/components/ui/button';
+import { ProfileHero } from '@/components/profile/ProfileHero';
+import { ActivityHeatmap } from '@/components/profile/ActivityHeatmap';
+import { RegionRadarChart } from '@/components/ui/region-radar-chart';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 export function ProfilePage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const { data: progression, isLoading: isLoadingProgression } = useUserProgression(user?.id);
+  const { data: overview, isLoading: isLoadingOverview } = useStatsOverview();
+  const { data: categoryStats, isLoading: isLoadingCategoryStats } = useStatsByCategory();
+  const { data: activityStats, isLoading: isLoadingActivity } = useStatsByDay(365);
+  const { data: categories, isLoading: isLoadingCategories } = useCategories();
 
-  const getInitials = () => {
-    if (user?.username) {
-      return user.username.charAt(0).toUpperCase();
-    }
-    return user?.email?.charAt(0).toUpperCase() || '?';
-  };
+  const isLoading =
+    isLoadingProgression ||
+    isLoadingOverview ||
+    isLoadingCategoryStats ||
+    isLoadingActivity ||
+    isLoadingCategories;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-40 rounded-[2rem]" />
+        <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+          <Skeleton className="h-[320px] rounded-[2rem]" />
+          <Skeleton className="h-[320px] rounded-[2rem]" />
+        </div>
+        <Skeleton className="h-[160px] rounded-[2rem]" />
+      </div>
+    );
+  }
+
+  const level = progression?.level ?? 1;
+  const gradeLabel = progression?.gradeLabel ?? 'Initiate';
+  const totalXp = overview?.totalXp ?? progression?.totalXp ?? 0;
+  const currentStreak = overview?.currentStreak ?? 0;
+  const totalCompleted = overview?.totalCompleted ?? 0;
+  const currentLevelXp = progression?.currentLevelXp ?? 0;
+  const nextLevelXp = progression?.nextLevelXp ?? 100;
+  const progressPercent = progression?.progressPercent ?? 0;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Profile</h1>
-        <p className="text-muted-foreground">Your account settings.</p>
+    <div className="space-y-8 pb-10">
+      <ProfileHero
+        username={user?.username || 'Unknown'}
+        profilePictureUrl={user?.profilePictureUrl}
+        bio={user?.bio}
+        level={level}
+        gradeLabel={gradeLabel}
+        totalXp={totalXp}
+        currentStreak={currentStreak}
+        totalCompleted={totalCompleted}
+        currentLevelXp={currentLevelXp}
+        nextLevelXp={nextLevelXp}
+        progressPercent={progressPercent}
+      />
+
+      <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
+        <RegionRadarChart data={categoryStats ?? []} />
+        <ActivityHeatmap dailyData={activityStats ?? []} isLoading={isLoadingActivity} />
       </div>
-      <div className="rounded-lg border p-6">
-        <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16 text-2xl">
-            <AvatarImage src={user?.profilePictureUrl || undefined} alt={user?.username} />
-            <AvatarFallback className="bg-primary text-primary-foreground">
-              {getInitials()}
-            </AvatarFallback>
-          </Avatar>
+
+      <section className="space-y-4">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <h3 className="font-semibold">{user?.username || 'Unknown'}</h3>
-            <p className="text-sm text-muted-foreground">{user?.email || 'Unknown'}</p>
+            <h2 className="text-lg font-semibold tracking-tight">Regions</h2>
+            <p className="text-sm text-muted-foreground">
+              The categories currently shaping your quest flow.
+            </p>
           </div>
+          {categories && categories.length > 0 ? (
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/regions">
+                Manage regions
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          ) : null}
         </div>
-      </div>
-      <Button variant="outline" onClick={logout}>
-        Logout
-      </Button>
+
+        {!categories || categories.length === 0 ? (
+          <div className="rounded-[1.75rem] border border-dashed border-border/70 bg-background/60 px-5 py-8 text-center">
+            <p className="text-sm font-medium text-foreground">No regions yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Create your first region to organize your quests by area of focus.
+            </p>
+            <Button asChild variant="outline" className="mt-4">
+              <Link to="/regions">
+                <Plus className="h-4 w-4" />
+                Create your first region
+              </Link>
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2.5">
+            {categories.map((category) => (
+              <Link
+                key={category.id}
+                to={`/inbox?category=${category.id}`}
+                className={cn(
+                  'inline-flex items-center gap-2 rounded-full border border-border/60 bg-background px-3 py-2 text-sm transition-colors',
+                  'hover:border-border hover:bg-muted/60'
+                )}
+              >
+                <span
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-base"
+                  style={{ backgroundColor: `${category.color}18`, color: category.color }}
+                >
+                  {category.icon}
+                </span>
+                <span className="font-medium text-foreground">{category.name}</span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

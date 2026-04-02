@@ -11,8 +11,10 @@ export function StatsPage() {
   const { data: overview, isLoading: isLoadingOverview } = useStatsOverview();
   const { data: categoryStats, isLoading: isLoadingCategories } = useStatsByCategory();
   const { data: dailyStats, isLoading: isLoadingDaily } = useStatsByDay(7);
+  const { data: monthlyActivityStats, isLoading: isLoadingMonthlyActivity } = useStatsByDay(365);
 
-  const isLoading = isLoadingOverview || isLoadingCategories || isLoadingDaily;
+  const isLoading =
+    isLoadingOverview || isLoadingCategories || isLoadingDaily || isLoadingMonthlyActivity;
 
   if (isLoading) {
     return (
@@ -152,6 +154,8 @@ export function StatsPage() {
 
       <div className="grid gap-4 lg:grid-cols-2 items-stretch">
         <MonthlyActivityGraph
+          dailyData={monthlyActivityStats}
+          isLoading={isLoadingMonthlyActivity}
           xpEarned={overview?.totalXp || 0}
           activeDays={overview?.currentStreak || 0}
           questsCompleted={overview?.totalCompleted || 0}

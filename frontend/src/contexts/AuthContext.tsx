@@ -8,6 +8,7 @@ interface User {
   id: string;
   email: string;
   username: string;
+  bio?: string | null;
   profilePictureUrl: string | null;
   role: 'USER' | 'ADMIN';
 }
@@ -31,6 +32,7 @@ function toAuthUser(userDto: UserDto | null | undefined): User | null {
     id: userDto.id,
     email: userDto.email,
     username: userDto.username,
+    bio: userDto.bio,
     profilePictureUrl: userDto.profilePictureUrl,
     role: userDto.role,
   };
@@ -106,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ...prev,
         email: data.email ?? prev.email,
         username: data.username ?? prev.username,
+        bio: data.bio ?? prev.bio,
         profilePictureUrl: data.profilePictureUrl ?? prev.profilePictureUrl,
         role: data.role ?? prev.role,
       };

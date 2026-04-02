@@ -505,10 +505,16 @@ export function useUserProfile(id?: string) {
 export function useUpdateUserProfile() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { username?: string; timezone?: string } }) =>
-      api.updateUserProfile(id, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: { username?: string; timezone?: string; bio?: string };
+    }) => api.updateUserProfile(id, data),
     onSuccess: (updatedUser) => {
       queryClient.setQueryData<UserDto>(queryKeys.users.profile(updatedUser.id), updatedUser);
+      queryClient.setQueryData<UserDto>(queryKeys.auth.me, updatedUser);
     },
   });
 }
@@ -519,6 +525,7 @@ export function useUploadProfilePicture() {
     mutationFn: ({ id, file }: { id: string; file: File }) => api.uploadProfilePicture(id, file),
     onSuccess: (updatedUser) => {
       queryClient.setQueryData<UserDto>(queryKeys.users.profile(updatedUser.id), updatedUser);
+      queryClient.setQueryData<UserDto>(queryKeys.auth.me, updatedUser);
     },
   });
 }
@@ -529,6 +536,7 @@ export function useDeleteProfilePicture() {
     mutationFn: (id: string) => api.deleteProfilePicture(id),
     onSuccess: (updatedUser) => {
       queryClient.setQueryData<UserDto>(queryKeys.users.profile(updatedUser.id), updatedUser);
+      queryClient.setQueryData<UserDto>(queryKeys.auth.me, updatedUser);
     },
   });
 }
