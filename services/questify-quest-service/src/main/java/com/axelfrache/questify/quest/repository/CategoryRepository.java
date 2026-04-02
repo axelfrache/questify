@@ -1,7 +1,6 @@
 package com.axelfrache.questify.quest.repository;
 
 import com.axelfrache.questify.quest.model.Category;
-import com.axelfrache.questify.quest.model.CategorySource;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;

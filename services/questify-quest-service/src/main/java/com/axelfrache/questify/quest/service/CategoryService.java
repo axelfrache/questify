@@ -138,7 +138,8 @@ public class CategoryService {
       return CategorySource.GLOBAL;
     }
 
-    return DEFAULT_CATEGORIES.stream().anyMatch(defaultCategory -> defaultCategory.matches(category))
+    return DEFAULT_CATEGORIES.stream()
+            .anyMatch(defaultCategory -> defaultCategory.matches(category))
         ? CategorySource.DEFAULT
         : CategorySource.CUSTOM;
   }
