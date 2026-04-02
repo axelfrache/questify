@@ -97,8 +97,18 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
           </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-3" align="start">
+      <PopoverContent
+        align="start"
+        side="bottom"
+        sideOffset={8}
+        collisionPadding={16}
+        className={cn(
+          'flex w-[min(20rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] flex-col overflow-hidden p-3',
+          'max-h-[min(calc(100dvh-2rem),var(--radix-popover-content-available-height))]'
+        )}
+      >
         <FrimousseEmojiPicker.Root
+          className="flex min-h-0 flex-1 flex-col"
           columns={8}
           locale="en"
           emojibaseUrl="/emojibase-data"
@@ -120,7 +130,7 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
               />
             </div>
           </div>
-          <FrimousseEmojiPicker.Viewport className="h-72 rounded-md border mt-2">
+          <FrimousseEmojiPicker.Viewport className="mt-2 min-h-0 flex-1 rounded-md border">
             <FrimousseEmojiPicker.Loading>
               <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
                 Loading emojis...
