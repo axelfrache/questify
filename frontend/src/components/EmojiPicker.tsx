@@ -10,36 +10,46 @@ interface EmojiPickerProps {
   onChange: (emoji: string) => void;
 }
 
-const LIST_COMPONENTS: Partial<EmojiPickerListComponents> = {
-  CategoryHeader: ({ category, className, ...props }) => (
-    <div
-      {...props}
-      className={cn(
-        'px-2 py-1.5 text-xs font-medium text-muted-foreground bg-background/95 border-b',
-        className
-      )}
-    >
-      {category.label}
-    </div>
-  ),
-  Row: ({ className, ...props }) => <div {...props} className={cn('flex px-1', className)} />,
-  Emoji: ({ emoji, className, ...props }) => (
-    <button
-      type="button"
-      {...props}
-      className={cn(
-        'h-8 w-8 flex items-center justify-center rounded-md text-lg transition-colors hover:bg-accent',
-        'data-[active]:bg-accent data-[active]:ring-1 data-[active]:ring-primary',
-        className
-      )}
-    >
-      {emoji.emoji}
-    </button>
-  ),
-};
-
 export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
   const [open, setOpen] = React.useState(false);
+
+  const listComponents = React.useMemo<Partial<EmojiPickerListComponents>>(
+    () => ({
+      CategoryHeader: ({ category, className, ...props }) => (
+        <div
+          {...props}
+          className={cn(
+            'px-2 py-1.5 text-xs font-medium text-muted-foreground bg-background/95 border-b',
+            className
+          )}
+        >
+          {category.label}
+        </div>
+      ),
+      Row: ({ className, ...props }) => <div {...props} className={cn('flex px-1', className)} />,
+      Emoji: ({ emoji, className, ...props }) => {
+        const isSelected = emoji.emoji === value;
+        return (
+          <button
+            type="button"
+            {...props}
+            className={cn(
+              'h-8 w-8 box-border flex items-center justify-center rounded-md text-lg border border-transparent',
+              'transition-[background-color,border-color] duration-150',
+              'hover:bg-accent hover:border-border/60',
+              'focus-visible:outline-none focus-visible:border-primary/70',
+              'data-[active]:bg-accent data-[active]:border-primary/60',
+              isSelected && 'bg-primary/15 border-primary/70',
+              className
+            )}
+          >
+            {emoji.emoji}
+          </button>
+        );
+      },
+    }),
+    [value]
+  );
 
   const handleSelect = (emoji: string) => {
     onChange(emoji);
@@ -123,7 +133,7 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
                 </div>
               )}
             </FrimousseEmojiPicker.Empty>
-            <FrimousseEmojiPicker.List components={LIST_COMPONENTS} />
+            <FrimousseEmojiPicker.List components={listComponents} />
           </FrimousseEmojiPicker.Viewport>
         </FrimousseEmojiPicker.Root>
       </PopoverContent>
