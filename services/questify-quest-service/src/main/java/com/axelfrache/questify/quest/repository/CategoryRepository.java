@@ -1,6 +1,7 @@
 package com.axelfrache.questify.quest.repository;
 
 import com.axelfrache.questify.quest.model.Category;
+import com.axelfrache.questify.quest.model.CategorySource;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,6 +18,10 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
   @Query("SELECT c FROM Category c WHERE c.userId IS NULL OR c.userId = :userId ORDER BY c.name")
   List<Category> findAllForUser(@Param("userId") UUID userId);
+
+  boolean existsByUserIdAndNameIgnoreCase(UUID userId, String name);
+
+  List<Category> findBySourceIsNull();
 
   void deleteByUserId(UUID userId);
 }

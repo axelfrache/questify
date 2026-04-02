@@ -3,6 +3,7 @@ package com.axelfrache.questify.quest.service;
 import com.axelfrache.questify.quest.dto.CategoryResponse;
 import com.axelfrache.questify.quest.dto.CreateCategoryRequest;
 import com.axelfrache.questify.quest.model.Category;
+import com.axelfrache.questify.quest.model.CategorySource;
 import com.axelfrache.questify.quest.model.QuestAction;
 import com.axelfrache.questify.quest.repository.CategoryRepository;
 import com.axelfrache.questify.quest.repository.QuestTemplateRepository;
@@ -19,6 +20,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class CategoryService {
 
+  private static final List<DefaultCategory> DEFAULT_CATEGORIES =
+      List.of(
+          new DefaultCategory("Work", "💼", "#3b82f6"),
+          new DefaultCategory("Health", "💪", "#22c55e"),
+          new DefaultCategory("Learning", "📚", "#a855f7"),
+          new DefaultCategory("Personal", "🏡", "#f59e0b"));
+
   private final CategoryRepository categoryRepository;
   private final QuestTemplateRepository questTemplateRepository;
 
@@ -29,10 +37,41 @@ public class CategoryService {
             .name(request.name())
             .icon(request.icon())
             .color(request.color())
+            .source(CategorySource.CUSTOM)
             .userId(userId)
             .build();
     categoryRepository.save(category);
     return toResponse(category);
+  }
+
+  @Transactional
+  public void seedDefaultCategoriesForUser(UUID userId) {
+    for (var defaultCategory : DEFAULT_CATEGORIES) {
+      if (categoryRepository.existsByUserIdAndNameIgnoreCase(userId, defaultCategory.name())) {
+        continue;
+      }
+
+      categoryRepository.save(
+          Category.builder()
+              .name(defaultCategory.name())
+              .icon(defaultCategory.icon())
+              .color(defaultCategory.color())
+              .source(CategorySource.DEFAULT)
+              .userId(userId)
+              .build());
+    }
+  }
+
+  @Transactional
+  public void backfillCategorySources() {
+    var categories = categoryRepository.findBySourceIsNull();
+    if (categories.isEmpty()) {
+      return;
+    }
+
+    categories.forEach(category -> category.setSource(inferSource(category)));
+    categoryRepository.saveAll(categories);
+    log.info("Backfilled category source for {} categories", categories.size());
   }
 
   @Transactional(readOnly = true)
@@ -84,11 +123,31 @@ public class CategoryService {
   }
 
   private CategoryResponse toResponse(Category category) {
+    var source = category.getSource() != null ? category.getSource() : inferSource(category);
     return new CategoryResponse(
         category.getId(),
         category.getName(),
         category.getIcon(),
         category.getColor(),
+        source,
         category.isGlobal());
+  }
+
+  private CategorySource inferSource(Category category) {
+    if (category.getUserId() == null) {
+      return CategorySource.GLOBAL;
+    }
+
+    return DEFAULT_CATEGORIES.stream().anyMatch(defaultCategory -> defaultCategory.matches(category))
+        ? CategorySource.DEFAULT
+        : CategorySource.CUSTOM;
+  }
+
+  private record DefaultCategory(String name, String icon, String color) {
+    private boolean matches(Category category) {
+      return name.equalsIgnoreCase(category.getName())
+          && icon.equals(category.getIcon())
+          && color.equalsIgnoreCase(category.getColor());
+    }
   }
 }

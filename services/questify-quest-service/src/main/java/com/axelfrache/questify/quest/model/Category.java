@@ -2,6 +2,8 @@ package com.axelfrache.questify.quest.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -38,7 +40,11 @@ public class Category {
   @Column(name = "user_id")
   private UUID userId;
 
+  @Enumerated(EnumType.STRING)
+  @Column(name = "source")
+  private CategorySource source;
+
   public boolean isGlobal() {
-    return userId == null;
+    return source == CategorySource.GLOBAL || userId == null;
   }
 }

@@ -730,6 +730,7 @@ export interface CategoryResponse {
   name: string;
   color: string;
   icon: string;
+  source: 'DEFAULT' | 'CUSTOM' | 'GLOBAL';
   isGlobal: boolean;
 }
 

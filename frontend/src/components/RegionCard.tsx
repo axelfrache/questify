@@ -27,7 +27,20 @@ function getRegionIcon(stats: CategoryResponse): string {
   return '🧭';
 }
 
+function getRegionOriginLabel(stats: CategoryResponse): string {
+  switch (stats.source) {
+    case 'DEFAULT':
+      return 'Default';
+    case 'GLOBAL':
+      return 'Global';
+    default:
+      return 'Custom';
+  }
+}
+
 export function RegionCard({ stats, onClick, onEdit, onDelete }: RegionCardProps) {
+  const canManage = stats.source !== 'GLOBAL';
+
   return (
     <Card
       className={cn(
@@ -60,47 +73,49 @@ export function RegionCard({ stats, onClick, onEdit, onDelete }: RegionCardProps
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1 space-y-1">
                 <h3 className="text-base font-semibold leading-tight truncate">{stats.name}</h3>
-                <p className="text-sm text-foreground/90">{stats.isGlobal ? 'Global' : 'Custom'}</p>
+                <p className="text-sm text-foreground/90">{getRegionOriginLabel(stats)}</p>
               </div>
 
               <div className="flex items-start gap-1">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={cn(
-                        'h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity -mr-2 -mt-1',
-                        'focus:opacity-100'
-                      )}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreVertical className="h-4 w-4" />
-                      <span className="sr-only">Region actions</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEdit?.();
-                      }}
-                    >
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete?.();
-                      }}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {canManage && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                          'h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity -mr-2 -mt-1',
+                          'focus:opacity-100'
+                        )}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                        <span className="sr-only">Region actions</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit?.();
+                        }}
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete?.();
+                        }}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
             </div>
           </div>

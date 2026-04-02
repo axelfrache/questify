@@ -6,6 +6,7 @@ import com.axelfrache.questify.quest.dto.QuestResponse;
 import com.axelfrache.questify.quest.dto.UpdateQuestRequest;
 import com.axelfrache.questify.quest.messaging.QuestEventPublisher;
 import com.axelfrache.questify.quest.model.Category;
+import com.axelfrache.questify.quest.model.CategorySource;
 import com.axelfrache.questify.quest.model.Difficulty;
 import com.axelfrache.questify.quest.model.QuestHistory;
 import com.axelfrache.questify.quest.model.QuestOccurrence;
@@ -577,11 +578,14 @@ public class QuestService {
 
   private CategoryResponse toCategoryResponse(Category category) {
     if (category == null) return null;
+    var source =
+        category.getSource() != null ? category.getSource() : inferCategorySource(category);
     return new CategoryResponse(
         category.getId(),
         category.getName(),
         category.getIcon(),
         category.getColor(),
+        source,
         category.isGlobal());
   }
 
@@ -666,6 +670,35 @@ public class QuestService {
         template.getParent() != null ? template.getParent().getTitle() : null,
         subquestCount,
         completedSubquestCount);
+  }
+
+  private CategorySource inferCategorySource(Category category) {
+    if (category.getUserId() == null) {
+      return CategorySource.GLOBAL;
+    }
+
+    if ("Work".equalsIgnoreCase(category.getName())
+        && "💼".equals(category.getIcon())
+        && "#3b82f6".equalsIgnoreCase(category.getColor())) {
+      return CategorySource.DEFAULT;
+    }
+    if ("Health".equalsIgnoreCase(category.getName())
+        && "💪".equals(category.getIcon())
+        && "#22c55e".equalsIgnoreCase(category.getColor())) {
+      return CategorySource.DEFAULT;
+    }
+    if ("Learning".equalsIgnoreCase(category.getName())
+        && "📚".equals(category.getIcon())
+        && "#a855f7".equalsIgnoreCase(category.getColor())) {
+      return CategorySource.DEFAULT;
+    }
+    if ("Personal".equalsIgnoreCase(category.getName())
+        && "🏡".equals(category.getIcon())
+        && "#f59e0b".equalsIgnoreCase(category.getColor())) {
+      return CategorySource.DEFAULT;
+    }
+
+    return CategorySource.CUSTOM;
   }
 
   private QuestResponse toGhostResponse(QuestTemplate template, LocalDate scheduledDate) {
