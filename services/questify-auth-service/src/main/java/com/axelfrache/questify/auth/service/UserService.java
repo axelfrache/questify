@@ -51,6 +51,11 @@ public class UserService {
         throw new IllegalArgumentException("Invalid timezone: " + request.timezone());
       }
 
+    if (request.bio() != null) {
+      var trimmedBio = request.bio().trim();
+      user.setBio(trimmedBio.isEmpty() ? null : trimmedBio);
+    }
+
     userRepository.save(user);
     return toUserDto(user);
   }
@@ -147,6 +152,7 @@ public class UserService {
         user.getUsername(),
         user.getEmail(),
         user.getTimezone(),
+        user.getBio(),
         user.getProfilePictureUrl(),
         user.getCreatedAt(),
         user.getUpdatedAt(),

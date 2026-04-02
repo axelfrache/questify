@@ -46,6 +46,9 @@ public class User {
   @Column(nullable = false)
   private String timezone = "UTC";
 
+  @Column(length = 280)
+  private String bio;
+
   @Column(length = 500)
   private String profilePictureUrl;
 

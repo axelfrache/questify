@@ -10,6 +10,7 @@ public record UserDto(
     String username,
     String email,
     String timezone,
+    String bio,
     String profilePictureUrl,
     Instant createdAt,
     Instant updatedAt,
