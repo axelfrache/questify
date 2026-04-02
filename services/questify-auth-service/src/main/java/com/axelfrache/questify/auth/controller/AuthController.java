@@ -120,6 +120,7 @@ public class AuthController {
                         user.getUsername(),
                         user.getEmail(),
                         user.getTimezone(),
+                        user.getBio(),
                         user.getProfilePictureUrl(),
                         user.getCreatedAt(),
                         user.getUpdatedAt(),
