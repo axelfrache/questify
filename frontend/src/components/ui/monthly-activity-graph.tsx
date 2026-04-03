@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { format, getDay, getDaysInMonth, startOfMonth } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { DailyStatsResponse } from '@/lib/api';
+import type { DailyCompletionSnapshot } from '@/lib/activity-completion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -11,6 +12,7 @@ interface MonthlyActivityGraphProps {
   className?: string;
   title?: string;
   dailyData?: DailyStatsResponse[];
+  completionByDate?: Record<string, DailyCompletionSnapshot>;
   isLoading?: boolean;
   xpEarned?: number;
   activeDays?: number;
@@ -21,6 +23,7 @@ export function MonthlyActivityGraph({
   className,
   title = 'Monthly Activity',
   dailyData = [],
+  completionByDate = {},
   isLoading = false,
   xpEarned = 0,
   activeDays = 0,
@@ -58,10 +61,11 @@ export function MonthlyActivityGraph({
     return nextMonth <= new Date();
   };
 
-  const getCompletionColor = (completed: number) => {
-    if (completed === 0) return 'bg-muted/40';
-    if (completed >= 5) return 'bg-primary';
-    if (completed >= 3) return 'bg-primary/60';
+  const getCompletionColor = (completion?: DailyCompletionSnapshot) => {
+    if (!completion || completion.plannedQuests === 0) return 'bg-muted/40';
+    if (completion.completionRate >= 100) return 'bg-primary';
+    if (completion.completionRate >= 75) return 'bg-primary/65';
+    if (completion.completionRate >= 50) return 'bg-primary/45';
     return 'bg-primary/30';
   };
 
@@ -135,6 +139,7 @@ export function MonthlyActivityGraph({
 
                   const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                   const dayData = monthlyData[dateKey];
+                  const completion = completionByDate[dateKey];
                   const questsCompletedForDay = dayData?.questsCompleted ?? 0;
                   const dayDate = new Date(year, month - 1, day);
                   const isFuture = dayDate > today;
@@ -148,7 +153,7 @@ export function MonthlyActivityGraph({
                             className={cn(
                               'h-4 w-4 cursor-default rounded-[3px] transition-all sm:h-5 sm:w-5',
                               'hover:ring-1 hover:ring-foreground/30',
-                              isFuture ? 'bg-muted/30' : getCompletionColor(questsCompletedForDay),
+                              isFuture ? 'bg-muted/30' : getCompletionColor(completion),
                               isToday && 'ring-2 ring-primary/60'
                             )}
                           />
@@ -157,12 +162,17 @@ export function MonthlyActivityGraph({
                           <p className="font-medium">{format(dayDate, 'EEE, MMM d')}</p>
                           {isFuture ? (
                             <p className="text-muted-foreground">Upcoming</p>
-                          ) : questsCompletedForDay === 0 ? (
-                            <p className="text-muted-foreground">No quests completed</p>
+                          ) : !completion || completion.plannedQuests === 0 ? (
+                            <p className="text-muted-foreground">No quests planned</p>
                           ) : (
-                            <p className="text-muted-foreground">
-                              {questsCompletedForDay} completed
-                            </p>
+                            <>
+                              <p className="text-muted-foreground">
+                                {completion.completedQuests} of {completion.plannedQuests} completed
+                              </p>
+                              <p className="text-muted-foreground">
+                                {completion.completionRate}% • +{questsCompletedForDay > 0 ? dayData?.xpEarned ?? 0 : 0} XP
+                              </p>
+                            </>
                           )}
                         </TooltipContent>
                       </Tooltip>
@@ -197,7 +207,7 @@ export function MonthlyActivityGraph({
                       <span className="h-2.5 w-2.5 cursor-default rounded-[2px] bg-muted/40 hover:ring-1 hover:ring-foreground/20" />
                     </TooltipTrigger>
                     <TooltipContent side="top" className="text-xs">
-                      No required quests
+                      No quests planned
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -207,17 +217,17 @@ export function MonthlyActivityGraph({
                       <span className="h-2.5 w-2.5 cursor-default rounded-[2px] bg-primary/30 hover:ring-1 hover:ring-foreground/20" />
                     </TooltipTrigger>
                     <TooltipContent side="top" className="text-xs">
-                      Some quests completed
+                      Up to 49% completed
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
                 <TooltipProvider delayDuration={100}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="h-2.5 w-2.5 cursor-default rounded-[2px] bg-primary/60 hover:ring-1 hover:ring-foreground/20" />
+                      <span className="h-2.5 w-2.5 cursor-default rounded-[2px] bg-primary/45 hover:ring-1 hover:ring-foreground/20" />
                     </TooltipTrigger>
                     <TooltipContent side="top" className="text-xs">
-                      Most quests completed
+                      50% to 99% completed
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -227,7 +237,7 @@ export function MonthlyActivityGraph({
                       <span className="h-2.5 w-2.5 cursor-default rounded-[2px] bg-primary hover:ring-1 hover:ring-foreground/20" />
                     </TooltipTrigger>
                     <TooltipContent side="top" className="text-xs">
-                      All quests completed
+                      100% completed
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>

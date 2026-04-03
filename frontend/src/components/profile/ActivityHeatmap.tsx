@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { format, getDay, getDaysInMonth, startOfMonth } from 'date-fns';
 import { ChevronLeft, ChevronRight, Flame, Target, Zap } from 'lucide-react';
 import type { DailyStatsResponse } from '@/lib/api';
+import type { DailyCompletionSnapshot } from '@/lib/activity-completion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,10 +10,15 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 interface ActivityHeatmapProps {
   dailyData: DailyStatsResponse[];
+  completionByDate?: Record<string, DailyCompletionSnapshot>;
   isLoading?: boolean;
 }
 
-export function ActivityHeatmap({ dailyData, isLoading = false }: ActivityHeatmapProps) {
+export function ActivityHeatmap({
+  dailyData,
+  completionByDate = {},
+  isLoading = false,
+}: ActivityHeatmapProps) {
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
@@ -75,15 +81,16 @@ export function ActivityHeatmap({ dailyData, isLoading = false }: ActivityHeatma
     return nextMonth <= new Date();
   };
 
-  const getCompletionColor = (questsCompleted: number) => {
-    if (questsCompleted === 0) return 'bg-muted/35';
-    if (questsCompleted >= 5) return 'bg-primary';
-    if (questsCompleted >= 3) return 'bg-primary/70';
-    return 'bg-primary/40';
+  const getCompletionColor = (completion?: DailyCompletionSnapshot) => {
+    if (!completion || completion.plannedQuests === 0) return 'bg-muted/35';
+    if (completion.completionRate >= 100) return 'bg-primary';
+    if (completion.completionRate >= 75) return 'bg-primary/75';
+    if (completion.completionRate >= 50) return 'bg-primary/52';
+    return 'bg-primary/38';
   };
 
   return (
-    <Card className="overflow-hidden rounded-[2rem] border-border/60 bg-card shadow-sm">
+    <Card className="h-full overflow-hidden">
       <CardHeader className="space-y-4 px-5 pb-0 pt-5 sm:px-6 sm:pt-6">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -154,7 +161,7 @@ export function ActivityHeatmap({ dailyData, isLoading = false }: ActivityHeatma
 
                 const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayData = monthlyData[dateKey];
-                const questsCompleted = dayData?.questsCompleted ?? 0;
+                const completion = completionByDate[dateKey];
                 const xpEarned = dayData?.xpEarned ?? 0;
                 const dayDate = new Date(year, month - 1, day);
                 const isFuture = dayDate > today;
@@ -167,7 +174,7 @@ export function ActivityHeatmap({ dailyData, isLoading = false }: ActivityHeatma
                         <div
                           className={cn(
                             'aspect-square rounded-[0.7rem] border border-transparent transition-all',
-                            isFuture ? 'bg-muted/25' : getCompletionColor(questsCompleted),
+                            isFuture ? 'bg-muted/25' : getCompletionColor(completion),
                             isToday &&
                               'border-primary/70 shadow-[0_0_0_1px_theme(colors.primary/25)]',
                             !isFuture && 'hover:-translate-y-0.5 hover:border-primary/20'
@@ -178,11 +185,18 @@ export function ActivityHeatmap({ dailyData, isLoading = false }: ActivityHeatma
                         <p className="font-medium">{format(dayDate, 'EEE, MMM d')}</p>
                         {isFuture ? (
                           <p className="text-muted-foreground">Upcoming</p>
+                        ) : !completion || completion.plannedQuests === 0 ? (
+                          <p className="text-muted-foreground">No quests planned</p>
                         ) : (
-                          <p className="text-muted-foreground">
-                            {questsCompleted} quest{questsCompleted === 1 ? '' : 's'} • +{xpEarned}{' '}
-                            XP
-                          </p>
+                          <>
+                            <p className="text-muted-foreground">
+                              {completion.completedQuests} of {completion.plannedQuests} quest
+                              {completion.plannedQuests === 1 ? '' : 's'} completed
+                            </p>
+                            <p className="text-muted-foreground">
+                              {completion.completionRate}% • +{xpEarned} XP
+                            </p>
+                          </>
                         )}
                       </TooltipContent>
                     </Tooltip>
@@ -197,16 +211,20 @@ export function ActivityHeatmap({ dailyData, isLoading = false }: ActivityHeatma
                 none
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-[3px] bg-primary/40" />
-                light
+                <span className="h-2.5 w-2.5 rounded-[3px] bg-primary/38" />
+                {'<50%'}
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-[3px] bg-primary/70" />
-                medium
+                <span className="h-2.5 w-2.5 rounded-[3px] bg-primary/52" />
+                50-74%
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-[3px] bg-primary/75" />
+                75-99%
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <span className="h-2.5 w-2.5 rounded-[3px] bg-primary" />
-                strong
+                100%
               </span>
             </div>
           </>
