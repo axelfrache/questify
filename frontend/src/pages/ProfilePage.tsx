@@ -88,9 +88,7 @@ export function ProfilePage() {
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div className="space-y-1">
             <CardTitle className="tracking-tight">Regions</CardTitle>
-            <CardDescription>
-              The categories currently shaping your quest flow.
-            </CardDescription>
+            <CardDescription>The categories currently shaping your quest flow.</CardDescription>
           </div>
           {categories && categories.length > 0 ? (
             <Button asChild variant="ghost" size="sm" className="shrink-0">

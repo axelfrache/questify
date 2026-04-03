@@ -170,7 +170,8 @@ export function MonthlyActivityGraph({
                                 {completion.completedQuests} of {completion.plannedQuests} completed
                               </p>
                               <p className="text-muted-foreground">
-                                {completion.completionRate}% • +{questsCompletedForDay > 0 ? dayData?.xpEarned ?? 0 : 0} XP
+                                {completion.completionRate}% • +
+                                {questsCompletedForDay > 0 ? (dayData?.xpEarned ?? 0) : 0} XP
                               </p>
                             </>
                           )}

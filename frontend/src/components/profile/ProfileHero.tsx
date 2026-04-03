@@ -108,7 +108,11 @@ export function ProfileHero({
           </div>
           <Progress value={progressPercent} className="h-3.5 rounded-full bg-primary/10" />
           <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-            <span className={progressPercent >= 100 ? 'font-medium text-primary' : 'text-muted-foreground'}>
+            <span
+              className={
+                progressPercent >= 100 ? 'font-medium text-primary' : 'text-muted-foreground'
+              }
+            >
               {Math.round(progressPercent)}% completed
             </span>
             <span className="inline-flex items-center gap-1 font-medium text-foreground">

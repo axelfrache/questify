@@ -509,8 +509,7 @@ export function SettingsPage() {
               <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3">
                 <p className="text-sm font-medium text-destructive">This action is permanent.</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Your quests, progress, achievements, and account data will be permanently
-                  removed.
+                  Your quests, progress, achievements, and account data will be permanently removed.
                 </p>
               </div>
 

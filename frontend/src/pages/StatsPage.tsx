@@ -112,7 +112,9 @@ export function StatsPage() {
               const completionRate = day.completion?.completionRate ?? 0;
               const plannedQuests = day.completion?.plannedQuests ?? 0;
               const xpEarned = day.stats?.xpEarned ?? 0;
-              const heightPct = isFuture ? 20 : Math.max(completionRate, plannedQuests > 0 ? 10 : 8);
+              const heightPct = isFuture
+                ? 20
+                : Math.max(completionRate, plannedQuests > 0 ? 10 : 8);
 
               return (
                 <TooltipProvider key={index}>
