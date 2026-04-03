@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Edit, MoreVertical, Trash2 } from 'lucide-react';
+import { appCardSurfaceClass } from '@/lib/card-surface';
 import { cn } from '@/lib/utils';
 import type { CategoryResponse } from '@/lib/api';
 
@@ -45,6 +46,7 @@ export function RegionCard({ stats, onClick, onEdit, onDelete }: RegionCardProps
     <Card
       className={cn(
         'group relative overflow-hidden transition-all duration-200',
+        appCardSurfaceClass,
         'border-l-[3px]',
         onClick && 'cursor-pointer hover:scale-[1.01] hover:shadow-md'
       )}

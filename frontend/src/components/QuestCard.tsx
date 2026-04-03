@@ -12,6 +12,7 @@ import { MoreVertical, Edit, Trash, SkipForward, Plus } from 'lucide-react';
 import { DifficultyChip, RecurrenceChip } from '@/components/ui/quest-meta-chip';
 import { XpBadge } from '@/components/ui/xp-badge';
 import { InlineSubquests } from '@/components/InlineSubquests';
+import { appCardSurfaceClass } from '@/lib/card-surface';
 import { cn } from '@/lib/utils';
 import type { QuestResponse } from '@/lib/api';
 import type { Density } from '@/types/inboxTypes';
@@ -66,11 +67,12 @@ function QuestCardInner({
     <Card
       className={cn(
         'group relative overflow-hidden transition-all duration-200',
+        appCardSurfaceClass,
         'border-l-[3px]',
         isCompleted && 'opacity-60',
         disabled && 'opacity-40 cursor-not-allowed',
         !isCompleted && !disabled && 'hover:scale-[1.01] hover:shadow-md',
-        !hasCategoryColor && 'bg-muted/30 border-l-muted-foreground/30'
+        !hasCategoryColor && 'border-l-border'
       )}
       style={{
         borderLeftColor: hasCategoryColor ? quest.category!.color : undefined,
@@ -145,7 +147,12 @@ function QuestCardInner({
 
           {/* Right side: XP badge + Actions */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <XpBadge xp={quest.totalXpReward} animate={showXpAnimation} faded={isCompleted} />
+            <XpBadge
+              xp={quest.totalXpReward}
+              difficulty={quest.difficulty}
+              animate={showXpAnimation}
+              faded={isCompleted}
+            />
 
             {/* Actions dropdown - visible on hover */}
             <DropdownMenu>
