@@ -36,8 +36,9 @@ export function ProfileHero({
   const xpToNextLevel = Math.max(nextLevelXp - currentLevelXp, 0);
 
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-gradient-to-br from-primary/[0.08] via-background to-background px-5 py-6 shadow-sm sm:px-7 sm:py-7">
-      <div className="absolute inset-y-0 right-0 hidden w-1/3 bg-[radial-gradient(circle_at_top_right,theme(colors.primary/12),transparent_55%)] lg:block" />
+    <section className="relative overflow-hidden rounded-[calc(var(--radius)+8px)] border border-border/70 bg-card/92 px-5 py-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:px-7 sm:py-7 dark:shadow-[0_22px_44px_rgba(0,0,0,0.34)]">
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,transparent_55%,theme(colors.background/72))]" />
+      <div className="absolute inset-y-0 right-0 hidden w-1/3 bg-[radial-gradient(circle_at_top_right,theme(colors.primary/10),transparent_55%)] lg:block" />
       <div className="relative space-y-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-center gap-4 sm:gap-5">
@@ -53,7 +54,7 @@ export function ProfileHero({
                 <h1 className="truncate text-3xl font-semibold tracking-tight sm:text-4xl">
                   {username}
                 </h1>
-                <div className="inline-flex min-h-8 items-stretch overflow-hidden rounded-xl border border-primary/20 bg-background/85 shadow-sm">
+                <div className="inline-flex min-h-8 items-stretch overflow-hidden rounded-xl border border-border/70 bg-background/80 shadow-sm">
                   <span className="inline-flex items-center bg-primary/[0.12] px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
                     Level {level}
                   </span>
@@ -107,7 +108,9 @@ export function ProfileHero({
           </div>
           <Progress value={progressPercent} className="h-3.5 rounded-full bg-primary/10" />
           <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-            <span className="text-muted-foreground">{Math.round(progressPercent)}% completed</span>
+            <span className={progressPercent >= 100 ? 'font-medium text-primary' : 'text-muted-foreground'}>
+              {Math.round(progressPercent)}% completed
+            </span>
             <span className="inline-flex items-center gap-1 font-medium text-foreground">
               <ArrowUpRight className="h-4 w-4 text-primary" />
               {xpToNextLevel.toLocaleString()} XP to next level
