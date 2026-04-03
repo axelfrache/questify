@@ -1,31 +1,24 @@
-import { useMemo } from 'react';
-import { useQuests } from '@/hooks/use-api';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 import { buildDailyCompletionMap } from '@/lib/activity-completion';
 
 export function useDailyCompletion() {
-  const completedQuery = useQuests('COMPLETED');
-  const pendingQuery = useQuests('PENDING');
-  const skippedQuery = useQuests('SKIPPED');
-  const cancelledQuery = useQuests('CANCELLED');
+  const query = useQuery({
+    queryKey: ['quests', 'daily-completion'],
+    queryFn: async ({ signal }) => {
+      const [completedQuests, pendingQuests, skippedQuests] = await Promise.all([
+        api.getQuests('COMPLETED', undefined, signal),
+        api.getQuests('PENDING', undefined, signal),
+        api.getQuests('SKIPPED', undefined, signal),
+      ]);
 
-  const quests = useMemo(
-    () => [
-      ...(completedQuery.data ?? []),
-      ...(pendingQuery.data ?? []),
-      ...(skippedQuery.data ?? []),
-      ...(cancelledQuery.data ?? []),
-    ],
-    [completedQuery.data, pendingQuery.data, skippedQuery.data, cancelledQuery.data]
-  );
-
-  const completionByDate = useMemo(() => buildDailyCompletionMap(quests), [quests]);
+      return buildDailyCompletionMap([...completedQuests, ...pendingQuests, ...skippedQuests]);
+    },
+    staleTime: 30_000,
+  });
 
   return {
-    completionByDate,
-    isLoading:
-      completedQuery.isLoading ||
-      pendingQuery.isLoading ||
-      skippedQuery.isLoading ||
-      cancelledQuery.isLoading,
+    completionByDate: query.data ?? {},
+    isLoading: query.isLoading,
   };
 }

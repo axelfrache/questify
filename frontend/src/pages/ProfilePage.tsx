@@ -78,9 +78,6 @@ export function ProfilePage() {
           dailyData={activityStats ?? []}
           completionByDate={completionByDate}
           isLoading={isLoadingActivity || isLoadingCompletion}
-          xpEarned={totalXp}
-          activeDays={currentStreak}
-          questsCompleted={totalCompleted}
         />
       </div>
 

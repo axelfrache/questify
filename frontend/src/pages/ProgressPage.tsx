@@ -120,7 +120,9 @@ export function ProgressPage() {
       <Card className="overflow-visible">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Star className="h-5 w-5 text-secondary" />
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-secondary/25 bg-secondary/18 shadow-sm">
+              <Star className="h-4.5 w-4.5 text-secondary-foreground" />
+            </span>
             Grade Journey
           </CardTitle>
         </CardHeader>
@@ -243,8 +245,8 @@ export function ProgressPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <div className="p-2 rounded-full bg-secondary/10">
-                <Star className="h-5 w-5 text-secondary" />
+              <div className="rounded-full border border-secondary/25 bg-secondary/18 p-2 shadow-sm">
+                <Star className="h-5 w-5 text-secondary-foreground" />
               </div>
               Current Grade
             </CardTitle>
@@ -267,7 +269,7 @@ export function ProgressPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <div className="p-2 rounded-full bg-primary/10">
+              <div className="rounded-full border border-primary/15 bg-primary/10 p-2 shadow-sm">
                 <Zap className="h-5 w-5 text-primary" />
               </div>
               Total Experience

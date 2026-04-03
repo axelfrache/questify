@@ -14,9 +14,6 @@ interface MonthlyActivityGraphProps {
   dailyData?: DailyStatsResponse[];
   completionByDate?: Record<string, DailyCompletionSnapshot>;
   isLoading?: boolean;
-  xpEarned?: number;
-  activeDays?: number;
-  questsCompleted?: number;
 }
 
 export function MonthlyActivityGraph({
@@ -25,13 +22,11 @@ export function MonthlyActivityGraph({
   dailyData = [],
   completionByDate = {},
   isLoading = false,
-  xpEarned = 0,
-  activeDays = 0,
-  questsCompleted = 0,
 }: MonthlyActivityGraphProps) {
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
+  const currentMonthKey = `${year}-${String(month).padStart(2, '0')}`;
 
   const monthlyData = useMemo(
     () =>
@@ -44,6 +39,15 @@ export function MonthlyActivityGraph({
       ),
     [dailyData]
   );
+
+  const currentMonthEntries = useMemo(
+    () => dailyData.filter((day) => day.date.startsWith(currentMonthKey)),
+    [currentMonthKey, dailyData]
+  );
+
+  const monthQuestCount = currentMonthEntries.reduce((sum, day) => sum + day.questsCompleted, 0);
+  const monthXp = currentMonthEntries.reduce((sum, day) => sum + day.xpEarned, 0);
+  const activeDays = currentMonthEntries.filter((day) => day.questsCompleted > 0).length;
 
   const goToPreviousMonth = () => {
     setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
@@ -131,7 +135,7 @@ export function MonthlyActivityGraph({
         ) : (
           <div className="flex gap-4">
             <div className="flex flex-1 items-center justify-center py-2">
-              <div className="grid grid-cols-7 gap-[3px] sm:gap-1">
+              <div className="-m-1 grid grid-cols-7 gap-[3px] overflow-visible p-1 sm:gap-1">
                 {weeks.flat().map((day, index) => {
                   if (day === null) {
                     return <div key={index} className="h-4 w-4 sm:h-5 sm:w-5" />;
@@ -151,10 +155,10 @@ export function MonthlyActivityGraph({
                         <TooltipTrigger asChild>
                           <div
                             className={cn(
-                              'h-4 w-4 cursor-default rounded-[3px] transition-all sm:h-5 sm:w-5',
-                              'hover:ring-1 hover:ring-foreground/30',
+                              'relative z-0 h-4 w-4 cursor-default rounded-[3px] transition-all sm:h-5 sm:w-5',
+                              'hover:z-10 hover:ring-1 hover:ring-inset hover:ring-foreground/30',
                               isFuture ? 'bg-muted/30' : getCompletionColor(completion),
-                              isToday && 'ring-2 ring-primary/60'
+                              isToday && 'ring-2 ring-inset ring-primary/60'
                             )}
                           />
                         </TooltipTrigger>
@@ -188,7 +192,7 @@ export function MonthlyActivityGraph({
             <div className="flex min-w-[85px] flex-1 flex-col justify-center pl-4">
               <div className="space-y-4">
                 <div>
-                  <p className="text-xl font-semibold leading-none">{questsCompleted}</p>
+                  <p className="text-xl font-semibold leading-none">{monthQuestCount}</p>
                   <p className="mt-0.5 text-[10px] text-muted-foreground">quests</p>
                 </div>
                 <div>
@@ -196,7 +200,7 @@ export function MonthlyActivityGraph({
                   <p className="mt-0.5 text-[10px] text-muted-foreground">active days</p>
                 </div>
                 <div>
-                  <p className="text-xl font-semibold leading-none">+{xpEarned}</p>
+                  <p className="text-xl font-semibold leading-none">+{monthXp}</p>
                   <p className="mt-0.5 text-[10px] text-muted-foreground">XP</p>
                 </div>
               </div>
