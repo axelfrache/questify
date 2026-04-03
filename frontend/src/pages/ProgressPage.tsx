@@ -117,19 +117,19 @@ export function ProgressPage() {
         </TooltipProvider>
       </div>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-visible">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Star className="h-5 w-5 text-secondary" />
             Grade Journey
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-0">
-          <div className="overflow-x-auto scrollbar-hide pb-2">
+        <CardContent className="overflow-visible px-0">
+          <div className="overflow-x-auto scrollbar-hide py-3">
             <TooltipProvider delayDuration={200}>
-              <div className="flex flex-col gap-2 min-w-max px-4">
+              <div className="flex min-w-max flex-col gap-2 px-4">
                 {/* Nodes and connectors row */}
-                <div className="flex items-center">
+                <div className="flex items-center py-1">
                   {GRADES.map((grade, index) => {
                     const isPast = index < currentGradeIndex;
                     const isCurrent = index === currentGradeIndex;
@@ -137,35 +137,46 @@ export function ProgressPage() {
 
                     return (
                       <div key={grade.name} className="flex items-center last:flex-none">
-                        <div className="flex justify-center w-16">
+                        <div className="flex w-16 justify-center">
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <button
-                                className="relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-full"
+                                className="relative flex h-14 w-14 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                                 aria-label={`${grade.name}: ${grade.tooltip}`}
                               >
-                                <div
-                                  className={cn(
-                                    'w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all cursor-pointer hover:scale-105',
-                                    isPast && 'bg-primary border-primary text-primary-foreground',
-                                    isCurrent && 'bg-primary/20 border-primary text-primary',
-                                    isFuture &&
-                                      'bg-muted border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/50'
-                                  )}
-                                >
-                                  {isPast || (isCurrent && currentLevel >= grade.minLevel) ? (
-                                    <Check className="h-5 w-5" />
-                                  ) : (
-                                    <span className="text-sm font-bold">{grade.minLevel}</span>
-                                  )}
-                                </div>
-                                {isCurrent && (
-                                  <ShineBorder
-                                    className="rounded-full"
-                                    shineColor={['#a855f7', '#6366f1', '#22d3ee']}
-                                    borderWidth={2}
-                                    duration={8}
-                                  />
+                                {isCurrent ? (
+                                  <div className="relative h-12 w-12 transition-all hover:scale-105">
+                                    <div className="absolute inset-0 rounded-full bg-muted-foreground/32" />
+                                    <ShineBorder
+                                      className="rounded-full"
+                                      shineColor={[
+                                        'rgba(168,85,247,0.55)',
+                                        'rgba(99,102,241,0.5)',
+                                        'rgba(34,211,238,0.55)',
+                                      ]}
+                                      borderWidth={2}
+                                      duration={14}
+                                    />
+                                    <div className="absolute inset-[2px] rounded-full bg-primary/6 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.05),0_0_0_1px_rgba(20,184,166,0.05),0_10px_24px_rgba(15,23,42,0.08)] dark:bg-primary/8 dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.07),0_0_0_1px_rgba(20,184,166,0.08),0_10px_24px_rgba(0,0,0,0.28)]" />
+                                    <div className="relative z-10 flex h-full w-full items-center justify-center text-primary">
+                                      <Check className="h-5 w-5" />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div
+                                    className={cn(
+                                      'flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border-2 transition-all hover:scale-105',
+                                      isPast && 'bg-primary border-primary text-primary-foreground',
+                                      isFuture &&
+                                        'bg-muted border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/50'
+                                    )}
+                                  >
+                                    {isPast ? (
+                                      <Check className="h-5 w-5" />
+                                    ) : (
+                                      <span className="text-sm font-bold">{grade.minLevel}</span>
+                                    )}
+                                  </div>
                                 )}
                               </button>
                             </TooltipTrigger>
