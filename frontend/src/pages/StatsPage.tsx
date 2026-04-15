@@ -1,4 +1,6 @@
 import { useStatsOverview, useStatsByCategory, useStatsByDay } from '@/hooks/use-api';
+import { useDailyCompletion } from '@/hooks/use-daily-completion';
+import { getUtcDateKey } from '@/lib/activity-completion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -8,13 +10,18 @@ import { Calendar, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function StatsPage() {
-  const { data: overview, isLoading: isLoadingOverview } = useStatsOverview();
+  const { isLoading: isLoadingOverview } = useStatsOverview();
   const { data: categoryStats, isLoading: isLoadingCategories } = useStatsByCategory();
   const { data: dailyStats, isLoading: isLoadingDaily } = useStatsByDay(7);
   const { data: monthlyActivityStats, isLoading: isLoadingMonthlyActivity } = useStatsByDay(365);
+  const { completionByDate, isLoading: isLoadingCompletion } = useDailyCompletion();
 
   const isLoading =
-    isLoadingOverview || isLoadingCategories || isLoadingDaily || isLoadingMonthlyActivity;
+    isLoadingOverview ||
+    isLoadingCategories ||
+    isLoadingDaily ||
+    isLoadingMonthlyActivity ||
+    isLoadingCompletion;
 
   if (isLoading) {
     return (
@@ -30,14 +37,28 @@ export function StatsPage() {
   }
 
   const getCompletionColor = (rate: number) => {
-    if (rate >= 100) return 'bg-success';
-    if (rate >= 75) return 'bg-success-muted';
-    if (rate >= 50) return 'bg-primary';
-    if (rate > 0) return 'bg-primary/60';
+    if (rate >= 100) return 'bg-primary';
+    if (rate >= 75) return 'bg-primary/80';
+    if (rate >= 50) return 'bg-primary/60';
+    if (rate > 0) return 'bg-primary/35';
     return 'bg-muted';
   };
 
   const today = new Date();
+  const dailyStatsByDate = Object.fromEntries((dailyStats ?? []).map((day) => [day.date, day]));
+  const weeklyDays = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(today);
+    date.setUTCHours(0, 0, 0, 0);
+    date.setUTCDate(date.getUTCDate() - (6 - index));
+    const dateKey = getUtcDateKey(date);
+
+    return {
+      date,
+      dateKey,
+      stats: dailyStatsByDate[dateKey],
+      completion: completionByDate[dateKey],
+    };
+  });
 
   return (
     <div className="space-y-6">
@@ -87,16 +108,15 @@ export function StatsPage() {
         </CardHeader>
         <CardContent className="pb-4">
           <div className="flex items-end gap-2 h-24">
-            {dailyStats?.map((day, index) => {
-              const dayDate = new Date(day.date);
+            {weeklyDays.map((day, index) => {
+              const dayDate = day.date;
               const isFuture = dayDate > today;
-              const maxQuests = Math.max(...(dailyStats.map((d) => d.questsCompleted) ?? [1]), 1);
+              const completionRate = day.completion?.completionRate ?? 0;
+              const plannedQuests = day.completion?.plannedQuests ?? 0;
+              const xpEarned = day.stats?.xpEarned ?? 0;
               const heightPct = isFuture
                 ? 20
-                : Math.max(
-                    (day.questsCompleted / maxQuests) * 100,
-                    day.questsCompleted > 0 ? 8 : 8
-                  );
+                : Math.max(completionRate, plannedQuests > 0 ? 10 : 8);
 
               return (
                 <TooltipProvider key={index}>
@@ -109,25 +129,35 @@ export function StatsPage() {
                               'w-full max-w-8 rounded-t transition-all',
                               isFuture
                                 ? 'bg-muted/30'
-                                : day.questsCompleted > 0
-                                  ? getCompletionColor(heightPct)
+                                : plannedQuests > 0
+                                  ? getCompletionColor(completionRate)
                                   : 'bg-muted/50'
                             )}
                             style={{ height: `${heightPct}%` }}
                           />
                         </div>
                         <span className="text-[10px] text-muted-foreground">
-                          {dayDate.toLocaleDateString('en-US', { weekday: 'narrow' })}
+                          {dayDate.toLocaleDateString('en-US', {
+                            timeZone: 'UTC',
+                            weekday: 'narrow',
+                          })}
                         </span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>
                       {isFuture ? (
                         <p className="text-xs">Upcoming</p>
+                      ) : plannedQuests === 0 ? (
+                        <p className="text-xs">No quests planned</p>
                       ) : (
-                        <p className="text-xs">
-                          {day.questsCompleted} quests · +{day.xpEarned} XP
-                        </p>
+                        <>
+                          <p className="text-xs">
+                            {day.completion?.completedQuests ?? 0} of {plannedQuests} completed
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {completionRate}% · +{xpEarned} XP
+                          </p>
+                        </>
                       )}
                     </TooltipContent>
                   </Tooltip>
@@ -137,7 +167,7 @@ export function StatsPage() {
           </div>
           <div className="mt-2 pt-2 border-t flex items-center justify-end gap-3 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-sm bg-success" />
+              <span className="w-2 h-2 rounded-sm bg-primary" />
               100%
             </span>
             <span className="flex items-center gap-1">
@@ -155,10 +185,8 @@ export function StatsPage() {
       <div className="grid gap-4 lg:grid-cols-2 items-stretch">
         <MonthlyActivityGraph
           dailyData={monthlyActivityStats}
+          completionByDate={completionByDate}
           isLoading={isLoadingMonthlyActivity}
-          xpEarned={overview?.totalXp || 0}
-          activeDays={overview?.currentStreak || 0}
-          questsCompleted={overview?.totalCompleted || 0}
         />
 
         {categoryStats && <RegionRadarChart data={categoryStats} />}

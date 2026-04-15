@@ -27,7 +27,7 @@ export function WeekdayPicker({ selectedDays, onDaysChange, disabled }: WeekdayP
   };
 
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1 overflow-visible py-1">
       {WEEKDAYS.map((day) => {
         const isSelected = selectedDays.includes(day.value);
         return (
@@ -39,11 +39,11 @@ export function WeekdayPicker({ selectedDays, onDaysChange, disabled }: WeekdayP
             title={day.full}
             className={cn(
               'h-8 w-8 rounded-full text-xs font-medium transition-colors',
-              'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
               isSelected
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80',
-              disabled && 'opacity-50 cursor-not-allowed'
+              disabled && 'cursor-not-allowed opacity-50'
             )}
           >
             {day.label}

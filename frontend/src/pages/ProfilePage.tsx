@@ -8,10 +8,12 @@ import {
   useStatsOverview,
   useUserProgression,
 } from '@/hooks/use-api';
+import { useDailyCompletion } from '@/hooks/use-daily-completion';
 import { Button } from '@/components/ui/button';
 import { ProfileHero } from '@/components/profile/ProfileHero';
-import { ActivityHeatmap } from '@/components/profile/ActivityHeatmap';
 import { RegionRadarChart } from '@/components/ui/region-radar-chart';
+import { MonthlyActivityGraph } from '@/components/ui/monthly-activity-graph';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -22,13 +24,15 @@ export function ProfilePage() {
   const { data: categoryStats, isLoading: isLoadingCategoryStats } = useStatsByCategory();
   const { data: activityStats, isLoading: isLoadingActivity } = useStatsByDay(365);
   const { data: categories, isLoading: isLoadingCategories } = useCategories();
+  const { completionByDate, isLoading: isLoadingCompletion } = useDailyCompletion();
 
   const isLoading =
     isLoadingProgression ||
     isLoadingOverview ||
     isLoadingCategoryStats ||
     isLoadingActivity ||
-    isLoadingCategories;
+    isLoadingCategories ||
+    isLoadingCompletion;
 
   if (isLoading) {
     return (
@@ -53,7 +57,7 @@ export function ProfilePage() {
   const progressPercent = progression?.progressPercent ?? 0;
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="space-y-6 pb-10">
       <ProfileHero
         username={user?.username || 'Unknown'}
         profilePictureUrl={user?.profilePictureUrl}
@@ -68,65 +72,68 @@ export function ProfilePage() {
         progressPercent={progressPercent}
       />
 
-      <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
+      <div className="grid items-stretch gap-4 lg:grid-cols-2">
         <RegionRadarChart data={categoryStats ?? []} />
-        <ActivityHeatmap dailyData={activityStats ?? []} isLoading={isLoadingActivity} />
+        <MonthlyActivityGraph
+          dailyData={activityStats ?? []}
+          completionByDate={completionByDate}
+          isLoading={isLoadingActivity || isLoadingCompletion}
+        />
       </div>
 
-      <section className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight">Regions</h2>
-            <p className="text-sm text-muted-foreground">
-              The categories currently shaping your quest flow.
-            </p>
+      <Card>
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
+          <div className="space-y-1">
+            <CardTitle className="tracking-tight">Regions</CardTitle>
+            <CardDescription>The categories currently shaping your quest flow.</CardDescription>
           </div>
           {categories && categories.length > 0 ? (
-            <Button asChild variant="ghost" size="sm">
+            <Button asChild variant="ghost" size="sm" className="shrink-0">
               <Link to="/regions">
                 Manage regions
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           ) : null}
-        </div>
-
-        {!categories || categories.length === 0 ? (
-          <div className="rounded-[1.75rem] border border-dashed border-border/70 bg-background/60 px-5 py-8 text-center">
-            <p className="text-sm font-medium text-foreground">No regions yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Create your first region to organize your quests by area of focus.
-            </p>
-            <Button asChild variant="outline" className="mt-4">
-              <Link to="/regions">
-                <Plus className="h-4 w-4" />
-                Create your first region
-              </Link>
-            </Button>
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-2.5">
-            {categories.map((category) => (
-              <Link
-                key={category.id}
-                to={`/inbox?category=${category.id}`}
-                className={cn(
-                  'inline-flex items-center gap-2 rounded-full border border-border/60 bg-background px-3 py-2 text-sm transition-colors',
-                  'hover:border-border hover:bg-muted/60'
-                )}
-              >
-                <span
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-base"
-                  style={{ backgroundColor: `${category.color}18`, color: category.color }}
+        </CardHeader>
+        <CardContent>
+          {!categories || categories.length === 0 ? (
+            <div className="rounded-[calc(var(--radius)+2px)] border border-dashed border-border/70 bg-background/55 px-5 py-8 text-center">
+              <p className="text-sm font-medium text-foreground">No regions yet</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Create your first region to organize your quests by area of focus.
+              </p>
+              <Button asChild variant="outline" className="mt-4">
+                <Link to="/regions">
+                  <Plus className="h-4 w-4" />
+                  Create your first region
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2.5">
+              {categories.map((category) => (
+                <Link
+                  key={category.id}
+                  to={`/inbox?category=${category.id}`}
+                  className={cn(
+                    'inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/72 px-3 py-2 text-sm shadow-sm transition-colors',
+                    'hover:border-border hover:bg-muted/60'
+                  )}
                 >
-                  {category.icon}
-                </span>
-                <span className="font-medium text-foreground">{category.name}</span>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
+                  <span
+                    className="flex h-7 w-7 items-center justify-center rounded-full text-base"
+                    style={{ backgroundColor: `${category.color}18`, color: category.color }}
+                  >
+                    {category.icon}
+                  </span>
+                  <span className="font-medium text-foreground">{category.name}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

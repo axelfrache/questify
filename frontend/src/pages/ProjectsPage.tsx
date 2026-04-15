@@ -43,9 +43,11 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
+import { Progress } from '@/components/ui/progress';
 import {
   Archive,
   ArchiveRestore,
+  CheckCircle2,
   Clock3,
   FolderOpen,
   ListTodo,
@@ -62,6 +64,7 @@ type SortMode = 'updated' | 'name' | 'quests';
 
 interface ProjectCardStats {
   questCount: number;
+  completedCount: number;
   urgentCount: number;
 }
 
@@ -134,10 +137,12 @@ export function ProjectsPage() {
         return [project.id, undefined] as const;
       }
       const urgentCount = quests.filter((quest) => isUrgentQuest(quest)).length;
+      const completedCount = quests.filter((quest) => quest.status === 'COMPLETED').length;
       return [
         project.id,
         {
           questCount: quests.length,
+          completedCount,
           urgentCount,
         },
       ] as const;
@@ -405,47 +410,39 @@ function ProjectCard({
   const updatedLabel = formatRelativeProjectUpdate(project.updatedAt);
   const trimmedDescription = project.description?.trim();
   const hasDescription = Boolean(trimmedDescription);
+  const completionPct =
+    stats && stats.questCount > 0 ? Math.round((stats.completedCount / stats.questCount) * 100) : 0;
 
   return (
     <Card
       className={cn(
-        'group overflow-hidden border-border/70 bg-card/70 shadow-sm transition-all duration-200',
+        'group flex flex-col overflow-hidden border-border/70 bg-card/70 shadow-sm transition-all duration-200',
         'hover:border-primary/30 hover:shadow-lg',
         project.pinned && 'border-primary/30 bg-primary/[0.04]'
       )}
     >
-      <CardContent className="flex h-full flex-col gap-4 p-5">
+      <CardContent className="flex flex-1 flex-col gap-3 p-5">
+        {/* Header row */}
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1 space-y-3">
-            <div className="flex items-start gap-3">
-              <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-muted/40 text-2xl">
-                {project.icon || '📁'}
-              </span>
-              <div className="min-w-0 space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="truncate text-lg font-semibold leading-tight text-foreground">
-                    {project.name}
-                  </h3>
-                  {project.pinned && (
-                    <Badge
-                      variant="outline"
-                      className="border-primary/30 bg-primary/10 text-primary"
-                    >
-                      <Star className="h-3 w-3 fill-current" />
-                      Pinned
-                    </Badge>
-                  )}
-                  {project.archived && <Badge variant="outline">Archived</Badge>}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {project.archived ? 'Archived project' : 'Active project'}
-                </p>
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-muted/40 text-xl">
+              {project.icon || '📁'}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <h3 className="truncate text-base font-semibold leading-tight text-foreground">
+                  {project.name}
+                </h3>
+                {project.pinned && (
+                  <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
+                    <Star className="h-3 w-3 fill-current" />
+                    Pinned
+                  </Badge>
+                )}
+                {project.archived && <Badge variant="outline">Archived</Badge>}
               </div>
-            </div>
-
-            <div className="min-h-[2.75rem]">
               {hasDescription && (
-                <p className="line-clamp-2 text-sm leading-5 text-muted-foreground">
+                <p className="mt-1 line-clamp-2 text-xs leading-4 text-muted-foreground">
                   {trimmedDescription}
                 </p>
               )}
@@ -457,13 +454,26 @@ function ProjectCard({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 shrink-0 opacity-70 transition-opacity hover:opacity-100 focus-visible:opacity-100"
+                className="h-7 w-7 shrink-0 opacity-60 transition-opacity hover:opacity-100 focus-visible:opacity-100"
                 aria-label={`More actions for ${project.name}`}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onTogglePin}>
+                {project.pinned ? (
+                  <>
+                    <StarOff className="mr-2 h-4 w-4" />
+                    Unpin
+                  </>
+                ) : (
+                  <>
+                    <Star className="mr-2 h-4 w-4" />
+                    Pin
+                  </>
+                )}
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={onEdit}>
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
@@ -491,71 +501,58 @@ function ProjectCard({
           </DropdownMenu>
         </div>
 
-        <div className="grid grid-cols-1 gap-2 text-sm text-muted-foreground">
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-background/50 px-3 py-2.5">
-            <span className="flex items-center gap-2">
-              <ListTodo className="h-4 w-4 text-muted-foreground/80" />
-              <span>Quests</span>
+        {/* Progress */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              {stats ? `${stats.completedCount} / ${stats.questCount} completed` : 'Loading…'}
             </span>
-            <span className="font-medium text-foreground">
-              {stats
-                ? `${stats.questCount} ${stats.questCount === 1 ? 'quest' : 'quests'}`
-                : 'Loading...'}
-            </span>
+            {stats && stats.questCount > 0 && (
+              <span className="font-medium tabular-nums">{completionPct}%</span>
+            )}
           </div>
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-background/50 px-3 py-2.5">
-            <span className="flex min-w-0 items-center gap-2">
-              <Clock3 className="h-4 w-4 text-muted-foreground/80" />
-              <span className="truncate">Updated</span>
-            </span>
-            <span className="shrink-0 whitespace-nowrap text-right text-xs sm:text-sm">
-              {updatedLabel}
-            </span>
-          </div>
+          <Progress value={stats ? completionPct : 0} className="h-1.5" />
         </div>
 
-        <div className="min-h-6">
-          {stats ? (
-            stats.urgentCount > 0 ? (
-              <Badge variant="destructive" className="gap-1">
-                <AlertTriangle className="h-3 w-3" />
-                {stats.urgentCount} urgent
-              </Badge>
-            ) : (
-              <span className="text-xs text-muted-foreground">No urgent quests right now</span>
-            )
-          ) : (
-            <span className="text-xs text-muted-foreground">Loading project activity…</span>
+        {/* Meta row */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <ListTodo className="h-3.5 w-3.5" />
+            {stats ? `${stats.questCount} ${stats.questCount === 1 ? 'quest' : 'quests'}` : '—'}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Clock3 className="h-3.5 w-3.5" />
+            {updatedLabel}
+          </span>
+        </div>
+
+        {/* Urgent badge */}
+        <div className="min-h-5">
+          {stats != null && stats.urgentCount > 0 && (
+            <Badge variant="destructive" className="gap-1 text-xs">
+              <AlertTriangle className="h-3 w-3" />
+              {stats.urgentCount} urgent
+            </Badge>
           )}
         </div>
 
+        {/* Actions */}
         <div className="mt-auto grid grid-cols-2 gap-2 pt-1">
-          <Button onClick={onOpen} className="gap-2">
+          <Button onClick={onOpen} className="gap-1.5" size="sm">
             <FolderOpen className="h-4 w-4" />
             Open
           </Button>
           <Button
             variant="outline"
             onClick={onAddQuest}
-            className="gap-2"
+            className="gap-1.5"
+            size="sm"
             disabled={project.archived}
             aria-label={`Add quest to ${project.name}`}
           >
             <Plus className="h-4 w-4" />
             Add quest
-          </Button>
-          <Button variant="outline" onClick={onTogglePin} className="col-span-2 gap-2">
-            {project.pinned ? (
-              <>
-                <StarOff className="h-4 w-4" />
-                Unpin
-              </>
-            ) : (
-              <>
-                <Star className="h-4 w-4" />
-                Pin
-              </>
-            )}
           </Button>
         </div>
       </CardContent>

@@ -294,13 +294,9 @@ export function SettingsPage() {
         <section>
           <h2 className="text-lg font-semibold mb-4">Appearance</h2>
           <Card>
-            <CardHeader>
-              <CardTitle>Theme</CardTitle>
-              <CardDescription>Select the theme for the application.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label>Interface Theme</Label>
+            <CardContent className="flex items-center justify-between py-4">
+              <div className="space-y-0.5">
+                <Label>Theme</Label>
                 <p className="text-sm text-muted-foreground">
                   Select the theme for the application.
                 </p>
@@ -371,7 +367,7 @@ export function SettingsPage() {
                         size="sm"
                         onClick={handleDeletePicture}
                         disabled={isDeleting}
-                        className="text-destructive hover:text-destructive"
+                        className="justify-start px-1 text-destructive/85 hover:bg-destructive/8 hover:text-destructive dark:text-destructive/80 dark:hover:bg-destructive/12 dark:hover:text-destructive"
                       >
                         {isDeleting ? (
                           <>
@@ -493,11 +489,11 @@ export function SettingsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold mb-4 text-destructive">Danger Zone</h2>
-          <Card className="border-destructive/30">
+          <h2 className="mb-4 text-lg font-semibold">Danger Zone</h2>
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-destructive">
-                <AlertTriangle className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
                 Delete Account
               </CardTitle>
               <CardDescription>
@@ -505,11 +501,26 @@ export function SettingsPage() {
                 undone.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete My Account
-              </Button>
+            <CardContent className="space-y-4">
+              <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3">
+                <p className="text-sm font-medium text-destructive">This action is permanent.</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Your quests, progress, achievements, and account data will be permanently removed.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-border/80 bg-background/70 px-4 py-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Delete my account</p>
+                  <p className="text-sm text-muted-foreground">
+                    You will be asked to confirm with your password.
+                  </p>
+                </div>
+                <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete My Account
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </section>

@@ -75,9 +75,9 @@ export function TodayPage() {
   const hasPlannedQuests = planned > 0;
 
   const getCompletionColor = (rate: number) => {
-    if (rate >= 100) return 'text-success';
-    if (rate >= 75) return 'text-success-muted';
-    if (rate >= 50) return 'text-primary';
+    if (rate >= 100) return 'text-primary';
+    if (rate >= 75) return 'text-primary/85';
+    if (rate >= 50) return 'text-primary/70';
     return 'text-muted-foreground';
   };
 

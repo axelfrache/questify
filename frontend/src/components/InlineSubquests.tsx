@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { DIFFICULTY_CONFIG } from '@/lib/quest-config';
 import { useSubquests } from '@/hooks/use-api';
 import type { QuestResponse } from '@/lib/api';
 import { formatDistanceToNow } from 'date-fns';
@@ -143,7 +144,13 @@ function SubquestRow({ subquest, onComplete, onEdit, onDelete }: SubquestRowProp
 
         {/* XP reward */}
         {subquest.totalXpReward > 0 && !isCompleted && (
-          <span className="text-[10px] text-amber-500/70 font-medium">
+          <span
+            className={cn(
+              'rounded-full border border-current/15 px-1.5 py-0.5 text-[10px] font-semibold',
+              DIFFICULTY_CONFIG[subquest.difficulty].bgColor,
+              DIFFICULTY_CONFIG[subquest.difficulty].textColor
+            )}
+          >
             +{subquest.totalXpReward}
           </span>
         )}
