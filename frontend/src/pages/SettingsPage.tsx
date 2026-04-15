@@ -294,13 +294,9 @@ export function SettingsPage() {
         <section>
           <h2 className="text-lg font-semibold mb-4">Appearance</h2>
           <Card>
-            <CardHeader>
-              <CardTitle>Theme</CardTitle>
-              <CardDescription>Select the theme for the application.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label>Interface Theme</Label>
+            <CardContent className="flex items-center justify-between py-4">
+              <div className="space-y-0.5">
+                <Label>Theme</Label>
                 <p className="text-sm text-muted-foreground">
                   Select the theme for the application.
                 </p>

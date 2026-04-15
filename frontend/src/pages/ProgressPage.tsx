@@ -14,36 +14,42 @@ const GRADES = [
     minLevel: 1,
     maxLevel: 5,
     tooltip: 'Every legend begins with a single step.',
+    colorVar: '--primary',
   },
   {
     name: 'Traveler',
     minLevel: 6,
     maxLevel: 10,
     tooltip: 'The road stretches ahead. You have found your rhythm.',
+    colorVar: '--difficulty-easy',
   },
   {
     name: 'Explorer',
     minLevel: 11,
     maxLevel: 20,
     tooltip: 'Curiosity guides your path. New horizons await.',
+    colorVar: '--difficulty-medium',
   },
   {
     name: 'Adventurer',
     minLevel: 21,
     maxLevel: 35,
     tooltip: 'Challenges sharpen your spirit. You grow with each quest.',
+    colorVar: '--difficulty-hard',
   },
   {
     name: 'Hero',
     minLevel: 36,
     maxLevel: 50,
     tooltip: 'Your actions inspire others. A true hero rises.',
+    colorVar: '--difficulty-epic',
   },
   {
     name: 'Legend',
     minLevel: 51,
     maxLevel: 999,
     tooltip: 'Stories will be told of your journey. You are eternal.',
+    colorVar: '--chart-2',
   },
 ];
 
@@ -148,30 +154,39 @@ export function ProgressPage() {
                               >
                                 {isCurrent ? (
                                   <div className="relative h-12 w-12 transition-all hover:scale-105">
-                                    <div className="absolute inset-0 rounded-full bg-muted-foreground/32" />
+                                    <div className="absolute inset-0 rounded-full bg-primary/18" />
                                     <ShineBorder
                                       className="rounded-full"
                                       shineColor={[
-                                        'rgba(168,85,247,0.55)',
-                                        'rgba(99,102,241,0.5)',
-                                        'rgba(34,211,238,0.55)',
+                                        'rgba(0,138,141,0.7)',
+                                        'rgba(168,85,247,0.5)',
+                                        'rgba(34,211,238,0.6)',
                                       ]}
                                       borderWidth={2}
                                       duration={14}
                                     />
-                                    <div className="absolute inset-[2px] rounded-full bg-primary/6 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.05),0_0_0_1px_rgba(20,184,166,0.05),0_10px_24px_rgba(15,23,42,0.08)] dark:bg-primary/8 dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.07),0_0_0_1px_rgba(20,184,166,0.08),0_10px_24px_rgba(0,0,0,0.28)]" />
+                                    <div className="absolute inset-[2px] rounded-full bg-gradient-to-br from-primary/20 to-primary/8 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.05),0_0_16px_color-mix(in_oklch,var(--primary)_30%,transparent)] dark:from-primary/25 dark:to-primary/10 dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.07),0_0_20px_color-mix(in_oklch,var(--primary)_35%,transparent)]" />
                                     <div className="relative z-10 flex h-full w-full items-center justify-center text-primary">
-                                      <Check className="h-5 w-5" />
+                                      <Check className="h-6 w-6" />
                                     </div>
                                   </div>
                                 ) : (
                                   <div
                                     className={cn(
                                       'flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border-2 transition-all hover:scale-105',
-                                      isPast && 'bg-primary border-primary text-primary-foreground',
-                                      isFuture &&
-                                        'bg-muted border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/50'
+                                      isPast &&
+                                        'border-difficulty-hard/50 bg-difficulty-hard text-white shadow-[0_0_14px_color-mix(in_oklch,var(--difficulty-hard)_55%,transparent)]',
+                                      isFuture && 'transition-all'
                                     )}
+                                    style={
+                                      isFuture
+                                        ? {
+                                            backgroundColor: `color-mix(in oklch, var(${grade.colorVar}) 10%, var(--muted))`,
+                                            borderColor: `color-mix(in oklch, var(${grade.colorVar}) 35%, var(--border))`,
+                                            color: `color-mix(in oklch, var(${grade.colorVar}) 60%, var(--muted-foreground))`,
+                                          }
+                                        : undefined
+                                    }
                                   >
                                     {isPast ? (
                                       <Check className="h-5 w-5" />
@@ -192,16 +207,16 @@ export function ProgressPage() {
                             <div
                               className={cn(
                                 'h-0.5 flex-1 rounded-full transition-all',
-                                index < currentGradeIndex && 'bg-primary',
+                                index < currentGradeIndex && 'bg-difficulty-hard',
                                 index === currentGradeIndex &&
-                                  'bg-gradient-to-r from-primary to-muted',
+                                  'bg-gradient-to-r from-difficulty-hard to-muted',
                                 index > currentGradeIndex && 'bg-muted'
                               )}
                             />
                             <ChevronRight
                               className={cn(
                                 'h-4 w-4 -ml-0.5 flex-shrink-0',
-                                index < currentGradeIndex && 'text-primary',
+                                index < currentGradeIndex && 'text-difficulty-hard',
                                 index >= currentGradeIndex && 'text-muted-foreground/50'
                               )}
                             />
@@ -223,6 +238,7 @@ export function ProgressPage() {
                           <span
                             className={cn(
                               'text-xs font-medium text-center whitespace-nowrap',
+                              !isCurrent && !isFuture && 'text-difficulty-hard font-semibold',
                               isCurrent && 'text-primary font-bold',
                               isFuture && 'text-muted-foreground'
                             )}
