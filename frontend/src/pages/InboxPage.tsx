@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { InboxControls } from '@/components/inbox/InboxControls';
 import { GroupedQuestList } from '@/components/inbox/GroupedQuestList';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
+import { QuestViewDialog } from '@/components/QuestViewDialog';
 import { type QuestResponse } from '@/lib/api';
 import { ChevronDown, Plus } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -57,6 +58,7 @@ export function InboxPage() {
   const completeQuestMutation = useCompleteQuest();
   const deleteQuestMutation = useDeleteQuest();
 
+  const [viewingQuest, setViewingQuest] = useState<QuestResponse | null>(null);
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
   const [parentQuest, setParentQuest] = useState<QuestResponse | null>(null);
   const [newQuestOpen, setNewQuestOpen] = useState(false);
@@ -199,6 +201,7 @@ export function InboxPage() {
             onToggleCollapse={toggleCollapseRegion}
             onTogglePin={togglePinRegion}
             onComplete={handleComplete}
+            onView={setViewingQuest}
             onEdit={setEditingQuest}
             onDelete={handleDelete}
             onAddSubquest={handleAddSubquest}
@@ -215,6 +218,14 @@ export function InboxPage() {
           )}
         </>
       )}
+
+      <QuestViewDialog
+        quest={viewingQuest}
+        open={!!viewingQuest}
+        onOpenChange={(open) => !open && setViewingQuest(null)}
+        onEdit={setEditingQuest}
+        onComplete={handleComplete}
+      />
 
       <CreateQuestDialog open={newQuestOpen} onOpenChange={setNewQuestOpen} />
 

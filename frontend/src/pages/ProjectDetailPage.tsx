@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { QuestCard } from '@/components/QuestCard';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
+import { QuestViewDialog } from '@/components/QuestViewDialog';
 import { type QuestResponse } from '@/lib/api';
 import { ChevronLeft, Plus } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -42,6 +43,7 @@ export function ProjectDetailPage() {
   const skipQuestMutation = useSkipQuest();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [viewingQuest, setViewingQuest] = useState<QuestResponse | null>(null);
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
   const [parentQuest, setParentQuest] = useState<QuestResponse | null>(null);
 
@@ -183,6 +185,7 @@ export function ProjectDetailPage() {
                     key={quest.id}
                     quest={quest}
                     onComplete={handleComplete}
+                    onView={setViewingQuest}
                     onEdit={setEditingQuest}
                     onDelete={handleDelete}
                     onSkip={(questId) => skipQuestMutation.mutate(questId)}
@@ -205,6 +208,7 @@ export function ProjectDetailPage() {
                     key={quest.id}
                     quest={quest}
                     onComplete={handleComplete}
+                    onView={setViewingQuest}
                     onEdit={setEditingQuest}
                     onDelete={handleDelete}
                     isPending={completeQuestMutation.isPending}
@@ -216,6 +220,14 @@ export function ProjectDetailPage() {
           )}
         </div>
       )}
+
+      <QuestViewDialog
+        quest={viewingQuest}
+        open={!!viewingQuest}
+        onOpenChange={(open) => !open && setViewingQuest(null)}
+        onEdit={setEditingQuest}
+        onComplete={handleComplete}
+      />
 
       <CreateQuestDialog
         open={isCreateDialogOpen}

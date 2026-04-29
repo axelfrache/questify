@@ -21,6 +21,7 @@ interface RegionSectionProps {
   onToggleCollapse: (regionId: string) => void;
   onTogglePin?: (regionId: string) => void;
   onComplete?: (id: string, checkboxElement?: HTMLElement) => void;
+  onView?: (quest: QuestResponse) => void;
   onEdit?: (quest: QuestResponse) => void;
   onDelete?: (id: string) => void;
   onAddSubquest?: (parentQuest: QuestResponse) => void;
@@ -45,6 +46,7 @@ export function RegionSection({
   onToggleCollapse,
   onTogglePin,
   onComplete,
+  onView,
   onEdit,
   onDelete,
   onAddSubquest,
@@ -113,6 +115,7 @@ export function RegionSection({
               key={quest.id}
               quest={quest}
               onComplete={onComplete}
+              onView={onView}
               onEdit={onEdit}
               onDelete={onDelete}
               onAddSubquest={onAddSubquest}

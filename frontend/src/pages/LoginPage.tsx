@@ -58,7 +58,12 @@ export function LoginPage() {
       </div>
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
-          <img src="/assets/images/questify3d.png" alt="Questify" className="w-16 h-16 mx-auto" />
+          <img
+            src="/assets/images/questifyIcon/questify-gem-accent.svg"
+            alt="Questify"
+            className="w-14 h-14 mx-auto"
+            draggable={false}
+          />
           <h1 className="text-2xl font-semibold tracking-tight">Questify</h1>
           <p className="text-sm text-muted-foreground">
             Welcome back.

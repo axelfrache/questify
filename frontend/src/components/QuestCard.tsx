@@ -19,6 +19,7 @@ import type { Density } from '@/types/inboxTypes';
 interface QuestCardProps {
   quest: QuestResponse;
   onComplete?: (id: string, checkboxElement?: HTMLElement) => void;
+  onView?: (quest: QuestResponse) => void;
   onEdit?: (quest: QuestResponse) => void;
   onDelete?: (id: string) => void;
   onSkip?: (id: string) => void;
@@ -34,6 +35,7 @@ interface QuestCardProps {
 function QuestCardInner({
   quest,
   onComplete,
+  onView,
   onEdit,
   onDelete,
   onSkip,
@@ -93,8 +95,15 @@ function QuestCardInner({
 
         {/* Content */}
         <div
-          className="flex-1 min-w-0 cursor-pointer"
-          onClick={() => !isCompleted && !disabled && !completing && onEdit?.(quest)}
+          className={cn(
+            'flex-1 min-w-0',
+            (onView || (!isCompleted && onEdit)) && !disabled && !completing && 'cursor-pointer'
+          )}
+          onClick={() => {
+            if (disabled || completing) return;
+            if (onView) onView(quest);
+            else if (!isCompleted) onEdit?.(quest);
+          }}
         >
           <div
             className={cn(

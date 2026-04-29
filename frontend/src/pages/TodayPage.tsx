@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { type QuestResponse } from '@/lib/api';
 import { QuestCard } from '@/components/QuestCard';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
+import { QuestViewDialog } from '@/components/QuestViewDialog';
 import confetti from 'canvas-confetti';
 import { Flame } from 'lucide-react';
 
@@ -50,6 +51,7 @@ export function TodayPage() {
   const deleteQuestMutation = useDeleteQuest();
   const skipQuestMutation = useSkipQuest();
 
+  const [viewingQuest, setViewingQuest] = useState<QuestResponse | null>(null);
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
 
   const greeting = useMemo(() => getGreeting(), []);
@@ -182,6 +184,7 @@ export function TodayPage() {
                 key={quest.id}
                 quest={quest}
                 onComplete={handleComplete}
+                onView={setViewingQuest}
                 onEdit={setEditingQuest}
                 onDelete={handleDelete}
                 onSkip={handleSkip}
@@ -202,6 +205,7 @@ export function TodayPage() {
                 key={quest.id}
                 quest={quest}
                 onComplete={handleComplete}
+                onView={setViewingQuest}
                 onEdit={setEditingQuest}
                 onDelete={handleDelete}
                 isPending={completeQuestMutation.isPending}
@@ -210,6 +214,14 @@ export function TodayPage() {
           </div>
         </div>
       )}
+
+      <QuestViewDialog
+        quest={viewingQuest}
+        open={!!viewingQuest}
+        onOpenChange={(open) => !open && setViewingQuest(null)}
+        onEdit={setEditingQuest}
+        onComplete={handleComplete}
+      />
 
       <CreateQuestDialog
         open={!!editingQuest}

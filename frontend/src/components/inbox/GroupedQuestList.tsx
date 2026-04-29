@@ -12,6 +12,7 @@ interface GroupedQuestListProps {
   onToggleCollapse: (regionId: string) => void;
   onTogglePin?: (regionId: string) => void;
   onComplete?: (id: string, checkboxElement?: HTMLElement) => void;
+  onView?: (quest: QuestResponse) => void;
   onEdit?: (quest: QuestResponse) => void;
   onDelete?: (id: string) => void;
   onAddSubquest?: (parentQuest: QuestResponse) => void;
@@ -28,6 +29,7 @@ export function GroupedQuestList({
   onToggleCollapse,
   onTogglePin,
   onComplete,
+  onView,
   onEdit,
   onDelete,
   onAddSubquest,
@@ -41,6 +43,7 @@ export function GroupedQuestList({
             key={quest.id}
             quest={quest}
             onComplete={onComplete}
+            onView={onView}
             onEdit={onEdit}
             onDelete={onDelete}
             onAddSubquest={onAddSubquest}
@@ -73,6 +76,7 @@ export function GroupedQuestList({
           onToggleCollapse={onToggleCollapse}
           onTogglePin={onTogglePin}
           onComplete={onComplete}
+          onView={onView}
           onEdit={onEdit}
           onDelete={onDelete}
           onAddSubquest={onAddSubquest}
