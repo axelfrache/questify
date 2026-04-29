@@ -7,15 +7,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useTheme } from '@/components/theme-provider';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
-import { ApiError } from '@/lib/api';
 import {
   useChangePassword,
   useDeleteProfilePicture,
@@ -25,6 +22,34 @@ import {
 } from '@/hooks/use-api';
 import { Upload, Trash2, Loader2, Save, Globe, Lock, AlertTriangle } from 'lucide-react';
 import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+      {children}
+    </p>
+  );
+}
+
+function SettingRow({
+  label,
+  description,
+  children,
+}: {
+  label: string;
+  description?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
+      <div className="min-w-0">
+        <p className="text-sm font-medium">{label}</p>
+        {description && <p className="text-xs text-muted-foreground">{description}</p>}
+      </div>
+      {children}
+    </div>
+  );
+}
 
 function PasswordChangeForm({ userId }: { userId?: string }) {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -36,20 +61,16 @@ function PasswordChangeForm({ userId }: { userId?: string }) {
 
   const handleChangePassword = async () => {
     if (!userId) return;
-
     setError(null);
     setSuccess(false);
-
     if (newPassword.length < 8) {
       setError('New password must be at least 8 characters');
       return;
     }
-
     if (newPassword !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
-
     try {
       await changePasswordMutation.mutateAsync({
         id: userId,
@@ -61,52 +82,53 @@ function PasswordChangeForm({ userId }: { userId?: string }) {
       setConfirmPassword('');
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Failed to change password');
-      }
+      setError(err instanceof Error ? err.message : 'Failed to change password');
     }
   };
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="current-password">Current Password</Label>
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <Label htmlFor="current-password" className="text-xs">
+          Current password
+        </Label>
         <Input
           id="current-password"
           type="password"
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
-          placeholder="Enter current password"
+          placeholder="••••••••"
         />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="new-password">New Password</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="new-password" className="text-xs">
+          New password
+        </Label>
         <Input
           id="new-password"
           type="password"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
-          placeholder="Enter new password"
+          placeholder="Min. 8 characters"
         />
-        <p className="text-xs text-muted-foreground">Minimum 8 characters required.</p>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="confirm-password">Confirm New Password</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="confirm-password" className="text-xs">
+          Confirm new password
+        </Label>
         <Input
           id="confirm-password"
           type="password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
-          placeholder="Confirm new password"
+          placeholder="••••••••"
         />
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      {success && <p className="text-sm text-green-600">Password changed successfully!</p>}
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      {success && <p className="text-xs text-primary">Password changed successfully.</p>}
       <Button
+        variant="outline"
+        size="sm"
         onClick={handleChangePassword}
         disabled={
           changePasswordMutation.isPending || !currentPassword || !newPassword || !confirmPassword
@@ -114,13 +136,13 @@ function PasswordChangeForm({ userId }: { userId?: string }) {
       >
         {changePasswordMutation.isPending ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Changing...
+            <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+            Changing…
           </>
         ) : (
           <>
-            <Lock className="mr-2 h-4 w-4" />
-            Change Password
+            <Lock className="mr-2 h-3.5 w-3.5" />
+            Change password
           </>
         )}
       </Button>
@@ -157,97 +179,59 @@ export function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (profile?.timezone) {
-      setTimezone(profile.timezone);
-    }
+    if (profile?.timezone) setTimezone(profile.timezone);
   }, [profile?.timezone]);
-
   useEffect(() => {
     setUsername(user?.username || '');
   }, [user?.username]);
-
   useEffect(() => {
     setBio(profile?.bio ?? '');
   }, [profile?.bio]);
 
-  const getInitials = () => {
-    if (user?.username) {
-      return user.username.charAt(0).toUpperCase();
-    }
-    return user?.email?.charAt(0).toUpperCase() || '?';
-  };
+  const getInitials = () =>
+    user?.username
+      ? user.username.charAt(0).toUpperCase()
+      : user?.email?.charAt(0).toUpperCase() || '?';
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file || !user?.id) return;
-
     setProfileError(null);
-
     try {
-      const updatedUser = await uploadProfilePictureMutation.mutateAsync({ id: user.id, file });
-      updateUser({
-        username: updatedUser.username,
-        bio: updatedUser.bio,
-        profilePictureUrl: updatedUser.profilePictureUrl,
-      });
-    } catch (error) {
-      if (error instanceof ApiError || error instanceof Error) {
-        setProfileError(error.message);
-      } else {
-        setProfileError('Failed to upload profile picture');
-      }
+      const u = await uploadProfilePictureMutation.mutateAsync({ id: user.id, file });
+      updateUser({ username: u.username, bio: u.bio, profilePictureUrl: u.profilePictureUrl });
+    } catch (err) {
+      setProfileError(err instanceof Error ? err.message : 'Failed to upload picture');
     } finally {
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
   const handleDeletePicture = async () => {
     if (!user?.id) return;
-
     setProfileError(null);
-
     try {
-      const updatedUser = await deleteProfilePictureMutation.mutateAsync(user.id);
-      updateUser({
-        username: updatedUser.username,
-        bio: updatedUser.bio,
-        profilePictureUrl: updatedUser.profilePictureUrl,
-      });
-    } catch (error) {
-      if (error instanceof ApiError || error instanceof Error) {
-        setProfileError(error.message);
-      } else {
-        setProfileError('Failed to delete profile picture');
-      }
+      const u = await deleteProfilePictureMutation.mutateAsync(user.id);
+      updateUser({ username: u.username, bio: u.bio, profilePictureUrl: u.profilePictureUrl });
+    } catch (err) {
+      setProfileError(err instanceof Error ? err.message : 'Failed to delete picture');
     }
   };
 
   const handleSaveProfile = async () => {
     if (!user?.id) return;
-
     setProfileError(null);
     setProfileSuccess(false);
-
     try {
-      const updatedUser = await updateUserProfileMutation.mutateAsync({
+      const u = await updateUserProfileMutation.mutateAsync({
         id: user.id,
         data: { username, timezone, bio },
       });
-      updateUser({
-        username: updatedUser.username,
-        bio: updatedUser.bio,
-        profilePictureUrl: updatedUser.profilePictureUrl,
-      });
+      updateUser({ username: u.username, bio: u.bio, profilePictureUrl: u.profilePictureUrl });
       setProfileSuccess(true);
       setTimeout(() => setProfileSuccess(false), 3000);
-    } catch (error) {
-      if (error instanceof ApiError || error instanceof Error) {
-        setProfileError(error.message);
-      } else {
-        setProfileError('Failed to update profile');
-      }
+    } catch (err) {
+      setProfileError(err instanceof Error ? err.message : 'Failed to update profile');
     }
   };
 
@@ -258,20 +242,10 @@ export function SettingsPage() {
     updateUserProfileMutation.mutate(
       { id: user.id, data: { timezone: value } },
       {
-        onSuccess: (updatedUser) => {
-          updateUser({
-            username: updatedUser.username,
-            bio: updatedUser.bio,
-            profilePictureUrl: updatedUser.profilePictureUrl,
-          });
-        },
-        onError: (error) => {
-          if (error instanceof ApiError || error instanceof Error) {
-            setProfileError(error.message);
-          } else {
-            setProfileError('Failed to update timezone');
-          }
-        },
+        onSuccess: (u) =>
+          updateUser({ username: u.username, bio: u.bio, profilePictureUrl: u.profilePictureUrl }),
+        onError: (err) =>
+          setProfileError(err instanceof Error ? err.message : 'Failed to update timezone'),
       }
     );
   };
@@ -283,247 +257,215 @@ export function SettingsPage() {
     username.trim() === (user?.username ?? '') && bio === (profile?.bio ?? '');
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-10">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">Manage your account settings and preferences.</p>
+        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <p className="text-sm text-muted-foreground">Manage your account and preferences</p>
       </div>
-      <Separator />
 
-      <div className="space-y-6">
-        <section>
-          <h2 className="text-lg font-semibold mb-4">Appearance</h2>
-          <Card>
-            <CardContent className="flex items-center justify-between py-4">
-              <div className="space-y-0.5">
-                <Label>Theme</Label>
-                <p className="text-sm text-muted-foreground">
-                  Select the theme for the application.
-                </p>
-              </div>
-              <Select
-                value={theme}
-                onValueChange={(value: 'light' | 'dark' | 'system') => setTheme(value)}
+      {/* Appearance */}
+      <div>
+        <SectionLabel>Appearance</SectionLabel>
+        <div className="rounded-lg border bg-card px-5 py-4">
+          <SettingRow label="Theme" description="Select the interface color scheme">
+            <Select value={theme} onValueChange={(v: 'light' | 'dark' | 'system') => setTheme(v)}>
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="light">Light</SelectItem>
+                <SelectItem value="dark">Dark</SelectItem>
+                <SelectItem value="system">System</SelectItem>
+              </SelectContent>
+            </Select>
+          </SettingRow>
+        </div>
+      </div>
+
+      {/* Profile */}
+      <div>
+        <SectionLabel>Profile</SectionLabel>
+        <div className="rounded-lg border bg-card px-5 py-5 space-y-5">
+          {/* Avatar */}
+          <div className="flex items-center gap-5">
+            <Avatar className="h-16 w-16 text-2xl">
+              <AvatarImage src={user?.profilePictureUrl || undefined} alt={user?.username} />
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                {getInitials()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col gap-1.5">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
               >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select theme" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="system">System</SelectItem>
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold mb-4">Account</h2>
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Profile Information</CardTitle>
-                <CardDescription>Manage your profile details and picture.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center gap-6">
-                  <Avatar className="h-20 w-20 text-3xl">
-                    <AvatarImage src={user?.profilePictureUrl || undefined} alt={user?.username} />
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      {getInitials()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col gap-2">
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileSelect}
-                      accept="image/jpeg,image/png,image/webp,image/gif"
-                      className="hidden"
-                      id="profile-picture-input"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploading}
-                    >
-                      {isUploading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="mr-2 h-4 w-4" />
-                          Upload Picture
-                        </>
-                      )}
-                    </Button>
-                    {user?.profilePictureUrl && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleDeletePicture}
-                        disabled={isDeleting}
-                        className="justify-start px-1 text-destructive/85 hover:bg-destructive/8 hover:text-destructive dark:text-destructive/80 dark:hover:bg-destructive/12 dark:hover:text-destructive"
-                      >
-                        {isDeleting ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Deleting...
-                          </>
-                        ) : (
-                          <>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Remove
-                          </>
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
-                    <Input
-                      id="username"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Your username"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" value={user?.email || ''} disabled className="bg-muted" />
-                    <p className="text-xs text-muted-foreground">Email cannot be changed.</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="bio">Bio</Label>
-                    <Textarea
-                      id="bio"
-                      value={bio}
-                      onChange={(e) => setBio(e.target.value)}
-                      rows={4}
-                      maxLength={280}
-                      placeholder="A short line about your focus, interests, or current quest."
-                    />
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>This bio will be displayed on your profile page.</span>
-                      <span>{bio.length}/280</span>
-                    </div>
-                  </div>
-                  {profileError && <p className="text-sm text-destructive">{profileError}</p>}
-                  {profileSuccess && (
-                    <p className="text-sm text-green-600">Profile updated successfully!</p>
+                {isUploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                    Uploading…
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-3.5 w-3.5" />
+                    Upload picture
+                  </>
+                )}
+              </Button>
+              {user?.profilePictureUrl && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDeletePicture}
+                  disabled={isDeleting}
+                  className="justify-start px-2 text-destructive/80 hover:text-destructive hover:bg-destructive/8"
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                      Removing…
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="mr-2 h-3.5 w-3.5" />
+                      Remove
+                    </>
                   )}
-                  <Button
-                    onClick={handleSaveProfile}
-                    disabled={isSavingProfile || isProfileUnchanged}
-                  >
-                    {isSavingProfile ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save Changes
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lock className="h-5 w-5" />
-                  Change Password
-                </CardTitle>
-                <CardDescription>Update your password to keep your account secure.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <PasswordChangeForm userId={user?.id} />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Globe className="h-5 w-5" />
-                  Timezone
-                </CardTitle>
-                <CardDescription>Set your timezone for accurate quest scheduling.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <Label>Your Timezone</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Used for daily resets and scheduling.
-                    </p>
-                  </div>
-                  <Select value={timezone} onValueChange={handleTimezoneChange}>
-                    <SelectTrigger className="w-[220px]">
-                      <SelectValue placeholder="Select timezone" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COMMON_TIMEZONES.map((tz) => (
-                        <SelectItem key={tz.value} value={tz.value}>
-                          {tz.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-
-        <section>
-          <h2 className="mb-4 text-lg font-semibold">Danger Zone</h2>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
-                Delete Account
-              </CardTitle>
-              <CardDescription>
-                Permanently delete your account and all associated data. This action cannot be
-                undone.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3">
-                <p className="text-sm font-medium text-destructive">This action is permanent.</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Your quests, progress, achievements, and account data will be permanently removed.
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-border/80 bg-background/70 px-4 py-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Delete my account</p>
-                  <p className="text-sm text-muted-foreground">
-                    You will be asked to confirm with your password.
-                  </p>
-                </div>
-                <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete My Account
                 </Button>
+              )}
+            </div>
+          </div>
+
+          <div className="h-px bg-border" />
+
+          {/* Fields */}
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="username" className="text-xs">
+                Username
+              </Label>
+              <Input
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Your username"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-xs">
+                Email
+              </Label>
+              <Input id="email" value={user?.email || ''} disabled className="bg-muted" />
+              <p className="text-[11px] text-muted-foreground">Email cannot be changed.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="bio" className="text-xs">
+                Bio
+              </Label>
+              <Textarea
+                id="bio"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                rows={3}
+                maxLength={280}
+                placeholder="A short line about your focus or current quest."
+              />
+              <div className="flex justify-between text-[11px] text-muted-foreground">
+                <span>Displayed on your profile page.</span>
+                <span>{bio.length}/280</span>
               </div>
-            </CardContent>
-          </Card>
-        </section>
+            </div>
+            {profileError && <p className="text-xs text-destructive">{profileError}</p>}
+            {profileSuccess && <p className="text-xs text-primary">Profile updated.</p>}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSaveProfile}
+              disabled={isSavingProfile || isProfileUnchanged}
+            >
+              {isSavingProfile ? (
+                <>
+                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                  Saving…
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-3.5 w-3.5" />
+                  Save changes
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Security */}
+      <div>
+        <SectionLabel>Security</SectionLabel>
+        <div className="rounded-lg border bg-card px-5 py-5 space-y-1">
+          <div className="flex items-center gap-2 mb-4">
+            <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+            <p className="text-sm font-medium">Change password</p>
+          </div>
+          <PasswordChangeForm userId={user?.id} />
+        </div>
+      </div>
+
+      {/* Localisation */}
+      <div>
+        <SectionLabel>Localisation</SectionLabel>
+        <div className="rounded-lg border bg-card px-5 py-4">
+          <SettingRow
+            label="Timezone"
+            description={
+              <>
+                <Globe className="inline h-3 w-3 mr-1" />
+                Used for daily resets and scheduling
+              </>
+            }
+          >
+            <Select value={timezone} onValueChange={handleTimezoneChange}>
+              <SelectTrigger className="w-52">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {COMMON_TIMEZONES.map((tz) => (
+                  <SelectItem key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </SettingRow>
+        </div>
+      </div>
+
+      {/* Danger zone */}
+      <div>
+        <SectionLabel>Danger zone</SectionLabel>
+        <div className="rounded-lg border border-destructive/20 bg-card px-5 py-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+            <p className="text-sm font-medium text-destructive">Delete account</p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Permanently removes your account, quests, progress, and all associated data. This action
+            cannot be undone.
+          </p>
+          <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
+            <Trash2 className="mr-2 h-3.5 w-3.5" />
+            Delete my account
+          </Button>
+        </div>
       </div>
 
       {user?.id && (

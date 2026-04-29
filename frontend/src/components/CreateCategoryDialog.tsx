@@ -106,7 +106,7 @@ export function CreateCategoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[min(90dvh,44rem)] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditMode ? 'Edit Region' : 'Create New Region'}</DialogTitle>
           <DialogDescription>

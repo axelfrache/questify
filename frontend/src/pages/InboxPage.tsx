@@ -15,7 +15,7 @@ import { InboxControls } from '@/components/inbox/InboxControls';
 import { GroupedQuestList } from '@/components/inbox/GroupedQuestList';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import { type QuestResponse } from '@/lib/api';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Plus } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 const fireConfettiFromElement = (element: HTMLElement) => {
@@ -30,7 +30,7 @@ const fireConfettiFromElement = (element: HTMLElement) => {
       x: x / window.innerWidth,
       y: y / window.innerHeight,
     },
-    colors: ['#22c55e', '#16a34a', '#4ade80', '#86efac', '#fbbf24', '#f59e0b'],
+    colors: ['#4f46e5', '#818cf8', '#c7d2fe', '#a855f7', '#6366f1', '#e0e7ff'],
     startVelocity: 25,
     gravity: 0.8,
     scalar: 0.9,
@@ -59,6 +59,7 @@ export function InboxPage() {
 
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
   const [parentQuest, setParentQuest] = useState<QuestResponse | null>(null);
+  const [newQuestOpen, setNewQuestOpen] = useState(false);
 
   const pendingQuests = useMemo(() => {
     let result = quests?.filter((q) => q.status === 'PENDING') || [];
@@ -87,6 +88,7 @@ export function InboxPage() {
     quickFilters,
     groupedQuests,
     paginatedQuests,
+    allCount,
     totalCount,
     displayedCount,
     overdueCount,
@@ -133,9 +135,15 @@ export function InboxPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Inbox</h1>
-        <p className="text-muted-foreground">Quest Board</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Inbox</h1>
+          <p className="text-sm text-muted-foreground">All quests, unassigned &amp; pending</p>
+        </div>
+        <Button onClick={() => setNewQuestOpen(true)} size="sm" className="gap-1.5 shrink-0">
+          <Plus className="h-3.5 w-3.5" />
+          New quest
+        </Button>
       </div>
 
       <InboxControls
@@ -144,6 +152,7 @@ export function InboxPage() {
         sortBy={sortBy}
         density={density}
         quickFilters={quickFilters}
+        allCount={allCount}
         totalCount={totalCount}
         displayedCount={displayedCount}
         overdueCount={overdueCount}
@@ -206,6 +215,8 @@ export function InboxPage() {
           )}
         </>
       )}
+
+      <CreateQuestDialog open={newQuestOpen} onOpenChange={setNewQuestOpen} />
 
       <CreateQuestDialog
         open={!!editingQuest}

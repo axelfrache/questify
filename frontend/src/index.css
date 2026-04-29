@@ -1,13 +1,24 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* Google Fonts — Geist */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap');
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* Typography */
+  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+
+  /* Radius — Linear Clarity 8px */
+  --radius: 0.5rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  /* Standard shadcn color mappings */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -33,10 +44,6 @@
   --color-chart-5: var(--chart-5);
   --color-success: var(--success);
   --color-success-muted: var(--success-muted);
-  --color-difficulty-easy: var(--difficulty-easy);
-  --color-difficulty-medium: var(--difficulty-medium);
-  --color-difficulty-hard: var(--difficulty-hard);
-  --color-difficulty-epic: var(--difficulty-epic);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -45,17 +52,26 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --animate-shine: shine var(--duration) infinite linear;
 
+  /* Questify — difficulty & XP tokens */
+  --color-quest-easy: var(--quest-easy);
+  --color-quest-medium: var(--quest-medium);
+  --color-quest-hard: var(--quest-hard);
+  --color-quest-epic: var(--quest-epic);
+  --color-xp-bg: var(--xp-bg);
+  --color-xp-fg: var(--xp-fg);
+  --color-xp-border: var(--xp-border);
+  --color-streak: var(--streak);
+
+  /* Shine animation (used by shine-border component) */
+  --animate-shine: shine var(--duration) infinite linear;
   @keyframes shine {
     0% {
       background-position: 0% 0%;
     }
-
     50% {
       background-position: 100% 100%;
     }
-
     to {
       background-position: 0% 0%;
     }
@@ -63,114 +79,132 @@
 }
 
 :root {
-  --background: oklch(0.985 0.004 255);
-  --foreground: oklch(0.235 0.014 255);
+  /* Neutres — fond stone/zinc tiède */
+  --background: oklch(0.985 0.002 80);
+  --foreground: oklch(0.145 0 0);
 
-  --card: oklch(0.995 0.004 255);
-  --card-foreground: oklch(0.235 0.014 255);
-  --popover: oklch(0.995 0.004 255);
-  --popover-foreground: oklch(0.235 0.014 255);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
 
-  --primary: oklch(0.54 0.17 182);
-  --primary-foreground: oklch(0.985 0.004 255);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
 
-  --secondary: oklch(0.935 0.017 85);
-  --secondary-foreground: oklch(0.29 0.016 85);
+  /* Accent Questify — indigo froid */
+  --primary: oklch(0.56 0.18 275);
+  --primary-foreground: oklch(0.985 0 0);
 
-  --muted: oklch(0.955 0.006 255);
-  --muted-foreground: oklch(0.52 0.012 255);
+  --secondary: oklch(0.97 0.002 80);
+  --secondary-foreground: oklch(0.205 0 0);
 
-  --accent: oklch(0.948 0.012 225);
-  --accent-foreground: oklch(0.235 0.014 255);
+  --muted: oklch(0.97 0.002 80);
+  --muted-foreground: oklch(0.45 0.01 80);
 
-  --destructive: oklch(0.55 0.22 25);
+  --accent: oklch(0.96 0.02 275);
+  --accent-foreground: oklch(0.56 0.18 275);
 
-  --border: oklch(0.89 0.007 255);
-  --input: oklch(0.965 0.004 255);
-  --ring: oklch(0.54 0.15 182);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
 
-  --chart-1: oklch(0.53 0.16 180);
+  --border: oklch(0.92 0.003 80);
+  --input: oklch(0.92 0.003 80);
+  --ring: oklch(0.56 0.18 275 / 0.4);
+
+  /* Charts */
+  --chart-1: oklch(0.56 0.18 275);
   --chart-2: oklch(0.72 0.14 75);
-  --chart-3: oklch(0.5 0.12 160);
-  --chart-4: oklch(0.6 0.14 55);
-  --chart-5: oklch(0.55 0.13 280);
+  --chart-3: oklch(0.78 0.1 150);
+  --chart-4: oklch(0.72 0.14 45);
+  --chart-5: oklch(0.62 0.18 290);
 
-  --success: oklch(0.65 0.18 145);
-  --success-muted: oklch(0.7 0.12 145);
+  --success: oklch(0.78 0.1 150);
+  --success-muted: oklch(0.88 0.06 150);
 
-  --difficulty-easy: oklch(0.6 0.16 145);
-  --difficulty-easy-bg: oklch(0.6 0.16 145 / 0.12);
-  --difficulty-medium: oklch(0.55 0.14 240);
-  --difficulty-medium-bg: oklch(0.55 0.14 240 / 0.12);
-  --difficulty-hard: oklch(0.65 0.18 45);
-  --difficulty-hard-bg: oklch(0.65 0.18 45 / 0.12);
-  --difficulty-epic: oklch(0.55 0.18 280);
-  --difficulty-epic-bg: oklch(0.55 0.18 280 / 0.12);
+  /* Sidebar */
+  --sidebar: oklch(0.97 0.002 80);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.56 0.18 275);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.94 0.003 80);
+  --sidebar-accent-foreground: oklch(0.145 0 0);
+  --sidebar-border: oklch(0.92 0.003 80);
+  --sidebar-ring: oklch(0.56 0.18 275 / 0.4);
 
-  --sidebar: oklch(0.975 0.005 255);
-  --sidebar-foreground: oklch(0.235 0.014 255);
-  --sidebar-primary: oklch(0.54 0.17 182);
-  --sidebar-primary-foreground: oklch(0.985 0.004 255);
-  --sidebar-accent: oklch(0.95 0.009 235);
-  --sidebar-accent-foreground: oklch(0.235 0.014 255);
-  --sidebar-border: oklch(0.89 0.007 255);
-  --sidebar-ring: oklch(0.54 0.15 182);
-  --radius: 1rem;
+  /* Questify — difficulty tints */
+  --quest-easy: oklch(0.78 0.1 150);
+  --quest-medium: oklch(0.75 0.12 230);
+  --quest-hard: oklch(0.72 0.14 45);
+  --quest-epic: oklch(0.62 0.18 290);
+
+  /* XP / streak */
+  --xp-bg: oklch(0.96 0.02 275);
+  --xp-fg: oklch(0.56 0.18 275);
+  --xp-border: oklch(0.88 0.06 275);
+  --streak: oklch(0.65 0.18 40);
 }
 
 .dark {
-  --background: oklch(0.16 0.01 255);
-  --foreground: oklch(0.94 0.006 255);
+  /* Surfaces — fond neutre profond avec élévation claire */
+  --background: oklch(0.1 0.002 275);
+  --foreground: oklch(0.97 0 0);
 
-  --card: oklch(0.205 0.01 255);
-  --card-foreground: oklch(0.94 0.006 255);
-  --popover: oklch(0.195 0.01 255);
-  --popover-foreground: oklch(0.94 0.006 255);
+  --card: oklch(0.14 0.002 275);
+  --card-foreground: oklch(0.97 0 0);
 
-  --primary: oklch(0.7 0.15 182);
-  --primary-foreground: oklch(0.16 0.01 255);
+  --popover: oklch(0.15 0.002 275);
+  --popover-foreground: oklch(0.97 0 0);
 
-  --secondary: oklch(0.3 0.016 80);
-  --secondary-foreground: oklch(0.92 0.008 255);
+  /* Primary — violet plus saturé et vivant, comme le bouton "Add quest" */
+  --primary: oklch(0.62 0.22 275);
+  --primary-foreground: oklch(0.98 0 0);
 
-  --muted: oklch(0.24 0.008 255);
-  --muted-foreground: oklch(0.7 0.01 255);
+  --secondary: oklch(0.18 0.002 275);
+  --secondary-foreground: oklch(0.97 0 0);
 
-  --accent: oklch(0.27 0.012 225);
-  --accent-foreground: oklch(0.94 0.006 255);
+  --muted: oklch(0.17 0.002 275);
+  --muted-foreground: oklch(0.55 0 0);
 
-  --destructive: oklch(0.65 0.2 25);
+  /* Accent — hover discret sur fond sombre */
+  --accent: oklch(0.21 0.06 275);
+  --accent-foreground: oklch(0.78 0.16 275);
 
-  --border: oklch(0.3 0.008 255);
-  --input: oklch(0.24 0.009 255);
-  --ring: oklch(0.7 0.13 182);
+  --destructive: oklch(0.48 0.18 25);
+  --destructive-foreground: oklch(0.98 0 0);
 
-  --chart-1: oklch(0.7 0.15 180);
-  --chart-2: oklch(0.75 0.13 75);
-  --chart-3: oklch(0.6 0.12 160);
-  --chart-4: oklch(0.7 0.14 55);
-  --chart-5: oklch(0.65 0.13 280);
+  --border: oklch(0.22 0.004 275);
+  --input: oklch(0.2 0.004 275);
+  --ring: oklch(0.62 0.22 275 / 0.4);
 
-  --success: oklch(0.7 0.16 145);
-  --success-muted: oklch(0.65 0.12 145);
+  /* Charts */
+  --chart-1: oklch(0.65 0.2 275);
+  --chart-2: oklch(0.72 0.14 75);
+  --chart-3: oklch(0.63 0.14 145);
+  --chart-4: oklch(0.68 0.15 45);
+  --chart-5: oklch(0.63 0.18 290);
 
-  --difficulty-easy: oklch(0.65 0.14 145);
-  --difficulty-easy-bg: oklch(0.65 0.14 145 / 0.15);
-  --difficulty-medium: oklch(0.65 0.12 240);
-  --difficulty-medium-bg: oklch(0.65 0.12 240 / 0.15);
-  --difficulty-hard: oklch(0.72 0.16 45);
-  --difficulty-hard-bg: oklch(0.72 0.16 45 / 0.15);
-  --difficulty-epic: oklch(0.65 0.16 280);
-  --difficulty-epic-bg: oklch(0.65 0.16 280 / 0.15);
+  --success: oklch(0.63 0.14 145);
+  --success-muted: oklch(0.52 0.1 145);
 
-  --sidebar: oklch(0.18 0.009 255);
-  --sidebar-foreground: oklch(0.94 0.006 255);
-  --sidebar-primary: oklch(0.7 0.15 182);
-  --sidebar-primary-foreground: oklch(0.16 0.01 255);
-  --sidebar-accent: oklch(0.24 0.01 235);
-  --sidebar-accent-foreground: oklch(0.94 0.006 255);
-  --sidebar-border: oklch(0.3 0.008 255);
-  --sidebar-ring: oklch(0.7 0.13 182);
+  /* Sidebar — nettement plus sombre que le background */
+  --sidebar: oklch(0.075 0.002 275);
+  --sidebar-foreground: oklch(0.97 0 0);
+  --sidebar-primary: oklch(0.62 0.22 275);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.15 0.003 275);
+  --sidebar-accent-foreground: oklch(0.97 0 0);
+  --sidebar-border: oklch(0.18 0.002 275);
+  --sidebar-ring: oklch(0.62 0.22 275 / 0.4);
+
+  /* Questify — difficulty tints (dark) */
+  --quest-easy: oklch(0.63 0.13 150);
+  --quest-medium: oklch(0.63 0.13 230);
+  --quest-hard: oklch(0.7 0.16 45);
+  --quest-epic: oklch(0.63 0.18 290);
+
+  /* XP / streak (dark) */
+  --xp-bg: oklch(0.22 0.06 275);
+  --xp-fg: oklch(0.76 0.18 275);
+  --xp-border: oklch(0.34 0.12 275);
+  --streak: oklch(0.7 0.17 40);
 }
 
 @layer base {
@@ -188,23 +222,14 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    background-image:
-      radial-gradient(circle at top, oklch(1 0.008 255 / 0.95), transparent 36%),
-      linear-gradient(180deg, oklch(0.992 0.003 255) 0%, oklch(0.972 0.005 255) 100%);
+    font-feature-settings: 'cv11', 'ss01';
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  .dark body {
-    background-image:
-      radial-gradient(circle at top, oklch(0.28 0.015 235 / 0.22), transparent 30%),
-      linear-gradient(180deg, oklch(0.18 0.01 255) 0%, oklch(0.145 0.008 255) 100%);
-  }
-
   ::selection {
-    background: oklch(0.78 0.08 190 / 0.35);
-    color: currentColor;
+    background: color-mix(in oklch, var(--primary) 25%, transparent);
   }
 }
 
@@ -216,5 +241,55 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  .font-tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Quest completion keyframes */
+@keyframes checkPop {
+  0% {
+    transform: scale(0);
+  }
+  60% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes xpFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-28px);
+  }
+}
+
+@keyframes xpBurst {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.85);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.05);
+  }
+  85% {
+    opacity: 1;
+    transform: translateY(-12px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-36px) scale(0.9);
   }
 }

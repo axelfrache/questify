@@ -13,9 +13,7 @@ import {
 import { api, type ProjectSummaryResponse, type QuestResponse } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { EmojiPicker } from '@/components/EmojiPicker';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,73 +22,42 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
-import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
-import { Progress } from '@/components/ui/progress';
 import {
   Archive,
   ArchiveRestore,
-  CheckCircle2,
-  Clock3,
-  FolderOpen,
-  ListTodo,
+  ArrowRight,
   MoreHorizontal,
+  Pencil,
   Plus,
   Search,
   Star,
   StarOff,
-  AlertTriangle,
-  Pencil,
+  ListFilter,
 } from 'lucide-react';
+import { DropdownMenuContent as SortMenuContent } from '@/components/ui/dropdown-menu';
 
 type SortMode = 'updated' | 'name' | 'quests';
+
+const SORT_LABELS: Record<SortMode, string> = {
+  updated: 'Recently updated',
+  name: 'Name',
+  quests: 'Most quests',
+};
 
 interface ProjectCardStats {
   questCount: number;
   completedCount: number;
   urgentCount: number;
-}
-
-interface ProjectsSectionProps {
-  title: string;
-  description: string;
-  projects: ProjectSummaryResponse[];
-  emptyMessage?: string;
-  onOpen: (projectId: string) => void;
-  onAddQuest: (project: ProjectSummaryResponse) => void;
-  onTogglePin: (projectId: string, pinned: boolean) => void;
-  onEdit: (project: ProjectSummaryResponse) => void;
-  onToggleArchive: (projectId: string, archived: boolean) => void;
-  onDelete: (project: ProjectSummaryResponse) => void;
-  statsByProjectId: Record<string, ProjectCardStats | undefined>;
-}
-
-interface ProjectCardProps {
-  project: ProjectSummaryResponse;
-  stats?: ProjectCardStats;
-  onOpen: () => void;
-  onAddQuest: () => void;
-  onTogglePin: () => void;
-  onEdit: () => void;
-  onToggleArchive: () => void;
-  onDelete: () => void;
 }
 
 interface CreateProjectDialogProps {
@@ -104,21 +71,22 @@ export function ProjectsPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortMode>('updated');
-  const [includeArchived, setIncludeArchived] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [projectToEdit, setProjectToEdit] = useState<ProjectSummaryResponse | null>(null);
   const [quickCreateProject, setQuickCreateProject] = useState<ProjectSummaryResponse | null>(null);
   const [createPrefillName, setCreatePrefillName] = useState('');
-  const backendSort = sort === 'name' ? 'name' : 'recent';
 
-  const { data: projects, isLoading } = useProjectsList(search, backendSort, includeArchived);
+  const { data: projects, isLoading } = useProjectsList(
+    search,
+    sort === 'name' ? 'name' : 'recent',
+    false
+  );
   const pinProject = usePinProject();
   const unpinProject = useUnpinProject();
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
 
   const projectList = useMemo(() => projects ?? [], [projects]);
-  const normalizedSearch = search.trim().toLowerCase();
 
   const statsQueries = useQueries({
     queries: projectList.map((project) => ({
@@ -133,17 +101,13 @@ export function ProjectsPage() {
     const entries = projectList.map((project, index) => {
       const query = statsQueries[index];
       const quests = query?.data as QuestResponse[] | undefined;
-      if (!quests) {
-        return [project.id, undefined] as const;
-      }
-      const urgentCount = quests.filter((quest) => isUrgentQuest(quest)).length;
-      const completedCount = quests.filter((quest) => quest.status === 'COMPLETED').length;
+      if (!quests) return [project.id, undefined] as const;
       return [
         project.id,
         {
           questCount: quests.length,
-          completedCount,
-          urgentCount,
+          completedCount: quests.filter((q) => q.status === 'COMPLETED').length,
+          urgentCount: quests.filter((q) => isUrgentQuest(q)).length,
         },
       ] as const;
     });
@@ -152,52 +116,30 @@ export function ProjectsPage() {
 
   const sortedProjects = useMemo(() => {
     const result = [...projectList];
-
-    result.sort((a, b) => {
-      if (sort === 'name') {
-        return a.name.localeCompare(b.name);
-      }
-
-      if (sort === 'quests') {
-        const questDelta =
-          (statsByProjectId[b.id]?.questCount ?? 0) - (statsByProjectId[a.id]?.questCount ?? 0);
-        if (questDelta !== 0) return questDelta;
-      }
-
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-    });
-
+    if (sort === 'name') result.sort((a, b) => a.name.localeCompare(b.name));
+    else if (sort === 'quests') {
+      result.sort(
+        (a, b) =>
+          (statsByProjectId[b.id]?.questCount ?? 0) - (statsByProjectId[a.id]?.questCount ?? 0)
+      );
+    } else {
+      result.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    }
     return result;
   }, [projectList, sort, statsByProjectId]);
 
-  const pinnedProjects = useMemo(
-    () => sortedProjects.filter((project) => project.pinned),
-    [sortedProjects]
-  );
-  const regularProjects = useMemo(
-    () => sortedProjects.filter((project) => !project.pinned),
-    [sortedProjects]
-  );
-  const hasProjects = projectList.length > 0;
-  const hasSearch = normalizedSearch.length > 0;
+  const normalizedSearch = search.trim().toLowerCase();
   const canCreateFromSearch =
-    hasSearch && !projectList.some((project) => project.name.toLowerCase() === normalizedSearch);
+    normalizedSearch.length > 0 &&
+    !projectList.some((p) => p.name.toLowerCase() === normalizedSearch);
 
   const handleTogglePin = (id: string, pinned: boolean) => {
-    if (pinned) {
-      unpinProject.mutate(id);
-      return;
-    }
-    pinProject.mutate(id);
+    if (pinned) unpinProject.mutate(id);
+    else pinProject.mutate(id);
   };
 
   const handleToggleArchive = (id: string, archived: boolean) => {
     updateProject.mutate({ id, data: { archived: !archived } });
-  };
-
-  const handleCreateFromSearch = () => {
-    setCreatePrefillName(search.trim());
-    setIsCreateOpen(true);
   };
 
   const handleDeleteProject = (project: ProjectSummaryResponse) => {
@@ -205,121 +147,111 @@ export function ProjectsPage() {
       !confirm(
         `Delete project "${project.name}"? This will also delete all quests associated with it.`
       )
-    ) {
+    )
       return;
-    }
-
     deleteProject.mutate(project.id);
   };
 
   return (
-    <div className="space-y-8 pb-10">
-      <header className="space-y-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
-              {hasProjects && <Badge variant="outline">{projectList.length}</Badge>}
-            </div>
-            <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
-              Organize long-running initiatives, keep important projects pinned, and jump straight
-              into the next quest that matters.
-            </p>
-          </div>
-
-          <Button onClick={() => setIsCreateOpen(true)} className="gap-2 self-start lg:self-auto">
-            <Plus className="h-4 w-4" />
-            New Project
-          </Button>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
+          <p className="text-sm text-muted-foreground">Long-running initiatives</p>
         </div>
-      </header>
-
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <div className="relative min-w-[240px] flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search projects by name or description..."
-            className="pl-9"
-            aria-label="Search projects"
-          />
-        </div>
-
-        <Select value={sort} onValueChange={(value) => setSort(value as SortMode)}>
-          <SelectTrigger aria-label="Sort projects" className="w-[190px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="updated">Recently updated</SelectItem>
-            <SelectItem value="name">Name</SelectItem>
-            <SelectItem value="quests">Most quests</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <div className="flex items-center gap-2">
-          <Switch
-            checked={includeArchived}
-            onCheckedChange={setIncludeArchived}
-            id="show-archived"
-          />
-          <Label htmlFor="show-archived" className="cursor-pointer text-sm text-muted-foreground">
-            Show archived
-          </Label>
-        </div>
-
-        <div className="text-sm text-muted-foreground">{sortedProjects.length} visible</div>
+        <Button onClick={() => setIsCreateOpen(true)} size="sm" className="gap-1.5 shrink-0">
+          <Plus className="h-3.5 w-3.5" />
+          New project
+        </Button>
       </div>
 
-      <Separator className="mt-6" />
-
-      {isLoading ? (
-        <ProjectsGridSkeleton />
-      ) : !hasProjects ? (
-        <ProjectsEmptyState onCreate={() => setIsCreateOpen(true)} />
-      ) : sortedProjects.length === 0 ? (
-        <ProjectsNoResultsState
-          search={search}
-          onCreate={canCreateFromSearch ? handleCreateFromSearch : undefined}
-        />
-      ) : (
-        <div className="space-y-8">
-          {pinnedProjects.length > 0 && (
-            <ProjectsSection
-              title="Pinned Projects"
-              description="Your quickest access list for active initiatives."
-              projects={pinnedProjects}
-              onOpen={(projectId) => navigate(`/projects/${projectId}`)}
-              onAddQuest={setQuickCreateProject}
-              onTogglePin={handleTogglePin}
-              onEdit={setProjectToEdit}
-              onToggleArchive={handleToggleArchive}
-              onDelete={handleDeleteProject}
-              statsByProjectId={statsByProjectId}
-            />
-          )}
-
-          <ProjectsSection
-            title="All Projects"
-            description={
-              pinnedProjects.length > 0
-                ? 'Everything else, ordered for fast scanning.'
-                : 'A complete overview of your current initiatives.'
-            }
-            projects={pinnedProjects.length > 0 ? regularProjects : sortedProjects}
-            emptyMessage={
-              pinnedProjects.length > 0
-                ? 'All visible projects are already pinned.'
-                : 'No projects match the current filters.'
-            }
-            onOpen={(projectId) => navigate(`/projects/${projectId}`)}
-            onAddQuest={setQuickCreateProject}
-            onTogglePin={handleTogglePin}
-            onEdit={setProjectToEdit}
-            onToggleArchive={handleToggleArchive}
-            onDelete={handleDeleteProject}
-            statsByProjectId={statsByProjectId}
+      {/* Search + sort toolbar */}
+      <div className="flex items-center gap-0 rounded-md border border-border bg-card overflow-hidden">
+        <div className="flex flex-1 items-center gap-2 px-3 py-2">
+          <Search className="h-[14px] w-[14px] shrink-0 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search projects..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none min-w-0"
           />
+        </div>
+
+        <div className="h-6 w-px bg-border mx-0.5 shrink-0" />
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap h-full">
+              <ListFilter className="h-3.5 w-3.5" />
+              <span>{SORT_LABELS[sort]}</span>
+            </button>
+          </DropdownMenuTrigger>
+          <SortMenuContent align="end" className="w-44">
+            {(Object.keys(SORT_LABELS) as SortMode[]).map((s) => (
+              <DropdownMenuItem
+                key={s}
+                onClick={() => setSort(s)}
+                className={cn(sort === s && 'bg-accent font-medium')}
+              >
+                {SORT_LABELS[s]}
+              </DropdownMenuItem>
+            ))}
+          </SortMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Grid */}
+      {isLoading ? (
+        <div
+          className="grid gap-2.5"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}
+        >
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-32 rounded-lg" />
+          ))}
+        </div>
+      ) : sortedProjects.length === 0 ? (
+        <div className="rounded-lg border border-dashed p-10 text-center">
+          <p className="text-sm text-muted-foreground">
+            {search
+              ? `No project matches "${search.trim()}".`
+              : 'No projects yet. Create your first one!'}
+          </p>
+          {canCreateFromSearch && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-3 gap-1.5"
+              onClick={() => {
+                setCreatePrefillName(search.trim());
+                setIsCreateOpen(true);
+              }}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Create "{search.trim()}"
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div
+          className="grid gap-2.5"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}
+        >
+          {sortedProjects.map((project) => (
+            <ProjectCard
+              key={project.id}
+              project={project}
+              stats={statsByProjectId[project.id]}
+              onOpen={() => navigate(`/projects/${project.id}`)}
+              onAddQuest={() => setQuickCreateProject(project)}
+              onTogglePin={() => handleTogglePin(project.id, project.pinned)}
+              onEdit={() => setProjectToEdit(project)}
+              onToggleArchive={() => handleToggleArchive(project.id, project.archived)}
+              onDelete={() => handleDeleteProject(project)}
+            />
+          ))}
         </div>
       )}
 
@@ -327,19 +259,15 @@ export function ProjectsPage() {
         open={isCreateOpen}
         onOpenChange={(open) => {
           setIsCreateOpen(open);
-          if (!open) {
-            setCreatePrefillName('');
-          }
+          if (!open) setCreatePrefillName('');
         }}
         initialName={createPrefillName}
       />
-
       <CreateProjectDialog
         open={!!projectToEdit}
         onOpenChange={(open) => !open && setProjectToEdit(null)}
         projectToEdit={projectToEdit}
       />
-
       <CreateQuestDialog
         open={!!quickCreateProject}
         onOpenChange={(open) => !open && setQuickCreateProject(null)}
@@ -349,52 +277,15 @@ export function ProjectsPage() {
   );
 }
 
-function ProjectsSection({
-  title,
-  description,
-  projects,
-  emptyMessage,
-  onOpen,
-  onAddQuest,
-  onTogglePin,
-  onEdit,
-  onToggleArchive,
-  onDelete,
-  statsByProjectId,
-}: ProjectsSectionProps) {
-  return (
-    <section className="space-y-4">
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
-          <Badge variant="outline">{projects.length}</Badge>
-        </div>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </div>
-
-      {projects.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border/70 px-5 py-8 text-sm text-muted-foreground">
-          {emptyMessage}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {projects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              stats={statsByProjectId[project.id]}
-              onOpen={() => onOpen(project.id)}
-              onAddQuest={() => onAddQuest(project)}
-              onTogglePin={() => onTogglePin(project.id, project.pinned)}
-              onEdit={() => onEdit(project)}
-              onToggleArchive={() => onToggleArchive(project.id, project.archived)}
-              onDelete={() => onDelete(project)}
-            />
-          ))}
-        </div>
-      )}
-    </section>
-  );
+interface ProjectCardProps {
+  project: ProjectSummaryResponse;
+  stats?: ProjectCardStats;
+  onOpen: () => void;
+  onAddQuest: () => void;
+  onTogglePin: () => void;
+  onEdit: () => void;
+  onToggleArchive: () => void;
+  onDelete: () => void;
 }
 
 function ProjectCard({
@@ -409,212 +300,103 @@ function ProjectCard({
 }: ProjectCardProps) {
   const updatedLabel = formatRelativeProjectUpdate(project.updatedAt);
   const trimmedDescription = project.description?.trim();
-  const hasDescription = Boolean(trimmedDescription);
-  const completionPct =
-    stats && stats.questCount > 0 ? Math.round((stats.completedCount / stats.questCount) * 100) : 0;
 
   return (
-    <Card
-      className={cn(
-        'group flex flex-col overflow-hidden border-border/70 bg-card/70 shadow-sm transition-all duration-200',
-        'hover:border-primary/30 hover:shadow-lg',
-        project.pinned && 'border-primary/30 bg-primary/[0.04]'
-      )}
+    <div
+      className="group relative flex flex-col overflow-hidden rounded-lg border bg-card transition-all duration-150 hover:border-border/80 hover:shadow-sm cursor-pointer"
+      onClick={onOpen}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
     >
-      <CardContent className="flex flex-1 flex-col gap-3 p-5">
-        {/* Header row */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 flex-1 items-start gap-3">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-muted/40 text-xl">
-              {project.icon || '📁'}
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <h3 className="truncate text-base font-semibold leading-tight text-foreground">
-                  {project.name}
-                </h3>
-                {project.pinned && (
-                  <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
-                    <Star className="h-3 w-3 fill-current" />
-                    Pinned
-                  </Badge>
-                )}
-                {project.archived && <Badge variant="outline">Archived</Badge>}
-              </div>
-              {hasDescription && (
-                <p className="mt-1 line-clamp-2 text-xs leading-4 text-muted-foreground">
-                  {trimmedDescription}
-                </p>
+      {/* Top: icon + name + time + menu */}
+      <div className="flex items-center gap-2.5 px-4 pt-4 pb-2.5">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40 text-base">
+          {project.icon || '📁'}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-medium text-foreground leading-tight">
+            {project.name}
+          </div>
+          <div className="text-[11px] text-muted-foreground">{updatedLabel}</div>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 flex-shrink-0"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreHorizontal className="h-3.5 w-3.5" />
+              <span className="sr-only">Project actions</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuItem onClick={onTogglePin}>
+              {project.pinned ? (
+                <>
+                  <StarOff className="mr-2 h-4 w-4" />
+                  Unpin
+                </>
+              ) : (
+                <>
+                  <Star className="mr-2 h-4 w-4" />
+                  Pin
+                </>
               )}
-            </div>
-          </div>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 shrink-0 opacity-60 transition-opacity hover:opacity-100 focus-visible:opacity-100"
-                aria-label={`More actions for ${project.name}`}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onTogglePin}>
-                {project.pinned ? (
-                  <>
-                    <StarOff className="mr-2 h-4 w-4" />
-                    Unpin
-                  </>
-                ) : (
-                  <>
-                    <Star className="mr-2 h-4 w-4" />
-                    Pin
-                  </>
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onEdit}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onToggleArchive}>
-                {project.archived ? (
-                  <>
-                    <ArchiveRestore className="mr-2 h-4 w-4" />
-                    Restore
-                  </>
-                ) : (
-                  <>
-                    <Archive className="mr-2 h-4 w-4" />
-                    Archive
-                  </>
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={onDelete}
-                className="text-destructive focus:text-destructive"
-              >
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {/* Progress */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              {stats ? `${stats.completedCount} / ${stats.questCount} completed` : 'Loading…'}
-            </span>
-            {stats && stats.questCount > 0 && (
-              <span className="font-medium tabular-nums">{completionPct}%</span>
-            )}
-          </div>
-          <Progress value={stats ? completionPct : 0} className="h-1.5" />
-        </div>
-
-        {/* Meta row */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <ListTodo className="h-3.5 w-3.5" />
-            {stats ? `${stats.questCount} ${stats.questCount === 1 ? 'quest' : 'quests'}` : '—'}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Clock3 className="h-3.5 w-3.5" />
-            {updatedLabel}
-          </span>
-        </div>
-
-        {/* Urgent badge */}
-        <div className="min-h-5">
-          {stats != null && stats.urgentCount > 0 && (
-            <Badge variant="destructive" className="gap-1 text-xs">
-              <AlertTriangle className="h-3 w-3" />
-              {stats.urgentCount} urgent
-            </Badge>
-          )}
-        </div>
-
-        {/* Actions */}
-        <div className="mt-auto grid grid-cols-2 gap-2 pt-1">
-          <Button onClick={onOpen} className="gap-1.5" size="sm">
-            <FolderOpen className="h-4 w-4" />
-            Open
-          </Button>
-          <Button
-            variant="outline"
-            onClick={onAddQuest}
-            className="gap-1.5"
-            size="sm"
-            disabled={project.archived}
-            aria-label={`Add quest to ${project.name}`}
-          >
-            <Plus className="h-4 w-4" />
-            Add quest
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ProjectsGridSkeleton() {
-  return (
-    <div className="space-y-8">
-      <div className="space-y-2">
-        <Skeleton className="h-6 w-40" />
-        <Skeleton className="h-4 w-64" />
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onEdit}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onAddQuest}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add quest
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onToggleArchive}>
+              {project.archived ? (
+                <>
+                  <ArchiveRestore className="mr-2 h-4 w-4" />
+                  Restore
+                </>
+              ) : (
+                <>
+                  <Archive className="mr-2 h-4 w-4" />
+                  Archive
+                </>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={onDelete}
+              className="text-destructive focus:text-destructive"
+            >
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        {Array.from({ length: 8 }).map((_, index) => (
-          <Skeleton key={index} className="h-[280px] rounded-xl" />
-        ))}
+
+      {/* Description */}
+      {trimmedDescription && (
+        <p className="px-4 pb-3 text-xs leading-relaxed text-muted-foreground line-clamp-2">
+          {trimmedDescription}
+        </p>
+      )}
+
+      {/* Footer */}
+      <div className="mt-auto flex items-center justify-between border-t border-border px-4 py-2.5">
+        <span className="font-mono text-[11px] text-muted-foreground">
+          {stats != null ? `${stats.questCount} quests` : '—'}
+        </span>
+        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
       </div>
     </div>
-  );
-}
-
-function ProjectsEmptyState({ onCreate }: { onCreate: () => void }) {
-  return (
-    <Card className="border-dashed border-border/70 bg-card/50">
-      <CardHeader className="items-center text-center">
-        <CardTitle>No projects yet</CardTitle>
-        <CardDescription className="max-w-md">
-          Projects help you group related quests into longer initiatives so you can plan and review
-          bigger goals without losing daily momentum.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex justify-center pb-6">
-        <Button onClick={onCreate} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Create your first project
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ProjectsNoResultsState({ search, onCreate }: { search: string; onCreate?: () => void }) {
-  return (
-    <Card className="border-dashed border-border/70 bg-card/50">
-      <CardHeader className="items-center text-center">
-        <CardTitle>No projects found</CardTitle>
-        <CardDescription className="max-w-md">
-          No project matches <span className="font-medium text-foreground">"{search.trim()}"</span>.
-          Try another search or create a new project if this looks like a fresh initiative.
-        </CardDescription>
-      </CardHeader>
-      {onCreate && (
-        <CardContent className="flex justify-center pb-6">
-          <Button onClick={onCreate} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Create "{search.trim()}"
-          </Button>
-        </CardContent>
-      )}
-    </Card>
   );
 }
 
@@ -644,38 +426,19 @@ function CreateProjectDialog({
 
   const handleSubmit = () => {
     if (!name.trim()) return;
-
-    if (projectToEdit) {
+    const payload = {
+      name: name.trim(),
+      icon: icon.trim(),
+      description: description.trim() || undefined,
+    };
+    if (isEditMode) {
       updateProject.mutate(
-        {
-          id: projectToEdit.id,
-          data: {
-            name: name.trim(),
-            icon: icon.trim(),
-            description: description.trim(),
-          },
-        },
-        {
-          onSuccess: () => {
-            onOpenChange(false);
-          },
-        }
+        { id: projectToEdit!.id, data: payload },
+        { onSuccess: () => onOpenChange(false) }
       );
-      return;
+    } else {
+      createProject.mutate(payload, { onSuccess: () => onOpenChange(false) });
     }
-
-    createProject.mutate(
-      {
-        name: name.trim(),
-        icon: icon.trim(),
-        description: description.trim() || undefined,
-      },
-      {
-        onSuccess: () => {
-          onOpenChange(false);
-        },
-      }
-    );
   };
 
   const handleOpenChange = (nextOpen: boolean) => {
@@ -689,13 +452,13 @@ function CreateProjectDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[420px]">
+      <DialogContent className="sm:max-w-[420px] max-h-[min(90dvh,44rem)] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditMode ? 'Edit Project' : 'Create Project'}</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Edit project' : 'New project'}</DialogTitle>
           <DialogDescription>
             {isEditMode
-              ? 'Update the project details shown across the app.'
-              : 'Add a project for grouped quests and longer initiatives.'}
+              ? 'Update project details.'
+              : 'Group related quests into a longer initiative.'}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -704,7 +467,7 @@ function CreateProjectDialog({
             <Input
               id="project-name"
               value={name}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Launch new portfolio"
             />
           </div>
@@ -717,14 +480,14 @@ function CreateProjectDialog({
             <Input
               id="project-description"
               value={description}
-              onChange={(event) => setDescription(event.target.value)}
+              onChange={(e) => setDescription(e.target.value)}
               maxLength={2000}
               placeholder="Short summary or focus area"
             />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isPending}>
+          <Button variant="ghost" onClick={() => handleOpenChange(false)} disabled={isPending}>
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={isDisabled}>
@@ -738,37 +501,24 @@ function CreateProjectDialog({
 
 function isUrgentQuest(quest: QuestResponse) {
   if (quest.status !== 'PENDING' || !quest.dueDate) return false;
-  const dueDate = new Date(quest.dueDate);
+  const dueDay = new Date(quest.dueDate);
+  dueDay.setHours(0, 0, 0, 0);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-
-  const dueDay = new Date(dueDate);
-  dueDay.setHours(0, 0, 0, 0);
-
   return dueDay.getTime() <= today.getTime();
 }
 
 function formatRelativeProjectUpdate(updatedAt: string) {
-  const diffMs = Date.now() - new Date(updatedAt).getTime();
-  const diffSeconds = Math.max(0, Math.floor(diffMs / 1000));
-
-  if (diffSeconds < 60) {
-    return 'now';
+  const diffSeconds = Math.max(0, Math.floor((Date.now() - new Date(updatedAt).getTime()) / 1000));
+  if (diffSeconds < 60) return 'now';
+  for (const [label, seconds] of [
+    ['y', 60 * 60 * 24 * 365],
+    ['mo', 60 * 60 * 24 * 30],
+    ['d', 60 * 60 * 24],
+    ['h', 60 * 60],
+    ['m', 60],
+  ] as [string, number][]) {
+    if (diffSeconds >= seconds) return `${Math.floor(diffSeconds / seconds)}${label} ago`;
   }
-
-  const units = [
-    { label: 'y', seconds: 60 * 60 * 24 * 365 },
-    { label: 'mo', seconds: 60 * 60 * 24 * 30 },
-    { label: 'd', seconds: 60 * 60 * 24 },
-    { label: 'h', seconds: 60 * 60 },
-    { label: 'm', seconds: 60 },
-  ];
-
-  for (const unit of units) {
-    if (diffSeconds >= unit.seconds) {
-      return `${Math.floor(diffSeconds / unit.seconds)}${unit.label} ago`;
-    }
-  }
-
   return 'now';
 }

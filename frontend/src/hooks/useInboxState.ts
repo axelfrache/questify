@@ -137,26 +137,25 @@ export function useInboxState(allQuests: QuestResponse[], pinnedProjectIds: stri
     setPage(1);
   }, []);
 
+  // Quests après recherche textuelle, AVANT les quick filters — sert à calculer les counts des chips
+  const searchedQuests = useMemo(() => {
+    if (!search.trim()) return allQuests;
+    const searchLower = search.toLowerCase();
+    return allQuests.filter(
+      (q) =>
+        q.title.toLowerCase().includes(searchLower) ||
+        q.description?.toLowerCase().includes(searchLower) ||
+        q.category?.name.toLowerCase().includes(searchLower) ||
+        q.parentTitle?.toLowerCase().includes(searchLower)
+    );
+  }, [allQuests, search]);
+
   const processedQuests = useMemo(() => {
-    let result = allQuests;
-
-    if (search.trim()) {
-      const searchLower = search.toLowerCase();
-      result = result.filter(
-        (q) =>
-          q.title.toLowerCase().includes(searchLower) ||
-          q.description?.toLowerCase().includes(searchLower) ||
-          q.category?.name.toLowerCase().includes(searchLower) ||
-          q.parentTitle?.toLowerCase().includes(searchLower)
-      );
-    }
-
+    let result = searchedQuests;
     result = applyQuickFilters(result, quickFilters);
-
     result = applySortAndBuckets(result, sortBy);
-
     return result;
-  }, [allQuests, search, quickFilters, sortBy]);
+  }, [searchedQuests, quickFilters, sortBy]);
 
   const groupedQuests = useMemo((): GroupedQuests[] => {
     if (groupBy === 'none') {
@@ -191,30 +190,31 @@ export function useInboxState(allQuests: QuestResponse[], pinnedProjectIds: stri
   }, [processedQuests, page, pageSize]);
 
   const hasMore = paginatedQuests.length < processedQuests.length;
+  const allCount = searchedQuests.length;
   const totalCount = processedQuests.length;
   const displayedCount = paginatedQuests.length;
 
   const overdueCount = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return allQuests.filter((q) => {
+    return searchedQuests.filter((q) => {
       if (!q.dueDate) return false;
       const due = new Date(q.dueDate);
       return due < today;
     }).length;
-  }, [allQuests]);
+  }, [searchedQuests]);
 
   const todayCount = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    return allQuests.filter((q) => {
+    return searchedQuests.filter((q) => {
       if (!q.dueDate) return false;
       const due = new Date(q.dueDate);
       return due >= today && due < tomorrow;
     }).length;
-  }, [allQuests]);
+  }, [searchedQuests]);
 
   const state: InboxState = {
     search,
@@ -252,6 +252,7 @@ export function useInboxState(allQuests: QuestResponse[], pinnedProjectIds: stri
     loadMore,
     resetPagination,
     hasMore,
+    allCount,
     totalCount,
     displayedCount,
 

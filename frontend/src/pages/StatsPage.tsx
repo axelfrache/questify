@@ -1,17 +1,22 @@
-import { useStatsOverview, useStatsByCategory, useStatsByDay } from '@/hooks/use-api';
+import {
+  useStatsOverview,
+  useStatsByCategory,
+  useStatsByDay,
+  useCategories,
+} from '@/hooks/use-api';
 import { useDailyCompletion } from '@/hooks/use-daily-completion';
 import { getUtcDateKey } from '@/lib/activity-completion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { RegionRadarChart } from '@/components/ui/region-radar-chart';
 import { MonthlyActivityGraph } from '@/components/ui/monthly-activity-graph';
-import { Calendar, Info } from 'lucide-react';
+import { Calendar, LayoutGrid, Map } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useMemo } from 'react';
 
 export function StatsPage() {
   const { isLoading: isLoadingOverview } = useStatsOverview();
   const { data: categoryStats, isLoading: isLoadingCategories } = useStatsByCategory();
+  const { data: categories } = useCategories();
   const { data: dailyStats, isLoading: isLoadingDaily } = useStatsByDay(7);
   const { data: monthlyActivityStats, isLoading: isLoadingMonthlyActivity } = useStatsByDay(365);
   const { completionByDate, isLoading: isLoadingCompletion } = useDailyCompletion();
@@ -23,35 +28,14 @@ export function StatsPage() {
     isLoadingMonthlyActivity ||
     isLoadingCompletion;
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-32" />
-        <div className="grid gap-4 md:grid-cols-2">
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
-        </div>
-      </div>
-    );
-  }
-
-  const getCompletionColor = (rate: number) => {
-    if (rate >= 100) return 'bg-primary';
-    if (rate >= 75) return 'bg-primary/80';
-    if (rate >= 50) return 'bg-primary/60';
-    if (rate > 0) return 'bg-primary/35';
-    return 'bg-muted';
-  };
-
   const today = new Date();
-  const dailyStatsByDate = Object.fromEntries((dailyStats ?? []).map((day) => [day.date, day]));
+  const dailyStatsByDate = Object.fromEntries((dailyStats ?? []).map((d) => [d.date, d]));
+
   const weeklyDays = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(today);
     date.setUTCHours(0, 0, 0, 0);
     date.setUTCDate(date.getUTCDate() - (6 - index));
     const dateKey = getUtcDateKey(date);
-
     return {
       date,
       dateKey,
@@ -60,84 +44,111 @@ export function StatsPage() {
     };
   });
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Stats</h1>
-          <p className="text-muted-foreground">Your activity and consistency over time.</p>
+  const weekStart = weeklyDays[0].date.toLocaleDateString('en-US', {
+    timeZone: 'UTC',
+    month: 'short',
+    day: 'numeric',
+  });
+  const weekEnd = weeklyDays[6].date.toLocaleDateString('en-US', {
+    timeZone: 'UTC',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  const weeklyActiveDays = weeklyDays.filter(
+    (d) => (d.completion?.completedQuests ?? 0) > 0
+  ).length;
+  const weeklyXp = weeklyDays.reduce((sum, d) => sum + (d.stats?.xpEarned ?? 0), 0);
+
+  // By region: compute percentages, join with category colors
+  const regionData = useMemo(() => {
+    if (!categoryStats || categoryStats.length === 0) return [];
+    const total = categoryStats.reduce((s, c) => s + c.questsCompleted, 0) || 1;
+    return categoryStats
+      .filter((c) => c.questsCompleted > 0)
+      .map((c) => ({
+        name: c.categoryName,
+        count: c.questsCompleted,
+        pct: Math.round((c.questsCompleted / total) * 100),
+        color:
+          categories?.find((cat) => cat.name === c.categoryName)?.color ?? 'oklch(0.56 0.18 275)',
+      }))
+      .sort((a, b) => b.pct - a.pct);
+  }, [categoryStats, categories]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-14 w-48" />
+        <Skeleton className="h-44 w-full" />
+        <div className="grid gap-3 lg:grid-cols-[1.3fr_1fr]">
+          <Skeleton className="h-72" />
+          <Skeleton className="h-72" />
         </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button className="p-2 rounded-full hover:bg-muted transition-colors">
-                <Info className="h-5 w-5 text-muted-foreground" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="left" className="max-w-xs">
-              <p className="text-sm">
-                Stats reflect short-term activity and may vary from day to day.
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 pb-10">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Stats</h1>
+        <p className="text-sm text-muted-foreground">Your activity and consistency over time</p>
       </div>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Calendar className="h-4 w-4" />
-              Weekly Consistency
-            </CardTitle>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span>
-                <span className="font-medium text-foreground">
-                  {dailyStats?.reduce((sum, d) => sum + d.questsCompleted, 0) || 0}
-                </span>{' '}
-                quests
-              </span>
-              <span>
-                <span className="font-medium text-foreground">
-                  +{dailyStats?.reduce((sum, d) => sum + d.xpEarned, 0) || 0}
-                </span>{' '}
-                XP
-              </span>
+      {/* Weekly Consistency */}
+      <div className="rounded-lg border bg-card p-5">
+        <div className="mb-5 flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-sm font-medium">Weekly consistency</span>
+            </div>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              {weekStart} – {weekEnd}
+            </p>
+          </div>
+          <div className="flex items-start gap-5">
+            <div className="text-right">
+              <p className="font-mono text-lg font-medium leading-none">{weeklyActiveDays}</p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">active days</p>
+            </div>
+            <div className="text-right">
+              <p className="font-mono text-lg font-medium leading-none">+{weeklyXp}</p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">XP</p>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="pb-4">
-          <div className="flex items-end gap-2 h-24">
-            {weeklyDays.map((day, index) => {
-              const dayDate = day.date;
-              const isFuture = dayDate > today;
-              const completionRate = day.completion?.completionRate ?? 0;
-              const plannedQuests = day.completion?.plannedQuests ?? 0;
-              const xpEarned = day.stats?.xpEarned ?? 0;
-              const heightPct = isFuture
-                ? 20
-                : Math.max(completionRate, plannedQuests > 0 ? 10 : 8);
+        </div>
 
-              return (
-                <TooltipProvider key={index}>
-                  <Tooltip>
+        {/* Fixed-height stripe chart */}
+        <TooltipProvider delayDuration={100}>
+          <div className="flex flex-col gap-4 py-4">
+            <div className="flex items-center gap-2">
+              {weeklyDays.map((day, i) => {
+                const isFuture = day.date > today;
+                const rate = day.completion?.completionRate ?? 0;
+                const planned = day.completion?.plannedQuests ?? 0;
+
+                const barClass =
+                  isFuture || planned === 0
+                    ? 'bg-muted/40'
+                    : rate >= 100
+                      ? 'bg-primary'
+                      : rate >= 50
+                        ? 'bg-primary/55'
+                        : 'bg-primary/30';
+
+                return (
+                  <Tooltip key={i}>
                     <TooltipTrigger asChild>
-                      <div className="flex-1 flex flex-col items-center gap-1">
-                        <div className="w-full flex items-end justify-center h-16">
-                          <div
-                            className={cn(
-                              'w-full max-w-8 rounded-t transition-all',
-                              isFuture
-                                ? 'bg-muted/30'
-                                : plannedQuests > 0
-                                  ? getCompletionColor(completionRate)
-                                  : 'bg-muted/50'
-                            )}
-                            style={{ height: `${heightPct}%` }}
-                          />
-                        </div>
-                        <span className="text-[10px] text-muted-foreground">
-                          {dayDate.toLocaleDateString('en-US', {
+                      <div className="flex flex-1 cursor-default flex-col items-center gap-2">
+                        <div
+                          className={cn('h-1 w-full rounded-full transition-colors', barClass)}
+                        />
+                        <span className="font-mono text-[10px] text-muted-foreground">
+                          {day.date.toLocaleDateString('en-US', {
                             timeZone: 'UTC',
                             weekday: 'narrow',
                           })}
@@ -147,49 +158,88 @@ export function StatsPage() {
                     <TooltipContent>
                       {isFuture ? (
                         <p className="text-xs">Upcoming</p>
-                      ) : plannedQuests === 0 ? (
+                      ) : planned === 0 ? (
                         <p className="text-xs">No quests planned</p>
                       ) : (
                         <>
                           <p className="text-xs">
-                            {day.completion?.completedQuests ?? 0} of {plannedQuests} completed
+                            {day.completion?.completedQuests ?? 0} of {planned} completed
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {completionRate}% · +{xpEarned} XP
+                            {rate}% · +{day.stats?.xpEarned ?? 0} XP
                           </p>
                         </>
                       )}
                     </TooltipContent>
                   </Tooltip>
-                </TooltipProvider>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-          <div className="mt-2 pt-2 border-t flex items-center justify-end gap-3 text-[10px] text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-sm bg-primary" />
-              100%
+        </TooltipProvider>
+
+        {/* Legend */}
+        <div className="mt-3 flex items-center justify-end gap-3 text-[10px] text-muted-foreground">
+          {[
+            { label: '100%', cls: 'bg-primary' },
+            { label: 'Partial', cls: 'bg-primary/60' },
+            { label: 'None', cls: 'bg-muted/50' },
+          ].map(({ label, cls }) => (
+            <span key={label} className="flex items-center gap-1">
+              <span className={cn('h-2 w-2 rounded-[2px]', cls)} />
+              {label}
             </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-sm bg-primary/60" />
-              Partial
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-sm bg-muted/50" />
-              None
-            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Monthly + By region */}
+      <div className="grid gap-3 lg:grid-cols-[1.3fr_1fr]">
+        {/* Monthly activity — reuse existing component, pass icon override via className */}
+        <div className="rounded-lg border bg-card overflow-hidden">
+          <div className="flex items-center gap-1.5 px-5 pt-4 pb-0">
+            <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-sm font-medium">Monthly activity</span>
           </div>
-        </CardContent>
-      </Card>
+          <MonthlyActivityGraph
+            dailyData={monthlyActivityStats}
+            completionByDate={completionByDate}
+            isLoading={isLoadingMonthlyActivity}
+            className="border-0 shadow-none bg-transparent"
+          />
+        </div>
 
-      <div className="grid gap-4 lg:grid-cols-2 items-stretch">
-        <MonthlyActivityGraph
-          dailyData={monthlyActivityStats}
-          completionByDate={completionByDate}
-          isLoading={isLoadingMonthlyActivity}
-        />
+        {/* By region */}
+        <div className="rounded-lg border bg-card p-5">
+          <div className="mb-4 flex items-center gap-1.5">
+            <Map className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-sm font-medium">By region</span>
+          </div>
 
-        {categoryStats && <RegionRadarChart data={categoryStats} />}
+          {regionData.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No region activity yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {regionData.map((r) => (
+                <div key={r.name}>
+                  <div className="mb-1 flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5 font-medium text-foreground">
+                      <span className="h-2 w-2 rounded-full" style={{ background: r.color }} />
+                      {r.name}
+                    </span>
+                    <span className="font-mono text-muted-foreground">{r.pct}%</span>
+                  </div>
+                  <div className="h-1 w-full overflow-hidden rounded-full bg-muted/40">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${r.pct}%`, background: r.color }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

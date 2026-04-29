@@ -1,74 +1,67 @@
 import { useUserProgression, useStatsOverview } from '@/hooks/use-api';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ShineBorder } from '@/components/ui/shine-border';
-import { Zap, Star, Info, ChevronRight, Check } from 'lucide-react';
+import { Zap, Star, Check, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const GRADES = [
   {
     name: 'Initiate',
     minLevel: 1,
-    maxLevel: 5,
+    questsRequired: 0,
     tooltip: 'Every legend begins with a single step.',
-    colorVar: '--primary',
   },
   {
     name: 'Traveler',
     minLevel: 6,
-    maxLevel: 10,
+    questsRequired: 10,
     tooltip: 'The road stretches ahead. You have found your rhythm.',
-    colorVar: '--difficulty-easy',
   },
   {
     name: 'Explorer',
     minLevel: 11,
-    maxLevel: 20,
+    questsRequired: 25,
     tooltip: 'Curiosity guides your path. New horizons await.',
-    colorVar: '--difficulty-medium',
   },
   {
     name: 'Adventurer',
     minLevel: 21,
-    maxLevel: 35,
+    questsRequired: 60,
     tooltip: 'Challenges sharpen your spirit. You grow with each quest.',
-    colorVar: '--difficulty-hard',
   },
   {
     name: 'Hero',
     minLevel: 36,
-    maxLevel: 50,
+    questsRequired: 150,
     tooltip: 'Your actions inspire others. A true hero rises.',
-    colorVar: '--difficulty-epic',
   },
   {
     name: 'Legend',
     minLevel: 51,
-    maxLevel: 999,
+    questsRequired: 400,
     tooltip: 'Stories will be told of your journey. You are eternal.',
-    colorVar: '--chart-2',
   },
 ];
 
-function getGradeIndex(gradeLabel: string): number {
+function getGradeIndex(gradeLabel: string) {
   return GRADES.findIndex((g) => g.name === gradeLabel);
 }
 
-function getNextGrade(currentGrade: string): (typeof GRADES)[number] | null {
+function getNextGrade(currentGrade: string) {
   const idx = getGradeIndex(currentGrade);
   if (idx === -1 || idx >= GRADES.length - 1) return null;
   return GRADES[idx + 1];
 }
 
-function getGradeProgress(level: number, currentGrade: string): number {
+function getGradeProgress(level: number, currentGrade: string) {
   const grade = GRADES.find((g) => g.name === currentGrade);
   if (!grade) return 0;
-  const range = grade.maxLevel - grade.minLevel + 1;
-  const progress = level - grade.minLevel;
-  return Math.min(100, Math.round((progress / range) * 100));
+  const next = getNextGrade(currentGrade);
+  if (!next) return 100;
+  const range = next.minLevel - grade.minLevel;
+  return Math.min(100, Math.round(((level - grade.minLevel) / range) * 100));
 }
 
 export function ProgressPage() {
@@ -82,10 +75,14 @@ export function ProgressPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-32" />
-        <Skeleton className="h-64" />
+      <div className="space-y-4">
+        <Skeleton className="h-14 w-64" />
+        <Skeleton className="h-36 w-full" />
+        <div className="grid grid-cols-2 gap-3">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+        </div>
+        <Skeleton className="h-40 w-full" />
       </div>
     );
   }
@@ -98,252 +95,182 @@ export function ProgressPage() {
   const gradeProgress = getGradeProgress(currentLevel, currentGrade);
   const totalCompleted = statsOverview?.totalCompleted || 0;
 
+  const levelToNextLevel = progression?.currentLevelXp || 0;
+  const xpNeededNextLevel = progression?.nextLevelXp || 100;
+  const xpProgressPct = progression?.progressPercent || 0;
+
   return (
-    <div className="space-y-8 pb-24">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Progress</h1>
-          <p className="text-muted-foreground">Your long-term journey, one step at a time.</p>
+    <div className="space-y-4 pb-10">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Progress</h1>
+        <p className="text-sm text-muted-foreground">Your long-term journey, one step at a time</p>
+      </div>
+
+      {/* Grade journey card */}
+      <div className="rounded-lg border bg-card p-5">
+        <div className="mb-5 flex items-center gap-1.5">
+          <Star className="h-3.5 w-3.5 text-primary" />
+          <span className="text-sm font-medium">Grade journey</span>
         </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button className="p-2 rounded-full hover:bg-muted transition-colors">
-                <Info className="h-5 w-5 text-muted-foreground" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="left" className="max-w-xs">
-              <p className="text-sm">
-                This view represents your overall progression in Questify. Grades mark meaningful
-                milestones on your journey and are earned through consistent action over time.
-                Progress here is cumulative and never goes backward.
-              </p>
-            </TooltipContent>
-          </Tooltip>
+
+        <TooltipProvider delayDuration={150}>
+          <div className="flex w-full items-start py-1">
+            {GRADES.map((grade, index) => {
+              const isPast = index < currentGradeIndex;
+              const isCurrent = index === currentGradeIndex;
+
+              return (
+                <div
+                  key={grade.name}
+                  className={cn(
+                    'flex items-start',
+                    index < GRADES.length - 1 ? 'flex-1' : 'flex-shrink-0'
+                  )}
+                >
+                  {/* Node + label — always centered */}
+                  <div className="flex flex-shrink-0 flex-col items-center gap-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div
+                          className={cn(
+                            'flex h-9 w-9 cursor-default items-center justify-center rounded-full border-2 font-mono text-xs font-medium transition-all',
+                            isCurrent &&
+                              'border-primary bg-primary text-primary-foreground shadow-[0_0_0_3px_oklch(0.56_0.18_275_/_0.15)]',
+                            isPast && 'border-muted-foreground/40 bg-muted text-muted-foreground',
+                            !isCurrent &&
+                              !isPast &&
+                              'border-border bg-muted/30 text-muted-foreground'
+                          )}
+                        >
+                          {isCurrent ? (
+                            <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+                          ) : (
+                            grade.minLevel
+                          )}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="top"
+                        className="max-w-[180px] text-center text-xs italic"
+                      >
+                        {grade.tooltip}
+                      </TooltipContent>
+                    </Tooltip>
+                    <span
+                      className={cn(
+                        'text-center text-[10px] leading-tight',
+                        isCurrent && 'font-medium text-foreground',
+                        !isCurrent && 'text-muted-foreground'
+                      )}
+                    >
+                      {grade.name}
+                    </span>
+                  </div>
+
+                  {/* Arrow to next node — mt-[11px] centers chevron on the h-9 circle */}
+                  {index < GRADES.length - 1 && (
+                    <div className="flex flex-1 items-start justify-center mt-[11px]">
+                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </TooltipProvider>
       </div>
 
-      <Card className="overflow-visible">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-secondary/25 bg-secondary/18 shadow-sm">
-              <Star className="h-4.5 w-4.5 text-secondary-foreground" />
-            </span>
-            Grade Journey
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-visible px-0">
-          <div className="overflow-x-auto scrollbar-hide py-3">
-            <TooltipProvider delayDuration={200}>
-              <div className="flex min-w-max flex-col gap-2 px-4">
-                {/* Nodes and connectors row */}
-                <div className="flex items-center py-1">
-                  {GRADES.map((grade, index) => {
-                    const isPast = index < currentGradeIndex;
-                    const isCurrent = index === currentGradeIndex;
-                    const isFuture = index > currentGradeIndex;
-
-                    return (
-                      <div key={grade.name} className="flex items-center last:flex-none">
-                        <div className="flex w-16 justify-center">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                className="relative flex h-14 w-14 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                                aria-label={`${grade.name}: ${grade.tooltip}`}
-                              >
-                                {isCurrent ? (
-                                  <div className="relative h-12 w-12 transition-all hover:scale-105">
-                                    <div className="absolute inset-0 rounded-full bg-primary/18" />
-                                    <ShineBorder
-                                      className="rounded-full"
-                                      shineColor={[
-                                        'rgba(0,138,141,0.7)',
-                                        'rgba(168,85,247,0.5)',
-                                        'rgba(34,211,238,0.6)',
-                                      ]}
-                                      borderWidth={2}
-                                      duration={14}
-                                    />
-                                    <div className="absolute inset-[2px] rounded-full bg-gradient-to-br from-primary/20 to-primary/8 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.05),0_0_16px_color-mix(in_oklch,var(--primary)_30%,transparent)] dark:from-primary/25 dark:to-primary/10 dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.07),0_0_20px_color-mix(in_oklch,var(--primary)_35%,transparent)]" />
-                                    <div className="relative z-10 flex h-full w-full items-center justify-center text-primary">
-                                      <Check className="h-6 w-6" />
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div
-                                    className={cn(
-                                      'flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border-2 transition-all hover:scale-105',
-                                      isPast &&
-                                        'border-difficulty-hard/50 bg-difficulty-hard text-white shadow-[0_0_14px_color-mix(in_oklch,var(--difficulty-hard)_55%,transparent)]',
-                                      isFuture && 'transition-all'
-                                    )}
-                                    style={
-                                      isFuture
-                                        ? {
-                                            backgroundColor: `color-mix(in oklch, var(${grade.colorVar}) 10%, var(--muted))`,
-                                            borderColor: `color-mix(in oklch, var(${grade.colorVar}) 35%, var(--border))`,
-                                            color: `color-mix(in oklch, var(${grade.colorVar}) 60%, var(--muted-foreground))`,
-                                          }
-                                        : undefined
-                                    }
-                                  >
-                                    {isPast ? (
-                                      <Check className="h-5 w-5" />
-                                    ) : (
-                                      <span className="text-sm font-bold">{grade.minLevel}</span>
-                                    )}
-                                  </div>
-                                )}
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="max-w-[200px] text-center">
-                              <p className="text-sm italic">{grade.tooltip}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                        {index < GRADES.length - 1 && (
-                          <div className="flex items-center w-8">
-                            <div
-                              className={cn(
-                                'h-0.5 flex-1 rounded-full transition-all',
-                                index < currentGradeIndex && 'bg-difficulty-hard',
-                                index === currentGradeIndex &&
-                                  'bg-gradient-to-r from-difficulty-hard to-muted',
-                                index > currentGradeIndex && 'bg-muted'
-                              )}
-                            />
-                            <ChevronRight
-                              className={cn(
-                                'h-4 w-4 -ml-0.5 flex-shrink-0',
-                                index < currentGradeIndex && 'text-difficulty-hard',
-                                index >= currentGradeIndex && 'text-muted-foreground/50'
-                              )}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                {/* Labels row */}
-                <div className="flex items-center">
-                  {GRADES.map((grade, index) => {
-                    const isCurrent = index === currentGradeIndex;
-                    const isFuture = index > currentGradeIndex;
-
-                    return (
-                      <div key={`${grade.name}-label`} className="flex items-center last:flex-none">
-                        <div className="flex justify-center w-16">
-                          <span
-                            className={cn(
-                              'text-xs font-medium text-center whitespace-nowrap',
-                              !isCurrent && !isFuture && 'text-difficulty-hard font-semibold',
-                              isCurrent && 'text-primary font-bold',
-                              isFuture && 'text-muted-foreground'
-                            )}
-                          >
-                            {grade.name}
-                          </span>
-                        </div>
-                        {index < GRADES.length - 1 && <div className="w-8" />}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </TooltipProvider>
+      {/* Two stat cards */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Current grade */}
+        <div className="rounded-lg border bg-card p-4">
+          <div className="mb-3 flex items-center gap-1.5">
+            <Star className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Current grade</span>
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="font-mono text-3xl font-medium tracking-tight">{currentGrade}</span>
+            <span className="text-sm text-muted-foreground">Level {currentLevel}</span>
+          </div>
+          <div className="mt-3 space-y-1.5">
+            <Progress value={gradeProgress} className="h-1.5" />
+            <p className="text-[11px] text-muted-foreground">{gradeProgress}% to next level</p>
+          </div>
+        </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <div className="rounded-full border border-secondary/25 bg-secondary/18 p-2 shadow-sm">
-                <Star className="h-5 w-5 text-secondary-foreground" />
-              </div>
-              Current Grade
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-3xl font-bold">{currentGrade}</span>
-              <span className="text-sm text-muted-foreground">Level {currentLevel}</span>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Progress in grade</span>
-                <span>{gradeProgress}%</span>
-              </div>
-              <Progress value={gradeProgress} className="h-2" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <div className="rounded-full border border-primary/15 bg-primary/10 p-2 shadow-sm">
-                <Zap className="h-5 w-5 text-primary" />
-              </div>
-              Total Experience
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-3xl font-bold">{totalXp.toLocaleString()}</span>
-              <span className="text-sm text-muted-foreground">XP</span>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>To next level</span>
-                <span>
-                  {progression?.currentLevelXp || 0} / {progression?.nextLevelXp || 100}
-                </span>
-              </div>
-              <Progress value={progression?.progressPercent || 0} className="h-2" />
-            </div>
-          </CardContent>
-        </Card>
+        {/* Total experience */}
+        <div className="rounded-lg border bg-card p-4">
+          <div className="mb-3 flex items-center gap-1.5">
+            <Zap className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Total experience</span>
+          </div>
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="font-mono text-3xl font-medium tracking-tight">
+              {totalXp.toLocaleString()}
+            </span>
+            <span className="text-sm text-muted-foreground">XP</span>
+          </div>
+          <div className="mt-3 space-y-1.5">
+            <Progress value={xpProgressPct} className="h-1.5" />
+            <p className="text-[11px] text-muted-foreground">
+              {levelToNextLevel} / {xpNeededNextLevel} to next level
+            </p>
+          </div>
+        </div>
       </div>
 
+      {/* Requirements for next grade */}
       {nextGrade && (
-        <Card className="border-dashed">
-          <CardHeader>
-            <CardTitle className="text-lg">Requirements for {nextGrade.name}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Reach Level {nextGrade.minLevel}</span>
-                    <span className="text-muted-foreground">
-                      {currentLevel} / {nextGrade.minLevel}
-                    </span>
-                  </div>
-                  <Progress
-                    value={Math.min(100, (currentLevel / nextGrade.minLevel) * 100)}
-                    className="h-2"
-                  />
-                </div>
-                {currentLevel >= nextGrade.minLevel && <Check className="h-5 w-5 text-success" />}
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Quests completed</span>
-                    <span className="text-muted-foreground">{totalCompleted}</span>
-                  </div>
-                  <Progress value={Math.min(100, totalCompleted)} className="h-2" />
-                </div>
-              </div>
+        <div className="rounded-lg border bg-card p-5">
+          <div className="mb-4 flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium">Requirements for {nextGrade.name}</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">Complete both to advance</p>
             </div>
-          </CardContent>
-        </Card>
+            <span className="rounded-full bg-muted px-2.5 py-1 font-mono text-[11px] text-muted-foreground">
+              {
+                [
+                  currentLevel < nextGrade.minLevel,
+                  nextGrade.questsRequired > 0 && totalCompleted < nextGrade.questsRequired,
+                ].filter(Boolean).length
+              }{' '}
+              remaining
+            </span>
+          </div>
+
+          <div className="space-y-4">
+            {/* Level requirement */}
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <span className="text-sm">Reach Level {nextGrade.minLevel}</span>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {currentLevel} / {nextGrade.minLevel} levels
+                </span>
+              </div>
+              <Progress
+                value={Math.min(100, (currentLevel / nextGrade.minLevel) * 100)}
+                className="h-1.5"
+              />
+            </div>
+
+            {/* Quest requirement */}
+            {nextGrade.questsRequired > 0 && (
+              <div>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <span className="text-sm">Complete {nextGrade.questsRequired} quests</span>
+                  <span className="font-mono text-xs text-muted-foreground">
+                    {totalCompleted} / {nextGrade.questsRequired} quests
+                  </span>
+                </div>
+                <Progress
+                  value={Math.min(100, (totalCompleted / nextGrade.questsRequired) * 100)}
+                  className="h-1.5"
+                />
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

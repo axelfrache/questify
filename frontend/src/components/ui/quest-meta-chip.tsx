@@ -38,9 +38,18 @@ export function DifficultyChip({
   const config = DIFFICULTY_CONFIG[difficulty];
 
   return (
-    <QuestMetaChip className={cn(config.bgColor, config.textColor)} faded={faded}>
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium border',
+        config.bgColor,
+        config.textColor,
+        config.borderColor,
+        faded && 'opacity-50'
+      )}
+    >
+      <span className="h-1.5 w-1.5 rounded-[2px] bg-current opacity-70" />
       {config.label}
-    </QuestMetaChip>
+    </span>
   );
 }
 

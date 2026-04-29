@@ -7,20 +7,31 @@ import {
   useProjectQuests,
   useSkipQuest,
 } from '@/hooks/use-api';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { QuestCard } from '@/components/QuestCard';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import { type QuestResponse } from '@/lib/api';
-import { AlertTriangle, ArrowLeft, CheckCircle2, Clock3, ListTodo, Plus } from 'lucide-react';
+import { ChevronLeft, Plus } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
-type QuestFilter = 'all' | 'pending' | 'completed';
+const fireConfettiFromElement = (element: HTMLElement) => {
+  const rect = element.getBoundingClientRect();
+  confetti({
+    particleCount: 50,
+    spread: 60,
+    origin: {
+      x: (rect.left + rect.width / 2) / window.innerWidth,
+      y: (rect.top + rect.height / 2) / window.innerHeight,
+    },
+    colors: ['#4f46e5', '#818cf8', '#c7d2fe', '#a855f7', '#6366f1', '#e0e7ff'],
+    startVelocity: 25,
+    gravity: 0.8,
+    scalar: 0.9,
+    ticks: 100,
+  });
+};
 
 export function ProjectDetailPage() {
   const { id = '' } = useParams();
@@ -33,31 +44,30 @@ export function ProjectDetailPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
   const [parentQuest, setParentQuest] = useState<QuestResponse | null>(null);
-  const [questFilter, setQuestFilter] = useState<QuestFilter>('all');
 
   const stats = useMemo(() => {
     if (!quests) return null;
     const total = quests.length;
     const completed = quests.filter((q) => q.status === 'COMPLETED').length;
-    const pending = quests.filter((q) => q.status === 'PENDING').length;
-    const urgent = quests.filter((q) => {
-      if (q.status !== 'PENDING' || !q.dueDate) return false;
-      const due = new Date(q.dueDate);
-      due.setHours(0, 0, 0, 0);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      return due.getTime() <= today.getTime();
-    }).length;
-    const completionPct = total > 0 ? Math.round((completed / total) * 100) : 0;
-    return { total, completed, pending, urgent, completionPct };
+    const xpEarned = quests
+      .filter((q) => q.status === 'COMPLETED')
+      .reduce((sum, q) => sum + (q.totalXpReward ?? 0), 0);
+    return { total, completed, xpEarned };
   }, [quests]);
 
-  const filteredQuests = useMemo(() => {
-    if (!quests) return [];
-    if (questFilter === 'pending') return quests.filter((q) => q.status === 'PENDING');
-    if (questFilter === 'completed') return quests.filter((q) => q.status === 'COMPLETED');
-    return quests;
-  }, [quests, questFilter]);
+  const pendingQuests = useMemo(
+    () => quests?.filter((q) => q.status === 'PENDING') ?? [],
+    [quests]
+  );
+  const completedQuests = useMemo(
+    () => quests?.filter((q) => q.status === 'COMPLETED').reverse() ?? [],
+    [quests]
+  );
+
+  const handleComplete = (questId: string, checkboxElement?: HTMLElement) => {
+    if (checkboxElement) fireConfettiFromElement(checkboxElement);
+    completeQuestMutation.mutate(questId);
+  };
 
   const handleDelete = (questId: string) => {
     if (confirm('Are you sure you want to delete this quest?')) {
@@ -67,15 +77,16 @@ export function ProjectDetailPage() {
 
   if (isLoadingProject) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-56" />
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 rounded-xl" />
-          ))}
+      <div className="space-y-6">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-16 w-80" />
+        <div className="grid grid-cols-3 gap-3">
+          <Skeleton className="h-20" />
+          <Skeleton className="h-20" />
+          <Skeleton className="h-20" />
         </div>
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-16 w-full" />
       </div>
     );
   }
@@ -88,115 +99,57 @@ export function ProjectDetailPage() {
     );
   }
 
-  const createdLabel = new Date(project.createdAt).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-
   return (
     <div className="space-y-6 pb-10">
+      {/* Back link */}
+      <Link
+        to="/projects"
+        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ChevronLeft className="h-3.5 w-3.5" />
+        Back to projects
+      </Link>
+
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1.5">
-          <Link
-            to="/projects"
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Projects
-          </Link>
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-bold">
-              <span className="mr-2">{project.icon}</span>
-              {project.name}
-            </h1>
-            {project.pinned && (
-              <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
-                Pinned
-              </Badge>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-border bg-muted/40 text-3xl">
+            {project.icon || '📁'}
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">{project.name}</h1>
+            {project.description && (
+              <p className="mt-0.5 text-sm text-muted-foreground">{project.description}</p>
             )}
           </div>
-          {project.description && (
-            <p className="max-w-prose text-sm text-muted-foreground">{project.description}</p>
-          )}
-          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Clock3 className="h-3.5 w-3.5" />
-            Created {createdLabel}
-          </p>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2 self-start">
-          <Plus className="h-4 w-4" />
+        <Button onClick={() => setIsCreateDialogOpen(true)} size="sm" className="gap-1.5 shrink-0">
+          <Plus className="h-3.5 w-3.5" />
           Add quest
         </Button>
       </div>
 
       {/* Stat tiles */}
       {stats && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Card className="border-border/60 bg-card/70">
-            <CardContent className="flex flex-col gap-1 p-4">
-              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <ListTodo className="h-3.5 w-3.5" />
-                Total
-              </span>
-              <span className="text-2xl font-bold tabular-nums">{stats.total}</span>
-            </CardContent>
-          </Card>
-          <Card className="border-border/60 bg-card/70">
-            <CardContent className="flex flex-col gap-1 p-4">
-              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Clock3 className="h-3.5 w-3.5" />
-                Pending
-              </span>
-              <span className="text-2xl font-bold tabular-nums">{stats.pending}</span>
-            </CardContent>
-          </Card>
-          <Card className="border-border/60 bg-card/70">
-            <CardContent className="flex flex-col gap-1 p-4">
-              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Completed
-              </span>
-              <span className="text-2xl font-bold tabular-nums">{stats.completed}</span>
-            </CardContent>
-          </Card>
-          <Card
-            className={
-              stats.urgent > 0
-                ? 'border-destructive/40 bg-destructive/5'
-                : 'border-border/60 bg-card/70'
-            }
-          >
-            <CardContent className="flex flex-col gap-1 p-4">
-              <span
-                className={`flex items-center gap-1.5 text-xs ${stats.urgent > 0 ? 'text-destructive' : 'text-muted-foreground'}`}
+        <div className="grid grid-cols-3 gap-2.5">
+          {[
+            { label: 'Total quests', value: stats.total },
+            { label: 'Completed', value: stats.completed },
+            { label: 'XP earned', value: `+${stats.xpEarned}`, mono: true },
+          ].map(({ label, value, mono }) => (
+            <div key={label} className="rounded-lg border bg-card px-4 py-3">
+              <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                {label}
+              </p>
+              <p
+                className={`mt-1.5 text-3xl font-medium tracking-tight ${mono ? 'font-mono' : ''}`}
               >
-                <AlertTriangle className="h-3.5 w-3.5" />
-                Urgent
-              </span>
-              <span
-                className={`text-2xl font-bold tabular-nums ${stats.urgent > 0 ? 'text-destructive' : ''}`}
-              >
-                {stats.urgent}
-              </span>
-            </CardContent>
-          </Card>
+                {value}
+              </p>
+            </div>
+          ))}
         </div>
       )}
-
-      {/* Progress bar */}
-      {stats && stats.total > 0 && (
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Overall progress</span>
-            <span className="font-medium tabular-nums">{stats.completionPct}%</span>
-          </div>
-          <Progress value={stats.completionPct} className="h-2" />
-        </div>
-      )}
-
-      <Separator />
 
       {questsError && (
         <Alert variant="destructive">
@@ -204,46 +157,63 @@ export function ProjectDetailPage() {
         </Alert>
       )}
 
-      {/* Quest filter tabs */}
-      {!isLoadingQuests && quests && quests.length > 0 && (
-        <Tabs value={questFilter} onValueChange={(v) => setQuestFilter(v as QuestFilter)}>
-          <TabsList>
-            <TabsTrigger value="all">All ({stats?.total ?? 0})</TabsTrigger>
-            <TabsTrigger value="pending">Pending ({stats?.pending ?? 0})</TabsTrigger>
-            <TabsTrigger value="completed">Completed ({stats?.completed ?? 0})</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      )}
-
+      {/* Quest list */}
       {isLoadingQuests ? (
-        <div className="space-y-3">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
+        <div className="space-y-2">
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
         </div>
       ) : !quests || quests.length === 0 ? (
         <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
           No quests in this project yet.
         </div>
-      ) : filteredQuests.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
-          No {questFilter} quests.
-        </div>
       ) : (
-        <div className="space-y-3">
-          {filteredQuests.map((quest) => (
-            <QuestCard
-              key={quest.id}
-              quest={quest}
-              onComplete={(questId) => completeQuestMutation.mutate(questId)}
-              onEdit={setEditingQuest}
-              onDelete={handleDelete}
-              onSkip={(questId) => skipQuestMutation.mutate(questId)}
-              onAddSubquest={setParentQuest}
-              isPending={completeQuestMutation.isPending}
-              showInlineSubquests
-              showRegionMarker={false}
-            />
-          ))}
+        <div className="space-y-6">
+          {pendingQuests.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold">Quests</h2>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {pendingQuests.length} items
+                </span>
+              </div>
+              <div className="space-y-1.5">
+                {pendingQuests.map((quest) => (
+                  <QuestCard
+                    key={quest.id}
+                    quest={quest}
+                    onComplete={handleComplete}
+                    onEdit={setEditingQuest}
+                    onDelete={handleDelete}
+                    onSkip={(questId) => skipQuestMutation.mutate(questId)}
+                    onAddSubquest={setParentQuest}
+                    isPending={completeQuestMutation.isPending}
+                    showInlineSubquests
+                    showRegionMarker
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {completedQuests.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold text-muted-foreground">Completed</h2>
+              <div className="space-y-1.5">
+                {completedQuests.map((quest) => (
+                  <QuestCard
+                    key={quest.id}
+                    quest={quest}
+                    onComplete={handleComplete}
+                    onEdit={setEditingQuest}
+                    onDelete={handleDelete}
+                    isPending={completeQuestMutation.isPending}
+                    showRegionMarker
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

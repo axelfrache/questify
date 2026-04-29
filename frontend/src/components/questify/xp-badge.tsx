@@ -1,24 +1,17 @@
 import { cn } from '@/lib/utils';
-import type { DifficultyLevel } from '@/lib/quest-config';
 
 interface XpBadgeProps {
   xp: number;
-  difficulty?: DifficultyLevel;
   className?: string;
-  animate?: boolean;
-  faded?: boolean;
 }
 
-export function XpBadge({ xp, className, animate = false, faded = false }: XpBadgeProps) {
+export function XpBadge({ xp, className }: XpBadgeProps) {
   return (
     <span
       className={cn(
         'inline-flex items-center gap-1 rounded-full px-2 py-0.5',
         'text-xs font-medium font-mono tracking-tight',
         'bg-xp-bg text-xp-fg border border-xp-border',
-        'transition-all duration-300',
-        animate && 'scale-110',
-        faded && 'opacity-50',
         className
       )}
     >

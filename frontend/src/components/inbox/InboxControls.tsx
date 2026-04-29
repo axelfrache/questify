@@ -1,24 +1,13 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Search, Filter, ArrowUpDown, LayoutGrid } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import type { GroupBy, SortBy, Density, QuickFilters } from '@/types/inboxTypes';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Search,
-  Layers,
-  ArrowUpDown,
-  Check,
-  LayoutGrid,
-  LayoutList,
-  AlertCircle,
-  CalendarClock,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { GroupBy, SortBy, Density, QuickFilters } from '@/types/inboxTypes';
 
 interface InboxControlsProps {
   search: string;
@@ -26,6 +15,7 @@ interface InboxControlsProps {
   sortBy: SortBy;
   density: Density;
   quickFilters: QuickFilters;
+  allCount: number;
   totalCount: number;
   displayedCount: number;
   overdueCount?: number;
@@ -44,9 +34,14 @@ const GROUP_BY_OPTIONS: { value: GroupBy; label: string }[] = [
 ];
 
 const SORT_BY_OPTIONS: { value: SortBy; label: string }[] = [
-  { value: 'dueDate', label: 'Due Date' },
+  { value: 'dueDate', label: 'Due date' },
   { value: 'priority', label: 'Priority' },
 ];
+
+const DENSITY_LABELS: Record<Density, string> = {
+  comfort: 'Comfort',
+  compact: 'Compact',
+};
 
 export function InboxControls({
   search,
@@ -54,6 +49,7 @@ export function InboxControls({
   sortBy,
   density,
   quickFilters,
+  allCount,
   totalCount,
   displayedCount,
   overdueCount = 0,
@@ -67,9 +63,7 @@ export function InboxControls({
   const [searchInput, setSearchInput] = useState(search);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      onSearchChange(searchInput);
-    }, 250);
+    const timer = setTimeout(() => onSearchChange(searchInput), 250);
     return () => clearTimeout(timer);
   }, [searchInput, onSearchChange]);
 
@@ -77,147 +71,120 @@ export function InboxControls({
     setSearchInput(e.target.value);
   }, []);
 
+  const activeFilter = quickFilters.overdue ? 'overdue' : quickFilters.today ? 'today' : 'all';
+
+  const chips = [
+    { id: 'all' as const, label: 'All', count: allCount },
+    { id: 'today' as const, label: 'Today', count: todayCount },
+    { id: 'overdue' as const, label: 'Overdue', count: overdueCount },
+  ];
+
   return (
     <div className="space-y-3">
-      {/* Main controls row */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {/* Search */}
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
+      {/* Unified toolbar */}
+      <div className="flex items-center gap-0 rounded-md border border-border bg-card overflow-hidden">
+        {/* Search section */}
+        <div className="flex flex-1 items-center gap-2 px-3 py-2">
+          <Search className="h-[14px] w-[14px] shrink-0 text-muted-foreground" />
+          <input
             type="text"
             placeholder="Search quests..."
             value={searchInput}
             onChange={handleSearchChange}
-            className="pl-9"
+            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none min-w-0"
           />
+          <kbd className="hidden sm:inline-flex items-center rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+            ⌘K
+          </kbd>
         </div>
 
-        {/* Group By */}
+        {/* Separator */}
+        <div className="h-6 w-px bg-border mx-0.5 shrink-0" />
+
+        {/* Filter (Group by) */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Layers className="h-4 w-4" />
-              <span className="hidden sm:inline">Group:</span>
-              {GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label}
-            </Button>
+            <button className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap h-full">
+              <Filter className="h-3.5 w-3.5" />
+              <span>{GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label ?? 'None'}</span>
+            </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="w-36">
             {GROUP_BY_OPTIONS.map((option) => (
               <DropdownMenuItem
                 key={option.value}
                 onClick={() => onGroupByChange(option.value)}
-                className={cn('gap-2', groupBy === option.value && 'bg-accent')}
+                className={cn(groupBy === option.value && 'bg-accent font-medium')}
               >
-                <Check
-                  className={cn('h-4 w-4', groupBy === option.value ? 'opacity-100' : 'opacity-0')}
-                />
                 {option.label}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Sort By */}
+        {/* Sort */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <ArrowUpDown className="h-4 w-4" />
-              <span className="hidden sm:inline">Sort:</span>
-              {SORT_BY_OPTIONS.find((o) => o.value === sortBy)?.label}
-            </Button>
+            <button className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap h-full">
+              <ArrowUpDown className="h-3.5 w-3.5" />
+              <span>{SORT_BY_OPTIONS.find((o) => o.value === sortBy)?.label ?? 'Due date'}</span>
+            </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="w-36">
             {SORT_BY_OPTIONS.map((option) => (
               <DropdownMenuItem
                 key={option.value}
                 onClick={() => onSortByChange(option.value)}
-                className={cn('gap-2', sortBy === option.value && 'bg-accent')}
+                className={cn(sortBy === option.value && 'bg-accent font-medium')}
               >
-                <Check
-                  className={cn('h-4 w-4', sortBy === option.value ? 'opacity-100' : 'opacity-0')}
-                />
                 {option.label}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Density Toggle */}
-        <Button
-          variant="outline"
-          size="sm"
+        {/* Density */}
+        <button
           onClick={onToggleDensity}
-          className="gap-2"
           title={density === 'compact' ? 'Switch to Comfort' : 'Switch to Compact'}
+          className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap h-full"
         >
-          {density === 'compact' ? (
-            <LayoutList className="h-4 w-4" />
-          ) : (
-            <LayoutGrid className="h-4 w-4" />
-          )}
-          <span className="hidden sm:inline">{density === 'compact' ? 'Compact' : 'Comfort'}</span>
-        </Button>
+          <LayoutGrid className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">{DENSITY_LABELS[density]}</span>
+        </button>
       </div>
 
-      {/* Quick filters row - premium pill chips */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {/* Overdue chip */}
-        <button
-          onClick={() => onToggleQuickFilter('overdue')}
-          className={cn(
-            'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium',
-            'border transition-all duration-150',
-            quickFilters.overdue
-              ? 'bg-destructive/15 border-destructive/40 text-destructive'
-              : 'bg-transparent border-border/60 text-muted-foreground hover:border-border hover:bg-muted/30'
-          )}
-        >
-          <AlertCircle className="h-3.5 w-3.5" />
-          Overdue
-          {overdueCount > 0 && (
-            <span
+      {/* Filter chips + counter */}
+      <div className="flex items-center gap-1.5">
+        {chips.map((chip) => {
+          const isActive = activeFilter === chip.id;
+          return (
+            <button
+              key={chip.id}
+              onClick={() => {
+                if (chip.id !== 'all') onToggleQuickFilter(chip.id as keyof QuickFilters);
+                else {
+                  if (quickFilters.overdue) onToggleQuickFilter('overdue');
+                  if (quickFilters.today) onToggleQuickFilter('today');
+                }
+              }}
               className={cn(
-                'ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold',
-                quickFilters.overdue ? 'bg-destructive/20' : 'bg-muted'
+                'inline-flex items-center gap-1.5 rounded-full border px-3 py-0.5 text-sm transition-colors',
+                isActive
+                  ? 'border-border font-medium text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               )}
             >
-              {overdueCount}
-            </span>
-          )}
-          {quickFilters.overdue && <Check className="h-3 w-3 ml-0.5" />}
-        </button>
+              {chip.label}
+              <span className="font-mono text-xs text-muted-foreground">{chip.count}</span>
+            </button>
+          );
+        })}
 
-        {/* Today chip */}
-        <button
-          onClick={() => onToggleQuickFilter('today')}
-          className={cn(
-            'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium',
-            'border transition-all duration-150',
-            quickFilters.today
-              ? 'bg-primary/15 border-primary/40 text-primary'
-              : 'bg-transparent border-border/60 text-muted-foreground hover:border-border hover:bg-muted/30'
-          )}
-        >
-          <CalendarClock className="h-3.5 w-3.5" />
-          Today
-          {todayCount > 0 && (
-            <span
-              className={cn(
-                'ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold',
-                quickFilters.today ? 'bg-primary/20' : 'bg-muted'
-              )}
-            >
-              {todayCount}
-            </span>
-          )}
-          {quickFilters.today && <Check className="h-3 w-3 ml-0.5" />}
-        </button>
-
-        {/* Counter */}
-        <div className="ml-auto text-xs text-muted-foreground">
+        <div className="flex-1" />
+        <span className="font-mono text-xs text-muted-foreground">
           {displayedCount} of {totalCount}
-        </div>
+        </span>
       </div>
     </div>
   );

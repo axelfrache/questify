@@ -10,7 +10,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 interface MonthlyActivityGraphProps {
   className?: string;
-  title?: string;
   dailyData?: DailyStatsResponse[];
   completionByDate?: Record<string, DailyCompletionSnapshot>;
   isLoading?: boolean;
@@ -18,7 +17,6 @@ interface MonthlyActivityGraphProps {
 
 export function MonthlyActivityGraph({
   className,
-  title = 'Monthly Activity',
   dailyData = [],
   completionByDate = {},
   isLoading = false,
@@ -105,14 +103,13 @@ export function MonthlyActivityGraph({
   return (
     <Card className={cn('min-h-[220px]', className)}>
       <CardHeader className="px-4 py-3">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium">{title}</span>
+        <div className="flex items-center justify-end">
           <div className="flex items-center">
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={goToPreviousMonth}>
               <ChevronLeft className="h-3.5 w-3.5" />
             </Button>
-            <span className="w-16 text-center text-xs text-muted-foreground">
-              {format(currentDate, 'MMM yyyy')}
+            <span className="w-20 text-center font-mono text-xs text-muted-foreground">
+              {format(currentDate, 'MMMM yyyy')}
             </span>
             <Button
               variant="ghost"
@@ -133,9 +130,9 @@ export function MonthlyActivityGraph({
             Loading...
           </div>
         ) : (
-          <div className="flex gap-4">
-            <div className="flex flex-1 items-center justify-center py-2">
-              <div className="-m-1 grid grid-cols-7 gap-[3px] overflow-visible p-1 sm:gap-1">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-1 items-center justify-center py-1">
+              <div className="grid w-full grid-cols-7 gap-[4px]">
                 {weeks.flat().map((day, index) => {
                   if (day === null) {
                     return <div key={index} className="h-4 w-4 sm:h-5 sm:w-5" />;
@@ -155,7 +152,7 @@ export function MonthlyActivityGraph({
                         <TooltipTrigger asChild>
                           <div
                             className={cn(
-                              'relative z-0 h-4 w-4 cursor-default rounded-[3px] transition-all sm:h-5 sm:w-5',
+                              'relative z-0 aspect-square cursor-default rounded-[3px] transition-all',
                               'hover:z-10 hover:ring-1 hover:ring-inset hover:ring-foreground/30',
                               isFuture ? 'bg-muted/30' : getCompletionColor(completion),
                               isToday && 'ring-2 ring-inset ring-primary/60'
@@ -187,66 +184,20 @@ export function MonthlyActivityGraph({
               </div>
             </div>
 
-            <div className="w-px bg-border/20" />
-
-            <div className="flex min-w-[85px] flex-1 flex-col justify-center pl-4">
-              <div className="space-y-4">
-                <div>
-                  <p className="text-xl font-semibold leading-none">{monthQuestCount}</p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">quests</p>
-                </div>
-                <div>
-                  <p className="text-xl font-semibold leading-none">{activeDays}</p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">active days</p>
-                </div>
-                <div>
-                  <p className="text-xl font-semibold leading-none">+{monthXp}</p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">XP</p>
-                </div>
-              </div>
-
-              <div className="mt-5 flex items-center gap-1">
-                <TooltipProvider delayDuration={100}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="h-2.5 w-2.5 cursor-default rounded-[2px] bg-muted/40 hover:ring-1 hover:ring-foreground/20" />
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="text-xs">
-                      No quests planned
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider delayDuration={100}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="h-2.5 w-2.5 cursor-default rounded-[2px] bg-primary/30 hover:ring-1 hover:ring-foreground/20" />
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="text-xs">
-                      Up to 49% completed
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider delayDuration={100}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="h-2.5 w-2.5 cursor-default rounded-[2px] bg-primary/45 hover:ring-1 hover:ring-foreground/20" />
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="text-xs">
-                      50% to 99% completed
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider delayDuration={100}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="h-2.5 w-2.5 cursor-default rounded-[2px] bg-primary hover:ring-1 hover:ring-foreground/20" />
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="text-xs">
-                      100% completed
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+            {/* Monthly summary stats */}
+            <div className="flex items-center gap-4 text-xs">
+              <span>
+                <span className="font-mono font-medium text-foreground">{monthQuestCount}</span>
+                <span className="ml-1 text-muted-foreground">quests</span>
+              </span>
+              <span>
+                <span className="font-mono font-medium text-foreground">{activeDays}</span>
+                <span className="ml-1 text-muted-foreground">active days</span>
+              </span>
+              <span>
+                <span className="font-mono font-medium text-foreground">+{monthXp}</span>
+                <span className="ml-1 text-muted-foreground">XP</span>
+              </span>
             </div>
           </div>
         )}

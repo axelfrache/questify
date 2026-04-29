@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import { useProjectsSidebar } from '@/hooks/use-api';
+import { useProjectsSidebar, useUserProgression } from '@/hooks/use-api';
 
 const navItems = [
   { title: 'Inbox', url: '/inbox', icon: Inbox },
@@ -58,6 +58,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { data: projectSidebar } = useProjectsSidebar();
+  const { data: progression } = useUserProgression(user?.id);
   const [isProjectsOpen, setIsProjectsOpen] = useState(true);
 
   const isActive = (url: string) => location.pathname === url;
@@ -80,14 +81,27 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarContent>
-        <div className="px-4 py-4">
+        {/* Header — user only */}
+        <div className="px-3 py-3 border-b border-sidebar-border">
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-3 outline-none">
-              <Avatar className="h-8 w-8">
+            <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-md px-1.5 py-1 outline-none hover:bg-sidebar-accent transition-colors">
+              <Avatar className="h-6 w-6 flex-shrink-0">
                 <AvatarImage src={user?.profilePictureUrl || undefined} alt={user?.username} />
-                <AvatarFallback>{user?.username ? getInitials(user.username) : 'U'}</AvatarFallback>
+                <AvatarFallback className="text-[10px]">
+                  {user?.username ? getInitials(user.username) : 'U'}
+                </AvatarFallback>
               </Avatar>
-              <span className="font-medium">{user?.username || 'User'}</span>
+              <div className="flex-1 min-w-0 text-left">
+                <div className="text-[13px] font-medium leading-tight text-sidebar-foreground truncate">
+                  {user?.username || 'User'}
+                </div>
+                {progression && (
+                  <div className="font-mono text-[10px] text-sidebar-foreground/50 leading-tight">
+                    Lvl {progression.level} · {progression.gradeLabel}
+                  </div>
+                )}
+              </div>
+              <ChevronDown className="h-3.5 w-3.5 text-sidebar-foreground/40 flex-shrink-0" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56">
               <DropdownMenuItem asChild>
@@ -104,7 +118,7 @@ export function AppSidebar() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleLogout}
-                className="cursor-pointer text-red-600 focus:text-red-600"
+                className="cursor-pointer text-destructive focus:text-destructive"
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 <span>Log out</span>

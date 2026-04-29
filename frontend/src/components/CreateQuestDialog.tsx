@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,15 +22,9 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { CalendarIcon, Loader2, Sparkles } from 'lucide-react';
 import { DIFFICULTY_CONFIG } from '@/lib/quest-config';
 import { WeekdayPicker } from '@/components/ui/weekday-picker';
 
@@ -59,6 +53,7 @@ export function CreateQuestDialog({
   const createQuestMutation = useCreateQuest();
   const updateQuestMutation = useUpdateQuest();
   const [date, setDate] = useState<Date>();
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
 
   const {
@@ -77,7 +72,7 @@ export function CreateQuestDialog({
 
   const title = watch('title');
   const recurrence = watch('recurrenceInterval');
-  const difficulty = watch('difficulty');
+  const difficulty = watch('difficulty') ?? 'EASY';
   const categoryId = watch('categoryId') ?? '';
 
   useEffect(() => {
@@ -94,7 +89,10 @@ export function CreateQuestDialog({
         setValue('recurrenceInterval', questToEdit.recurrenceInterval);
         setValue('baseXpReward', questToEdit.baseXpReward);
         if (questToEdit.dueDate) {
-          setDate(new Date(questToEdit.dueDate));
+          // Parse in local timezone to avoid UTC offset shifting the day
+          const datePart = questToEdit.dueDate.split('T')[0];
+          const [y, m, d] = datePart.split('-').map(Number);
+          setDate(new Date(y, m - 1, d));
         } else {
           setDate(undefined);
         }
@@ -147,185 +145,231 @@ export function CreateQuestDialog({
     }
   };
 
-  const getButtonText = () => {
-    if (questToEdit) return 'Update Quest';
-    if (parentId) return 'Create Subquest';
-    if (recurrence === 'DAILY') return 'Create Daily Quest';
-    if (recurrence === 'WEEKLY') return 'Create Weekly Quest';
-    if (recurrence === 'MONTHLY') return 'Create Monthly Quest';
-    return 'Create Quest';
+  const getSubmitLabel = () => {
+    if (questToEdit) return 'Update quest';
+    if (parentId) return 'Create subquest';
+    if (recurrence === 'DAILY') return 'Create daily quest';
+    if (recurrence === 'WEEKLY') return 'Create weekly quest';
+    if (recurrence === 'MONTHLY') return 'Create monthly quest';
+    return 'Create quest';
   };
 
   const getDialogTitle = () => {
-    if (questToEdit) return 'Edit Quest';
-    if (parentId) return `Add Subquest to "${parentTitle}"`;
-    return 'Create New Quest';
+    if (questToEdit) return 'Edit quest';
+    if (parentId) return `Add subquest`;
+    return 'New quest';
   };
 
+  const getDialogDescription = () => {
+    if (questToEdit) return 'Update your quest details';
+    if (parentId) return `Subquest of "${parentTitle}"`;
+    return 'Add a new quest to your board';
+  };
+
+  const xpReward = DIFFICULTY_CONFIG[difficulty as keyof typeof DIFFICULTY_CONFIG]?.xp ?? 50;
   const isPending = createQuestMutation.isPending || updateQuestMutation.isPending;
   const isWeeklyWithNoDays = recurrence === 'WEEKLY' && selectedDays.length === 0;
   const isDisabled = !title?.trim() || isPending || isWeeklyWithNoDays;
+  const showDueDate = recurrence === 'NONE' || !!parentId;
+  const showRecurrence = !parentId || parentRecurrence === 'NONE';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>{getDialogTitle()}</DialogTitle>
-          <DialogDescription>
-            {questToEdit
-              ? 'Update your quest details.'
-              : parentId
-                ? 'This subquest will appear independently in Today.'
-                : 'What do you want to accomplish?'}
+      <DialogContent className="sm:max-w-[560px] p-0 gap-0 overflow-hidden">
+        {/* Header */}
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+          <DialogTitle className="text-xl font-semibold tracking-tight">
+            {getDialogTitle()}
+          </DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground mt-0.5">
+            {getDialogDescription()}
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Input
-              id="title"
-              autoFocus
-              placeholder="e.g., Finish React hooks tutorial"
-              className="text-base"
-              {...register('title', { required: true })}
-            />
-            {errors.title && <span className="text-xs text-destructive">Title is required</span>}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
+        {/* Form */}
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="px-6 py-5 space-y-5">
+            {/* Quest title */}
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Difficulty</Label>
-              <Select
-                onValueChange={(value) =>
-                  setValue('difficulty', value as CreateQuestRequest['difficulty'])
-                }
-                value={difficulty || 'EASY'}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(DIFFICULTY_CONFIG).map(([key, config]) => (
-                    <SelectItem key={key} value={key}>
-                      <span className="flex items-center justify-between w-full gap-2">
-                        <span>{config.label}</span>
-                        <span className={cn('text-xs', config.textColor)}>+{config.xp} XP</span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="text-sm font-medium">Quest title</Label>
+              <Input
+                autoFocus
+                placeholder="e.g., Finish React hooks tutorial"
+                className={cn(
+                  'h-11 text-sm',
+                  errors.title && 'border-destructive focus-visible:ring-destructive'
+                )}
+                {...register('title', { required: true })}
+              />
+              {errors.title && <span className="text-xs text-destructive">Title is required</span>}
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Region</Label>
-              <Select onValueChange={(value) => setValue('categoryId', value)} value={categoryId}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories?.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      <span className="flex items-center gap-2">
-                        <span>{category.icon}</span>
-                        {category.name}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Difficulty + Region */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Difficulty</Label>
+                <Select
+                  onValueChange={(v) =>
+                    setValue('difficulty', v as CreateQuestRequest['difficulty'])
+                  }
+                  value={difficulty}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(DIFFICULTY_CONFIG).map(([key, config]) => (
+                      <SelectItem key={key} value={key}>
+                        <span className="flex items-center gap-2">
+                          <span
+                            className={cn('h-2 w-2 rounded-[2px] flex-shrink-0', config.bgColor)}
+                            style={{ background: 'currentColor' }}
+                          />
+                          <span className={config.textColor}>{config.label}</span>
+                          <span className="ml-auto text-xs text-muted-foreground">
+                            +{config.xp} XP
+                          </span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Region</Label>
+                <Select onValueChange={(v) => setValue('categoryId', v)} value={categoryId}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select region..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories?.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        <span className="flex items-center gap-2">
+                          <span>{cat.icon}</span>
+                          {cat.name}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
 
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="advanced" className="border-none">
-              <AccordionTrigger className="py-2 text-sm text-muted-foreground hover:text-foreground hover:no-underline">
-                <span className="flex items-center gap-1">More options</span>
-              </AccordionTrigger>
-              <AccordionContent className="space-y-4 pt-2">
-                {!parentId || (parentId && parentRecurrence === 'NONE') ? (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Recurrence</Label>
-                    <Select
-                      onValueChange={(value) =>
-                        setValue(
-                          'recurrenceInterval',
-                          value as CreateQuestRequest['recurrenceInterval']
-                        )
-                      }
-                      value={recurrence || 'NONE'}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="NONE">One-time</SelectItem>
-                        <SelectItem value="DAILY">Daily</SelectItem>
-                        <SelectItem value="WEEKLY">Weekly</SelectItem>
-                        <SelectItem value="MONTHLY">Monthly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ) : (
-                  <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
-                    <p>
-                      Recurrence is disabled because the parent quest is recurring. This subquest
-                      will repeat with every occurrence of the parent.
-                    </p>
-                  </div>
-                )}
-
-                {(recurrence === 'NONE' || parentId) && (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Due Date</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            'w-full justify-start text-left font-normal',
-                            !date && 'text-muted-foreground'
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {date ? format(date, 'PPP') : 'Pick a date'}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                )}
-
-                {recurrence === 'WEEKLY' &&
-                  (!parentId || (parentId && parentRecurrence === 'NONE')) && (
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-muted-foreground">Repeat on</Label>
-                      <WeekdayPicker selectedDays={selectedDays} onDaysChange={setSelectedDays} />
-                      {selectedDays.length === 0 && (
-                        <p className="text-xs text-muted-foreground">Select at least one day</p>
-                      )}
-                    </div>
-                  )}
-
+            {/* Recurrence + Due date */}
+            <div className="grid grid-cols-2 gap-4">
+              {showRecurrence ? (
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Description</Label>
-                  <Textarea
-                    placeholder="Add notes or details..."
-                    className="resize-none"
-                    rows={3}
-                    {...register('description')}
-                  />
+                  <Label className="text-sm font-medium">Recurrence</Label>
+                  <Select
+                    onValueChange={(v) =>
+                      setValue('recurrenceInterval', v as CreateQuestRequest['recurrenceInterval'])
+                    }
+                    value={recurrence || 'NONE'}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="NONE">One-time</SelectItem>
+                      <SelectItem value="DAILY">Daily</SelectItem>
+                      <SelectItem value="WEEKLY">Weekly</SelectItem>
+                      <SelectItem value="MONTHLY">Monthly</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+              ) : (
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium text-muted-foreground">Recurrence</Label>
+                  <div className="h-10 flex items-center px-3 rounded-md border border-border bg-muted/50">
+                    <span className="text-sm text-muted-foreground">Inherited from parent</span>
+                  </div>
+                </div>
+              )}
 
-          <Button type="submit" disabled={isDisabled} className="w-full">
-            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {getButtonText()}
-          </Button>
+              {showDueDate && (
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Due date</Label>
+                  <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          'border-input dark:bg-input/30 dark:hover:bg-input/50 focus-visible:border-ring focus-visible:ring-ring/50',
+                          'flex h-9 w-full items-center gap-2 rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs',
+                          'transition-[color,box-shadow] outline-none focus-visible:ring-[3px]',
+                          !date && 'text-muted-foreground'
+                        )}
+                      >
+                        <CalendarIcon className="h-4 w-4 shrink-0 opacity-50" />
+                        {date ? format(date, 'dd/MM/yyyy') : 'Pick a date'}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={(d) => {
+                          setDate(d);
+                          setDatePickerOpen(false);
+                        }}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
+            </div>
+
+            {/* Weekly day picker */}
+            {recurrence === 'WEEKLY' && showRecurrence && (
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Repeat on</Label>
+                <WeekdayPicker selectedDays={selectedDays} onDaysChange={setSelectedDays} />
+                {selectedDays.length === 0 && (
+                  <p className="text-xs text-muted-foreground">Select at least one day</p>
+                )}
+              </div>
+            )}
+
+            {/* Description */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Description</Label>
+              <Textarea
+                placeholder="Add notes or details..."
+                className="resize-none min-h-[88px] bg-muted/40 border-border/60 text-sm"
+                rows={3}
+                {...register('description')}
+              />
+            </div>
+
+            {/* XP reward banner */}
+            <div className="flex items-center justify-between rounded-lg px-4 py-3 bg-xp-bg border border-xp-border">
+              <div className="flex items-center gap-2.5 text-sm text-xp-fg">
+                <Sparkles className="h-4 w-4 flex-shrink-0" />
+                <span>Reward for completing this quest</span>
+              </div>
+              <span className="font-mono font-semibold text-xp-fg">
+                +{xpReward} <span className="text-xs opacity-70">XP</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-border bg-muted/30">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isDisabled} className="min-w-[120px]">
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {getSubmitLabel()}
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
