@@ -42,21 +42,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
 
   const clearSessionQueries = useCallback(() => {
-    queryClient.removeQueries({
-      predicate: ({ queryKey }) => {
-        const root = queryKey[0];
-        return (
-          root === 'auth' ||
-          root === 'users' ||
-          root === 'quests' ||
-          root === 'categories' ||
-          root === 'stats' ||
-          root === 'history' ||
-          root === 'admin'
-        );
-      },
-    });
     queryClient.setQueryData(queryKeys.auth.me, null);
+    queryClient.removeQueries({
+      predicate: ({ queryKey }) => queryKey[0] !== 'auth',
+    });
   }, [queryClient]);
 
   const { data: currentUser, isLoading } = useQuery({
@@ -81,11 +70,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const login = async (email: string, password: string) => {
+    queryClient.removeQueries({
+      predicate: ({ queryKey }) => queryKey[0] !== 'auth',
+    });
     await api.login({ email, password });
     await refreshCurrentUser();
   };
 
   const register = async (username: string, email: string, password: string) => {
+    queryClient.removeQueries({
+      predicate: ({ queryKey }) => queryKey[0] !== 'auth',
+    });
     await api.register({ username, email, password });
     await refreshCurrentUser();
   };
