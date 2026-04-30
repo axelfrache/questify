@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import * as TabsPrimitive from '@radix-ui/react-tabs';
 import {
   Select,
   SelectContent,
@@ -20,16 +21,21 @@ import {
   useUploadProfilePicture,
   useUserProfile,
 } from '@/hooks/use-api';
-import { Upload, Trash2, Loader2, Save, Globe, Lock, AlertTriangle } from 'lucide-react';
+import {
+  Upload,
+  Trash2,
+  Loader2,
+  Save,
+  Globe,
+  Lock,
+  AlertTriangle,
+  User,
+  SlidersHorizontal,
+  Shield,
+  Camera,
+} from 'lucide-react';
 import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-      {children}
-    </p>
-  );
-}
+import { cn } from '@/lib/utils';
 
 function SettingRow({
   label,
@@ -48,6 +54,14 @@ function SettingRow({
       </div>
       {children}
     </div>
+  );
+}
+
+function GroupLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70">
+      {children}
+    </p>
   );
 }
 
@@ -126,26 +140,28 @@ function PasswordChangeForm({ userId }: { userId?: string }) {
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
       {success && <p className="text-xs text-primary">Password changed successfully.</p>}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleChangePassword}
-        disabled={
-          changePasswordMutation.isPending || !currentPassword || !newPassword || !confirmPassword
-        }
-      >
-        {changePasswordMutation.isPending ? (
-          <>
-            <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-            Changing…
-          </>
-        ) : (
-          <>
-            <Lock className="mr-2 h-3.5 w-3.5" />
-            Change password
-          </>
-        )}
-      </Button>
+      <div className="flex justify-end pt-1">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleChangePassword}
+          disabled={
+            changePasswordMutation.isPending || !currentPassword || !newPassword || !confirmPassword
+          }
+        >
+          {changePasswordMutation.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+              Changing…
+            </>
+          ) : (
+            <>
+              <Lock className="mr-2 h-3.5 w-3.5" />
+              Update password
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -256,217 +272,242 @@ export function SettingsPage() {
   const isProfileUnchanged =
     username.trim() === (user?.username ?? '') && bio === (profile?.bio ?? '');
 
+  const tabTrigger = cn(
+    'flex items-center gap-2 px-1 pb-3 pt-1 text-sm font-medium border-b-2 -mb-px',
+    'text-muted-foreground border-transparent',
+    'hover:text-foreground transition-colors duration-150',
+    'data-[state=active]:text-foreground data-[state=active]:border-primary',
+    'focus-visible:outline-none'
+  );
+
   return (
-    <div className="space-y-8 pb-10">
+    <div className="pb-10 max-w-2xl mx-auto">
       {/* Header */}
-      <div>
+      <div className="mb-7">
         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground">Manage your account and preferences</p>
+        <p className="text-sm text-muted-foreground mt-0.5">Manage your account and preferences</p>
       </div>
 
-      {/* Appearance */}
-      <div>
-        <SectionLabel>Appearance</SectionLabel>
-        <div className="rounded-lg border bg-card px-5 py-4">
-          <SettingRow label="Theme" description="Select the interface color scheme">
-            <Select value={theme} onValueChange={(v: 'light' | 'dark' | 'system') => setTheme(v)}>
-              <SelectTrigger className="w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="dark">Dark</SelectItem>
-                <SelectItem value="system">System</SelectItem>
-              </SelectContent>
-            </Select>
-          </SettingRow>
-        </div>
-      </div>
+      <TabsPrimitive.Root defaultValue="profile">
+        {/* Underline tabs */}
+        <TabsPrimitive.List className="flex gap-6 border-b border-border w-full">
+          <TabsPrimitive.Trigger value="profile" className={tabTrigger}>
+            <User className="h-3.5 w-3.5 shrink-0" />
+            Profile
+          </TabsPrimitive.Trigger>
+          <TabsPrimitive.Trigger value="preferences" className={tabTrigger}>
+            <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" />
+            Preferences
+          </TabsPrimitive.Trigger>
+          <TabsPrimitive.Trigger value="security" className={tabTrigger}>
+            <Shield className="h-3.5 w-3.5 shrink-0" />
+            Security
+          </TabsPrimitive.Trigger>
+        </TabsPrimitive.List>
 
-      {/* Profile */}
-      <div>
-        <SectionLabel>Profile</SectionLabel>
-        <div className="rounded-lg border bg-card px-5 py-5 space-y-5">
-          {/* Avatar */}
-          <div className="flex items-center gap-5">
-            <Avatar className="h-16 w-16 text-2xl">
-              <AvatarImage src={user?.profilePictureUrl || undefined} alt={user?.username} />
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {getInitials()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col gap-1.5">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileSelect}
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                className="hidden"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-              >
-                {isUploading ? (
-                  <>
-                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                    Uploading…
-                  </>
-                ) : (
-                  <>
-                    <Upload className="mr-2 h-3.5 w-3.5" />
-                    Upload picture
-                  </>
-                )}
-              </Button>
-              {user?.profilePictureUrl && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleDeletePicture}
-                  disabled={isDeleting}
-                  className="justify-start px-2 text-destructive/80 hover:text-destructive hover:bg-destructive/8"
+        {/* ── Profile ── */}
+        <TabsPrimitive.Content value="profile" className="mt-6 outline-none">
+          <div className="rounded-lg border bg-card overflow-hidden">
+            {/* Avatar header */}
+            <div className="px-5 py-5 flex items-center gap-4">
+              <div className="relative group/avatar shrink-0">
+                <Avatar className="h-14 w-14 text-xl">
+                  <AvatarImage src={user?.profilePictureUrl || undefined} alt={user?.username} />
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {getInitials()}
+                  </AvatarFallback>
+                </Avatar>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="absolute inset-0 rounded-full flex items-center justify-center bg-black/50 opacity-0 group-hover/avatar:opacity-100 transition-opacity text-white cursor-pointer disabled:cursor-not-allowed"
                 >
-                  {isDeleting ? (
+                  {isUploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Camera className="h-4 w-4" />
+                  )}
+                </button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold">{user?.username || '—'}</p>
+                <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  <Upload className="mr-1.5 h-3.5 w-3.5" />
+                  {isUploading ? 'Uploading…' : 'Change photo'}
+                </Button>
+                {user?.profilePictureUrl && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    onClick={handleDeletePicture}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <div className="h-px bg-border" />
+
+            {/* Editable fields */}
+            <div className="px-5 py-5 space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="username" className="text-xs font-medium">
+                  Username
+                </Label>
+                <Input
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Your username"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-xs font-medium">
+                  Email
+                </Label>
+                <Input id="email" value={user?.email || ''} disabled className="bg-muted/60" />
+                <p className="text-[11px] text-muted-foreground">Email cannot be changed.</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="bio" className="text-xs font-medium">
+                  Bio
+                </Label>
+                <Textarea
+                  id="bio"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  rows={3}
+                  maxLength={280}
+                  placeholder="A short line about your focus or current quest."
+                />
+                <div className="flex justify-between text-[11px] text-muted-foreground">
+                  <span>Displayed on your profile page.</span>
+                  <span>{bio.length}/280</span>
+                </div>
+              </div>
+
+              {profileError && <p className="text-xs text-destructive">{profileError}</p>}
+              {profileSuccess && <p className="text-xs text-primary">Profile updated.</p>}
+
+              <div className="flex justify-end pt-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSaveProfile}
+                  disabled={isSavingProfile || isProfileUnchanged}
+                >
+                  {isSavingProfile ? (
                     <>
                       <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                      Removing…
+                      Saving…
                     </>
                   ) : (
                     <>
-                      <Trash2 className="mr-2 h-3.5 w-3.5" />
-                      Remove
+                      <Save className="mr-2 h-3.5 w-3.5" />
+                      Save changes
                     </>
                   )}
                 </Button>
-              )}
-            </div>
-          </div>
-
-          <div className="h-px bg-border" />
-
-          {/* Fields */}
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="username" className="text-xs">
-                Username
-              </Label>
-              <Input
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Your username"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-xs">
-                Email
-              </Label>
-              <Input id="email" value={user?.email || ''} disabled className="bg-muted" />
-              <p className="text-[11px] text-muted-foreground">Email cannot be changed.</p>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="bio" className="text-xs">
-                Bio
-              </Label>
-              <Textarea
-                id="bio"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                rows={3}
-                maxLength={280}
-                placeholder="A short line about your focus or current quest."
-              />
-              <div className="flex justify-between text-[11px] text-muted-foreground">
-                <span>Displayed on your profile page.</span>
-                <span>{bio.length}/280</span>
               </div>
             </div>
-            {profileError && <p className="text-xs text-destructive">{profileError}</p>}
-            {profileSuccess && <p className="text-xs text-primary">Profile updated.</p>}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSaveProfile}
-              disabled={isSavingProfile || isProfileUnchanged}
+          </div>
+        </TabsPrimitive.Content>
+
+        {/* ── Preferences ── */}
+        <TabsPrimitive.Content value="preferences" className="mt-6 outline-none space-y-4">
+          <div className="rounded-lg border bg-card px-5 py-4">
+            <GroupLabel>Appearance</GroupLabel>
+            <SettingRow label="Theme" description="Select the interface color scheme">
+              <Select value={theme} onValueChange={(v: 'light' | 'dark' | 'system') => setTheme(v)}>
+                <SelectTrigger className="w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Light</SelectItem>
+                  <SelectItem value="dark">Dark</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                </SelectContent>
+              </Select>
+            </SettingRow>
+          </div>
+
+          <div className="rounded-lg border bg-card px-5 py-4">
+            <GroupLabel>Localisation</GroupLabel>
+            <SettingRow
+              label="Timezone"
+              description={
+                <>
+                  <Globe className="inline h-3 w-3 mr-1" />
+                  Used for daily resets and scheduling
+                </>
+              }
             >
-              {isSavingProfile ? (
-                <>
-                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                  Saving…
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-3.5 w-3.5" />
-                  Save changes
-                </>
-              )}
+              <Select value={timezone} onValueChange={handleTimezoneChange}>
+                <SelectTrigger className="w-52">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {COMMON_TIMEZONES.map((tz) => (
+                    <SelectItem key={tz.value} value={tz.value}>
+                      {tz.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </SettingRow>
+          </div>
+        </TabsPrimitive.Content>
+
+        {/* ── Security ── */}
+        <TabsPrimitive.Content value="security" className="mt-6 outline-none space-y-4">
+          <div className="rounded-lg border bg-card px-5 py-5">
+            <GroupLabel>Password</GroupLabel>
+            <PasswordChangeForm userId={user?.id} />
+          </div>
+
+          <div className="rounded-lg border border-destructive/25 bg-card px-5 py-5">
+            <div className="flex items-center gap-2 mb-1.5">
+              <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+              <p className="text-sm font-semibold text-destructive">Danger zone</p>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">
+              Permanently removes your account, quests, progress, and all associated data. This
+              action cannot be undone.
+            </p>
+            <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
+              <Trash2 className="mr-2 h-3.5 w-3.5" />
+              Delete my account
             </Button>
           </div>
-        </div>
-      </div>
-
-      {/* Security */}
-      <div>
-        <SectionLabel>Security</SectionLabel>
-        <div className="rounded-lg border bg-card px-5 py-5 space-y-1">
-          <div className="flex items-center gap-2 mb-4">
-            <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-            <p className="text-sm font-medium">Change password</p>
-          </div>
-          <PasswordChangeForm userId={user?.id} />
-        </div>
-      </div>
-
-      {/* Localisation */}
-      <div>
-        <SectionLabel>Localisation</SectionLabel>
-        <div className="rounded-lg border bg-card px-5 py-4">
-          <SettingRow
-            label="Timezone"
-            description={
-              <>
-                <Globe className="inline h-3 w-3 mr-1" />
-                Used for daily resets and scheduling
-              </>
-            }
-          >
-            <Select value={timezone} onValueChange={handleTimezoneChange}>
-              <SelectTrigger className="w-52">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {COMMON_TIMEZONES.map((tz) => (
-                  <SelectItem key={tz.value} value={tz.value}>
-                    {tz.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </SettingRow>
-        </div>
-      </div>
-
-      {/* Danger zone */}
-      <div>
-        <SectionLabel>Danger zone</SectionLabel>
-        <div className="rounded-lg border border-destructive/20 bg-card px-5 py-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
-            <p className="text-sm font-medium text-destructive">Delete account</p>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Permanently removes your account, quests, progress, and all associated data. This action
-            cannot be undone.
-          </p>
-          <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
-            <Trash2 className="mr-2 h-3.5 w-3.5" />
-            Delete my account
-          </Button>
-        </div>
-      </div>
+        </TabsPrimitive.Content>
+      </TabsPrimitive.Root>
 
       {user?.id && (
         <DeleteAccountDialog
