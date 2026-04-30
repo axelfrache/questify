@@ -36,88 +36,81 @@ export function ProfileHero({
   const xpToNextLevel = Math.max(nextLevelXp - currentLevelXp, 0);
 
   return (
-    <section className="relative overflow-hidden rounded-[calc(var(--radius)+8px)] border border-border/70 bg-card/92 px-5 py-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:px-7 sm:py-7 dark:shadow-[0_22px_44px_rgba(0,0,0,0.34)]">
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,transparent_55%,theme(colors.background/72))]" />
-      <div className="absolute inset-y-0 right-0 hidden w-1/3 bg-[radial-gradient(circle_at_top_right,theme(colors.primary/10),transparent_55%)] lg:block" />
-      <div className="relative space-y-6">
+    <section className="relative overflow-hidden rounded-lg border bg-card px-5 py-5 sm:px-6 sm:py-6">
+      {/* Subtle radial accent */}
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(ellipse_at_top_right,theme(colors.primary/8),transparent_60%)]" />
+
+      <div className="relative space-y-5">
+        {/* Top row: avatar + identity + edit */}
         <div className="flex items-start justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-4 sm:gap-5">
-            <Avatar className="h-20 w-20 shrink-0 border border-primary/20 text-3xl sm:h-24 sm:w-24 sm:text-4xl">
+          <div className="flex min-w-0 items-center gap-4">
+            <Avatar className="h-16 w-16 shrink-0 border border-border text-2xl sm:h-20 sm:w-20 sm:text-3xl">
               <AvatarImage src={profilePictureUrl || undefined} alt={username} />
-              <AvatarFallback className="bg-primary/90 text-primary-foreground">
+              <AvatarFallback className="bg-primary text-primary-foreground">
                 {initials}
               </AvatarFallback>
             </Avatar>
 
-            <div className="min-w-0 space-y-3">
-              <div className="space-y-3">
-                <h1 className="truncate text-3xl font-semibold tracking-tight sm:text-4xl">
-                  {username}
-                </h1>
-                <div className="inline-flex min-h-8 items-stretch overflow-hidden rounded-xl border border-border/70 bg-background/80 shadow-sm">
-                  <span className="inline-flex items-center bg-primary/[0.12] px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-                    Level {level}
-                  </span>
-                  <span className="w-px bg-border/70" />
-                  <span className="inline-flex items-center px-3 text-sm font-medium text-foreground">
-                    {gradeLabel}
-                  </span>
-                </div>
+            <div className="min-w-0 space-y-1.5">
+              <h1 className="truncate text-2xl font-semibold tracking-tight sm:text-3xl">
+                {username}
+              </h1>
+              <div className="inline-flex items-center gap-2 rounded-md border border-border/70 bg-muted/50 px-2.5 py-1 text-xs">
+                <span className="font-semibold text-primary">Lvl {level}</span>
+                <span className="h-3 w-px bg-border" />
+                <span className="text-muted-foreground">{gradeLabel}</span>
               </div>
-
-              {trimmedBio ? (
-                <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-[15px]">
+              {trimmedBio && (
+                <p className="text-sm text-muted-foreground leading-relaxed max-w-lg">
                   {trimmedBio}
                 </p>
-              ) : null}
+              )}
             </div>
           </div>
 
           <Button asChild variant="ghost" size="sm" className="shrink-0">
             <Link to="/settings">
-              <Pencil className="h-4 w-4" />
-              Edit profile
+              <Pencil className="h-3.5 w-3.5" />
+              Edit
             </Link>
           </Button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
-          <div className="inline-flex items-center gap-2">
-            <Zap className="h-4 w-4 text-primary" />
-            <span className="font-medium text-foreground">{totalXp.toLocaleString()}</span>
-            <span className="text-muted-foreground">total XP</span>
+        {/* Stats row */}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-md border border-border/50 bg-muted/30 px-4 py-3 text-sm">
+          <div className="flex items-center gap-2">
+            <Zap className="h-3.5 w-3.5 text-primary" />
+            <span className="font-mono font-medium">{totalXp.toLocaleString()}</span>
+            <span className="text-muted-foreground">XP</span>
           </div>
-          <div className="inline-flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <span className="font-medium text-foreground">{currentStreak}</span>
+          <span className="h-3 w-px bg-border" />
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <span className="font-mono font-medium">{currentStreak}</span>
             <span className="text-muted-foreground">day streak</span>
           </div>
-          <div className="inline-flex items-center gap-2">
-            <Target className="h-4 w-4 text-primary" />
-            <span className="font-medium text-foreground">{totalCompleted}</span>
+          <span className="h-3 w-px bg-border" />
+          <div className="flex items-center gap-2">
+            <Target className="h-3.5 w-3.5 text-primary" />
+            <span className="font-mono font-medium">{totalCompleted}</span>
             <span className="text-muted-foreground">quests done</span>
           </div>
         </div>
 
-        <div className="space-y-3 border-t border-border/60 pt-4">
-          <div className="flex items-center justify-between gap-4 text-sm">
-            <span className="text-muted-foreground">XP progression</span>
-            <span className="font-medium text-foreground">
-              {currentLevelXp.toLocaleString()} / {nextLevelXp.toLocaleString()} XP
+        {/* XP progress */}
+        <div className="space-y-2 border-t border-border/50 pt-4">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>XP to next level</span>
+            <span className="font-mono font-medium text-foreground">
+              {currentLevelXp.toLocaleString()} / {nextLevelXp.toLocaleString()}
             </span>
           </div>
-          <Progress value={progressPercent} className="h-3.5 rounded-full bg-primary/10" />
-          <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-            <span
-              className={
-                progressPercent >= 100 ? 'font-medium text-primary' : 'text-muted-foreground'
-              }
-            >
-              {Math.round(progressPercent)}% completed
-            </span>
-            <span className="inline-flex items-center gap-1 font-medium text-foreground">
-              <ArrowUpRight className="h-4 w-4 text-primary" />
-              {xpToNextLevel.toLocaleString()} XP to next level
+          <Progress value={progressPercent} className="h-2 rounded-full bg-muted/60" />
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{Math.round(progressPercent)}%</span>
+            <span className="inline-flex items-center gap-1">
+              <ArrowUpRight className="h-3 w-3 text-primary" />
+              {xpToNextLevel.toLocaleString()} XP remaining
             </span>
           </div>
         </div>

@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
-import { ArrowRight, Plus } from 'lucide-react';
+import { useMemo } from 'react';
+import { Map } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   useCategories,
@@ -9,13 +9,9 @@ import {
   useUserProgression,
 } from '@/hooks/use-api';
 import { useDailyCompletion } from '@/hooks/use-daily-completion';
-import { Button } from '@/components/ui/button';
 import { ProfileHero } from '@/components/profile/ProfileHero';
-import { RegionRadarChart } from '@/components/ui/region-radar-chart';
 import { MonthlyActivityGraph } from '@/components/ui/monthly-activity-graph';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
 
 export function ProfilePage() {
   const { user } = useAuth();
@@ -34,15 +30,30 @@ export function ProfilePage() {
     isLoadingCategories ||
     isLoadingCompletion;
 
+  const regionData = useMemo(() => {
+    if (!categoryStats || categoryStats.length === 0) return [];
+    const total = categoryStats.reduce((s, c) => s + c.questsCompleted, 0) || 1;
+    return categoryStats
+      .filter((c) => c.questsCompleted > 0)
+      .map((c) => ({
+        name: c.categoryName,
+        count: c.questsCompleted,
+        pct: Math.round((c.questsCompleted / total) * 100),
+        color:
+          categories?.find((cat) => cat.name === c.categoryName)?.color ?? 'oklch(0.56 0.18 275)',
+      }))
+      .sort((a, b) => b.pct - a.pct);
+  }, [categoryStats, categories]);
+
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-40 rounded-[2rem]" />
-        <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-          <Skeleton className="h-[320px] rounded-[2rem]" />
-          <Skeleton className="h-[320px] rounded-[2rem]" />
+      <div className="space-y-4">
+        <Skeleton className="h-48 rounded-lg" />
+        <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+          <Skeleton className="h-72 rounded-lg" />
+          <Skeleton className="h-72 rounded-lg" />
         </div>
-        <Skeleton className="h-[160px] rounded-[2rem]" />
+        <Skeleton className="h-40 rounded-lg" />
       </div>
     );
   }
@@ -57,7 +68,7 @@ export function ProfilePage() {
   const progressPercent = progression?.progressPercent ?? 0;
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-4 pb-10">
       <ProfileHero
         username={user?.username || 'Unknown'}
         profilePictureUrl={user?.profilePictureUrl}
@@ -72,68 +83,56 @@ export function ProfilePage() {
         progressPercent={progressPercent}
       />
 
-      <div className="grid items-stretch gap-4 lg:grid-cols-2">
-        <RegionRadarChart data={categoryStats ?? []} />
-        <MonthlyActivityGraph
-          dailyData={activityStats ?? []}
-          completionByDate={completionByDate}
-          isLoading={isLoadingActivity || isLoadingCompletion}
-        />
-      </div>
+      <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+        {/* Monthly activity */}
+        <div className="rounded-lg border bg-card overflow-hidden">
+          <MonthlyActivityGraph
+            dailyData={activityStats ?? []}
+            completionByDate={completionByDate}
+            isLoading={isLoadingActivity || isLoadingCompletion}
+            className="border-0 shadow-none bg-transparent"
+          />
+        </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-start justify-between gap-4">
-          <div className="space-y-1">
-            <CardTitle className="tracking-tight">Regions</CardTitle>
-            <CardDescription>The categories currently shaping your quest flow.</CardDescription>
+        {/* By region */}
+        <div className="rounded-lg border bg-card p-5">
+          <div className="mb-4 flex items-center gap-1.5">
+            <Map className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-sm font-medium">By region</span>
           </div>
-          {categories && categories.length > 0 ? (
-            <Button asChild variant="ghost" size="sm" className="shrink-0">
-              <Link to="/regions">
-                Manage regions
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          ) : null}
-        </CardHeader>
-        <CardContent>
-          {!categories || categories.length === 0 ? (
-            <div className="rounded-[calc(var(--radius)+2px)] border border-dashed border-border/70 bg-background/55 px-5 py-8 text-center">
-              <p className="text-sm font-medium text-foreground">No regions yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Create your first region to organize your quests by area of focus.
+
+          {regionData.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <p className="text-sm font-medium text-foreground">No activity yet</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Complete quests to see your region breakdown.
               </p>
-              <Button asChild variant="outline" className="mt-4">
-                <Link to="/regions">
-                  <Plus className="h-4 w-4" />
-                  Create your first region
-                </Link>
-              </Button>
             </div>
           ) : (
-            <div className="flex flex-wrap gap-2.5">
-              {categories.map((category) => (
-                <Link
-                  key={category.id}
-                  to={`/inbox?category=${category.id}`}
-                  className={cn(
-                    'inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/72 px-3 py-2 text-sm shadow-sm transition-colors',
-                    'hover:border-border hover:bg-muted/60'
-                  )}
-                >
-                  <span
-                    className="flex h-7 w-7 items-center justify-center rounded-full text-base"
-                    style={{ backgroundColor: `${category.color}18`, color: category.color }}
-                  >
-                    {category.icon}
-                  </span>
-                  <span className="font-medium text-foreground">{category.name}</span>
-                </Link>
+            <div className="space-y-3">
+              {regionData.map((r) => (
+                <div key={r.name}>
+                  <div className="mb-1 flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5 font-medium text-foreground">
+                      <span className="h-2 w-2 rounded-full" style={{ background: r.color }} />
+                      {r.name}
+                    </span>
+                    <span className="font-mono text-muted-foreground">
+                      {r.count} · {r.pct}%
+                    </span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/40">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${r.pct}%`, background: r.color }}
+                    />
+                  </div>
+                </div>
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
