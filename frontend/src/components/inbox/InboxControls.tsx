@@ -162,10 +162,13 @@ export function InboxControls({
             <button
               key={chip.id}
               onClick={() => {
-                if (chip.id !== 'all') onToggleQuickFilter(chip.id as keyof QuickFilters);
-                else {
+                if (chip.id === 'all') {
                   if (quickFilters.overdue) onToggleQuickFilter('overdue');
                   if (quickFilters.today) onToggleQuickFilter('today');
+                } else {
+                  const other = chip.id === 'today' ? 'overdue' : 'today';
+                  if (quickFilters[other]) onToggleQuickFilter(other);
+                  onToggleQuickFilter(chip.id as keyof QuickFilters);
                 }
               }}
               className={cn(

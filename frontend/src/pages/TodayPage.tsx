@@ -161,7 +161,7 @@ export function TodayPage() {
           </div>
         </div>
       ) : (
-        <div className="rounded-lg border border-dashed bg-card/50 p-6 text-center">
+        <div className="rounded-lg border border-dashed p-6 text-center">
           <p className="text-base font-medium text-muted-foreground">Nothing required today</p>
           <p className="mt-1 text-sm text-muted-foreground/70">
             Enjoy your day, or check the inbox for optional tasks.

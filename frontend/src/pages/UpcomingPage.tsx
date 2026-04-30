@@ -40,8 +40,11 @@ export function UpcomingPage() {
       </div>
 
       {sortedDates.length === 0 ? (
-        <div className="rounded-lg border p-8 text-center text-muted-foreground">
-          No upcoming quests scheduled for the next 7 days.
+        <div className="rounded-lg border border-dashed p-8 text-center">
+          <p className="text-base font-medium text-muted-foreground">Nothing on the horizon</p>
+          <p className="mt-1 text-sm text-muted-foreground/70">
+            No quests scheduled for the next 7 days.
+          </p>
         </div>
       ) : (
         <div className="space-y-8">
