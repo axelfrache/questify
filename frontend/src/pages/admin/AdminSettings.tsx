@@ -73,7 +73,9 @@ export function AdminSettings() {
     if (!settings) return;
     try {
       setError(null);
-      await updateSettingsMutation.mutateAsync({ registrationEnabled: !settings.registrationEnabled });
+      await updateSettingsMutation.mutateAsync({
+        registrationEnabled: !settings.registrationEnabled,
+      });
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Failed to update settings'));
     }
@@ -90,7 +92,8 @@ export function AdminSettings() {
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.'))
+      return;
     try {
       setError(null);
       await adminDeleteUserMutation.mutateAsync(userId);
@@ -102,7 +105,9 @@ export function AdminSettings() {
   if (!currentUser || currentUser.role !== 'ADMIN') {
     return (
       <Alert variant="destructive">
-        <AlertDescription>Access Denied: You do not have permission to view this page.</AlertDescription>
+        <AlertDescription>
+          Access Denied: You do not have permission to view this page.
+        </AlertDescription>
       </Alert>
     );
   }
@@ -133,10 +138,7 @@ export function AdminSettings() {
           {isLoadingSettings ? (
             <Skeleton className="h-10 w-full" />
           ) : (
-            <SettingRow
-              label="User registration"
-              description="Allow new users to create accounts"
-            >
+            <SettingRow label="User registration" description="Allow new users to create accounts">
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-xs text-muted-foreground">
                   {settings?.registrationEnabled ? 'Enabled' : 'Disabled'}
@@ -172,12 +174,24 @@ export function AdminSettings() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-b border-border/60">
-                    <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground pl-5">User</TableHead>
-                    <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">Email</TableHead>
-                    <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">Role</TableHead>
-                    <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">Status</TableHead>
-                    <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">Created</TableHead>
-                    <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground text-right pr-5">Actions</TableHead>
+                    <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground pl-5">
+                      User
+                    </TableHead>
+                    <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                      Email
+                    </TableHead>
+                    <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                      Role
+                    </TableHead>
+                    <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                      Status
+                    </TableHead>
+                    <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                      Created
+                    </TableHead>
+                    <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground text-right pr-5">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -193,11 +207,15 @@ export function AdminSettings() {
                           <span className="text-sm font-medium">{u.username}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground py-3">{u.email}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground py-3">
+                        {u.email}
+                      </TableCell>
                       <TableCell className="py-3">
                         <Badge
                           variant="secondary"
-                          className={u.role === 'ADMIN' ? 'bg-primary/10 text-primary border-primary/20' : ''}
+                          className={
+                            u.role === 'ADMIN' ? 'bg-primary/10 text-primary border-primary/20' : ''
+                          }
                         >
                           {u.role}
                         </Badge>
@@ -222,7 +240,9 @@ export function AdminSettings() {
                           <Switch
                             checked={u.enabled}
                             onCheckedChange={() => toggleUserStatus(u)}
-                            disabled={currentUser.id === u.id || adminUpdateUserStatusMutation.isPending}
+                            disabled={
+                              currentUser.id === u.id || adminUpdateUserStatusMutation.isPending
+                            }
                           />
                           <Button
                             variant="ghost"
@@ -240,7 +260,10 @@ export function AdminSettings() {
                   ))}
                   {users.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-sm text-muted-foreground">
+                      <TableCell
+                        colSpan={6}
+                        className="text-center py-8 text-sm text-muted-foreground"
+                      >
                         No users found.
                       </TableCell>
                     </TableRow>
