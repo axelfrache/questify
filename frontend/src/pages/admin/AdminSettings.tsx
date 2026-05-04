@@ -16,14 +16,41 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { Loader2, Settings2, Users, Trash2 } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+import { Trash2, Settings2, Users } from 'lucide-react';
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+      {children}
+    </p>
+  );
+}
+
+function SettingRow({
+  label,
+  description,
+  children,
+}: {
+  label: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
+      <div className="min-w-0">
+        <p className="text-sm font-medium">{label}</p>
+        {description && <p className="text-xs text-muted-foreground">{description}</p>}
+      </div>
+      {children}
+    </div>
+  );
+}
 
 export function AdminSettings() {
   const [error, setError] = useState<string | null>(null);
@@ -36,12 +63,9 @@ export function AdminSettings() {
   const adminDeleteUserMutation = useAdminDeleteUser();
 
   const users = usersPage?.content ?? [];
-  const loading = isLoadingSettings || isLoadingUsers;
 
   const getErrorMessage = (err: unknown, fallback: string) => {
-    if (err instanceof ApiError || err instanceof Error) {
-      return err.message;
-    }
+    if (err instanceof ApiError || err instanceof Error) return err.message;
     return fallback;
   };
 
@@ -49,9 +73,7 @@ export function AdminSettings() {
     if (!settings) return;
     try {
       setError(null);
-      await updateSettingsMutation.mutateAsync({
-        registrationEnabled: !settings.registrationEnabled,
-      });
+      await updateSettingsMutation.mutateAsync({ registrationEnabled: !settings.registrationEnabled });
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Failed to update settings'));
     }
@@ -61,21 +83,14 @@ export function AdminSettings() {
     if (currentUser?.id === user.id) return;
     try {
       setError(null);
-      await adminUpdateUserStatusMutation.mutateAsync({
-        id: user.id,
-        enabled: !user.enabled,
-      });
+      await adminUpdateUserStatusMutation.mutateAsync({ id: user.id, enabled: !user.enabled });
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Failed to update user status'));
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (
-      !window.confirm('Are you sure you want to delete this user? This action cannot be undone.')
-    ) {
-      return;
-    }
+    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
     try {
       setError(null);
       await adminDeleteUserMutation.mutateAsync(userId);
@@ -84,35 +99,21 @@ export function AdminSettings() {
     }
   };
 
-  const getInitials = (username: string) => {
-    return username.charAt(0).toUpperCase();
-  };
-
   if (!currentUser || currentUser.role !== 'ADMIN') {
     return (
       <Alert variant="destructive">
-        <AlertDescription>
-          Access Denied: You do not have permission to view this page.
-        </AlertDescription>
+        <AlertDescription>Access Denied: You do not have permission to view this page.</AlertDescription>
       </Alert>
     );
   }
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-10">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        <p className="text-muted-foreground">Manage instance settings and users.</p>
+        <h1 className="text-2xl font-bold tracking-tight">Admin</h1>
+        <p className="text-sm text-muted-foreground">Manage instance settings and users</p>
       </div>
-      <Separator />
 
       {error && (
         <Alert variant="destructive">
@@ -120,24 +121,24 @@ export function AdminSettings() {
         </Alert>
       )}
 
-      <div className="space-y-6">
-        <section>
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Settings2 className="h-5 w-5" />
-            Instance Settings
-          </h2>
-          <Card>
-            <CardHeader>
-              <CardTitle>Registration Control</CardTitle>
-              <CardDescription>Manage user registration access.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <span className="font-medium">User Registration</span>
-                <p className="text-sm text-muted-foreground">Allow new users to create accounts</p>
-              </div>
-              <div className="flex items-center gap-2 self-start sm:self-auto">
-                <span className="text-sm text-muted-foreground">
+      {/* Instance Settings */}
+      <div>
+        <SectionLabel>
+          <span className="inline-flex items-center gap-1.5">
+            <Settings2 className="h-3 w-3" />
+            Instance settings
+          </span>
+        </SectionLabel>
+        <div className="rounded-lg border bg-card px-5 py-4">
+          {isLoadingSettings ? (
+            <Skeleton className="h-10 w-full" />
+          ) : (
+            <SettingRow
+              label="User registration"
+              description="Allow new users to create accounts"
+            >
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-xs text-muted-foreground">
                   {settings?.registrationEnabled ? 'Enabled' : 'Disabled'}
                 </span>
                 <Switch
@@ -146,103 +147,109 @@ export function AdminSettings() {
                   disabled={updateSettingsMutation.isPending}
                 />
               </div>
-            </CardContent>
-          </Card>
-        </section>
+            </SettingRow>
+          )}
+        </div>
+      </div>
 
-        <section>
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Users Management
-            </h2>
-          </div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Registered Users</CardTitle>
-              <CardDescription>A list of all users registered on this instance.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Created At</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+      {/* Users Management */}
+      <div>
+        <SectionLabel>
+          <span className="inline-flex items-center gap-1.5">
+            <Users className="h-3 w-3" />
+            Users management
+          </span>
+        </SectionLabel>
+        <div className="rounded-lg border bg-card">
+          {isLoadingUsers ? (
+            <div className="space-y-3 p-5">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-b border-border/60">
+                    <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground pl-5">User</TableHead>
+                    <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">Email</TableHead>
+                    <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">Role</TableHead>
+                    <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">Status</TableHead>
+                    <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">Created</TableHead>
+                    <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground text-right pr-5">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((u) => (
+                    <TableRow key={u.id} className="border-b border-border/40 last:border-0">
+                      <TableCell className="pl-5 py-3">
+                        <div className="flex items-center gap-2.5">
+                          <Avatar className="h-7 w-7 text-xs">
+                            <AvatarFallback className="bg-muted text-muted-foreground">
+                              {u.username.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm font-medium">{u.username}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground py-3">{u.email}</TableCell>
+                      <TableCell className="py-3">
+                        <Badge
+                          variant="secondary"
+                          className={u.role === 'ADMIN' ? 'bg-primary/10 text-primary border-primary/20' : ''}
+                        >
+                          {u.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-3">
+                        <Badge
+                          variant="outline"
+                          className={
+                            u.enabled
+                              ? 'text-difficulty-easy border-difficulty-easy/50 bg-difficulty-easy/8'
+                              : 'text-destructive border-destructive/50 bg-destructive/8'
+                          }
+                        >
+                          {u.enabled ? 'Active' : 'Disabled'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground py-3 font-mono text-xs">
+                        {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
+                      </TableCell>
+                      <TableCell className="text-right pr-5 py-3">
+                        <div className="flex justify-end items-center gap-2">
+                          <Switch
+                            checked={u.enabled}
+                            onCheckedChange={() => toggleUserStatus(u)}
+                            disabled={currentUser.id === u.id || adminUpdateUserStatusMutation.isPending}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDeleteUser(u.id)}
+                            disabled={currentUser.id === u.id || adminDeleteUserMutation.isPending}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            <span className="sr-only">Delete</span>
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((u) => (
-                      <TableRow key={u.id}>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarFallback>{getInitials(u.username)}</AvatarFallback>
-                            </Avatar>
-                            {u.username}
-                          </div>
-                        </TableCell>
-                        <TableCell>{u.email}</TableCell>
-                        <TableCell>
-                          <Badge variant={u.role === 'ADMIN' ? 'default' : 'secondary'}>
-                            {u.role}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {u.enabled ? (
-                              <Badge variant="outline" className="text-green-600 border-green-600">
-                                Active
-                              </Badge>
-                            ) : (
-                              <Badge
-                                variant="outline"
-                                className="text-destructive border-destructive"
-                              >
-                                Disabled
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '-'}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end items-center gap-2">
-                            <Switch
-                              checked={u.enabled}
-                              onCheckedChange={() => toggleUserStatus(u)}
-                              disabled={
-                                currentUser.id === u.id || adminUpdateUserStatusMutation.isPending
-                              }
-                            />
-
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-                              onClick={() => handleDeleteUser(u.id)}
-                              disabled={
-                                currentUser.id === u.id || adminDeleteUserMutation.isPending
-                              }
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              <span className="sr-only">Delete</span>
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
+                  ))}
+                  {users.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-sm text-muted-foreground">
+                        No users found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
