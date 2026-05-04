@@ -1,9 +1,12 @@
 package com.axelfrache.questify.project.messaging;
 
+import com.axelfrache.questify.project.model.OutboxEvent;
+import com.axelfrache.questify.project.repository.OutboxEventRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -11,19 +14,22 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class ProjectEventPublisher {
 
-  private final RabbitTemplate rabbitTemplate;
+  private final OutboxEventRepository outboxEventRepository;
+  private final ObjectMapper objectMapper;
 
   public void publishProjectDeleted(UUID projectId) {
+    var event = new ProjectDeletedEvent(projectId);
     try {
-      var event = new ProjectDeletedEvent(projectId);
-      rabbitTemplate.convertAndSend(
-          QueueConstants.EXCHANGE, QueueConstants.PROJECT_DELETED_ROUTING_KEY, event);
-      log.debug("Published ProjectDeletedEvent: projectId={}", projectId);
-    } catch (Exception e) {
-      log.warn(
-          "Failed to publish ProjectDeletedEvent for projectId={} — quest-service will not unlink quests: {}",
-          projectId,
-          e.getMessage());
+      var outboxEvent =
+          OutboxEvent.builder()
+              .routingKey(QueueConstants.PROJECT_DELETED_ROUTING_KEY)
+              .payload(objectMapper.writeValueAsString(event))
+              .typeId(ProjectDeletedEvent.class.getName())
+              .build();
+      outboxEventRepository.save(outboxEvent);
+      log.debug("Queued ProjectDeletedEvent to outbox: projectId={}", projectId);
+    } catch (JsonProcessingException ex) {
+      throw new RuntimeException("Failed to serialize ProjectDeletedEvent", ex);
     }
   }
 }
