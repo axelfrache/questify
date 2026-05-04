@@ -51,6 +51,10 @@ export const queryKeys = {
   auth: {
     me: ['auth', 'me'] as const,
   },
+  progression: {
+    all: ['users', 'progression'] as const,
+    byUser: (id: string) => ['users', 'progression', id] as const,
+  },
   projects: {
     sidebar: ['projects', 'sidebar'] as const,
     list: (search: string, sort: 'recent' | 'name', includeArchived: boolean) =>
@@ -63,6 +67,7 @@ export const queryKeys = {
 function invalidateQuestData(queryClient: QueryClient) {
   queryClient.invalidateQueries({ queryKey: queryKeys.quests.all });
   queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+  queryClient.invalidateQueries({ queryKey: queryKeys.progression.all });
 }
 
 function invalidateProjectData(queryClient: QueryClient) {
@@ -488,7 +493,7 @@ export function useHistory(page: number = 0, size: number = 20) {
 
 export function useUserProgression(id?: string) {
   return useQuery({
-    queryKey: ['users', 'progression', id ?? ''],
+    queryKey: queryKeys.progression.byUser(id ?? ''),
     queryFn: () => api.getUserProgression(id ?? ''),
     enabled: !!id,
   });
