@@ -36,3 +36,29 @@ CREATE TABLE IF NOT EXISTS projects.user_project_pins (
 
 CREATE INDEX IF NOT EXISTS idx_user_project_pins_user_id ON projects.user_project_pins(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_project_pins_pinned_at ON projects.user_project_pins(pinned_at);
+
+CREATE TABLE IF NOT EXISTS projects.outbox_events (
+    id              UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    routing_key     VARCHAR(255) NOT NULL,
+    payload         TEXT         NOT NULL,
+    type_id         VARCHAR(512) NOT NULL,
+    status          VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
+    created_at      TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    processed_at    TIMESTAMPTZ,
+    attempts        INTEGER      NOT NULL DEFAULT 0,
+    next_attempt_at TIMESTAMPTZ,
+    last_error      TEXT
+);
+
+ALTER TABLE projects.outbox_events ADD COLUMN IF NOT EXISTS attempts INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE projects.outbox_events ADD COLUMN IF NOT EXISTS next_attempt_at TIMESTAMPTZ;
+ALTER TABLE projects.outbox_events ADD COLUMN IF NOT EXISTS last_error TEXT;
+
+UPDATE projects.outbox_events
+SET status = 'PENDING',
+    next_attempt_at = now()
+WHERE status = 'FAILED';
+
+CREATE INDEX IF NOT EXISTS idx_projects_outbox_pending
+    ON projects.outbox_events (next_attempt_at, created_at)
+    WHERE status = 'PENDING';

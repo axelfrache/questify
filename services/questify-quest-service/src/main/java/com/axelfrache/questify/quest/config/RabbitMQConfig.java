@@ -1,6 +1,7 @@
 package com.axelfrache.questify.quest.config;
 
 import com.axelfrache.questify.quest.messaging.QueueConstants;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
@@ -12,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@Slf4j
 public class RabbitMQConfig {
 
   @Bean
@@ -66,6 +68,21 @@ public class RabbitMQConfig {
   public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
     var template = new RabbitTemplate(connectionFactory);
     template.setMessageConverter(messageConverter());
+    template.setMandatory(true);
+    template.setReturnsCallback(
+        returned ->
+            log.warn(
+                "Message returned — exchange={} routingKey={} replyCode={} replyText={}",
+                returned.getExchange(),
+                returned.getRoutingKey(),
+                returned.getReplyCode(),
+                returned.getReplyText()));
+    template.setConfirmCallback(
+        (correlationData, ack, cause) -> {
+          if (!ack) {
+            log.warn("Message nacked — correlationData={} cause={}", correlationData, cause);
+          }
+        });
     return template;
   }
 }

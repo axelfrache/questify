@@ -1,10 +1,13 @@
 package com.axelfrache.questify.quest.messaging;
 
+import com.axelfrache.questify.quest.model.OutboxEvent;
+import com.axelfrache.questify.quest.repository.OutboxEventRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -12,7 +15,8 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class QuestEventPublisher {
 
-  private final RabbitTemplate rabbitTemplate;
+  private final OutboxEventRepository outboxEventRepository;
+  private final ObjectMapper objectMapper;
 
   public void publishQuestCompleted(
       UUID userId,
@@ -23,9 +27,21 @@ public class QuestEventPublisher {
       Instant completedAt) {
     var event =
         new QuestCompletedEvent(userId, questId, questTitle, xpEarned, categoryName, completedAt);
-    rabbitTemplate.convertAndSend(
-        QueueConstants.EXCHANGE, QueueConstants.QUEST_COMPLETED_ROUTING_KEY, event);
-    log.debug(
-        "Published QuestCompletedEvent: userId={} questId={} xp={}", userId, questId, xpEarned);
+    try {
+      var outboxEvent =
+          OutboxEvent.builder()
+              .routingKey(QueueConstants.QUEST_COMPLETED_ROUTING_KEY)
+              .payload(objectMapper.writeValueAsString(event))
+              .typeId(QuestCompletedEvent.class.getName())
+              .build();
+      outboxEventRepository.save(outboxEvent);
+      log.debug(
+          "Queued QuestCompletedEvent to outbox: userId={} questId={} xp={}",
+          userId,
+          questId,
+          xpEarned);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Failed to serialize QuestCompletedEvent", e);
+    }
   }
 }
