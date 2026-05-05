@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -24,6 +27,7 @@ public class StatsService {
 
   private final QuestCompletionEntryRepository repository;
 
+  @Cacheable(cacheNames = "stats.overview", key = "#userId")
   @Transactional(readOnly = true)
   public OverallStatsResponse getOverallStats(UUID userId) {
     var total = repository.countTotalByUserId(userId);
@@ -46,11 +50,13 @@ public class StatsService {
                     e.getCompletedAt()));
   }
 
+  @Cacheable(cacheNames = "stats.categories", key = "#userId")
   @Transactional(readOnly = true)
   public List<CategoryStatsResponse> getCategoryStats(UUID userId) {
     return repository.findCategoryStatsByUserId(userId);
   }
 
+  @Cacheable(cacheNames = "stats.daily", key = "#userId + '-' + #days")
   @Transactional(readOnly = true)
   public List<DailyStatsResponse> getDailyStats(UUID userId, int days) {
     var today = LocalDate.now(ZoneOffset.UTC);
@@ -71,6 +77,14 @@ public class StatsService {
         .sorted(Comparator.comparing(DailyStatsResponse::date).reversed())
         .toList();
   }
+
+  @Caching(
+      evict = {
+        @CacheEvict(cacheNames = "stats.overview", key = "#userId"),
+        @CacheEvict(cacheNames = "stats.categories", key = "#userId"),
+        @CacheEvict(cacheNames = "stats.daily", allEntries = true)
+      })
+  public void evictUserCache(UUID userId) {}
 
   private int computeCurrentStreak(UUID userId) {
     var today = LocalDate.now(ZoneOffset.UTC);

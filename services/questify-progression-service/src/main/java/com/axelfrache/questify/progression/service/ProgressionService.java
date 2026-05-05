@@ -11,6 +11,8 @@ import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,7 @@ public class ProgressionService {
   private final LevelConfig levelConfig;
 
   @Transactional
+  @CacheEvict(cacheNames = "progression", key = "#userId")
   public void awardXp(
       UUID userId, int amount, UUID questId, String categoryName, Instant completedAt) {
     var progression = findOrCreate(userId);
@@ -53,10 +56,14 @@ public class ProgressionService {
       log.info("User {} grade changed: {} -> {}", userId, previousGrade, newGrade);
   }
 
+  @Cacheable(cacheNames = "progression", key = "#userId")
   @Transactional(readOnly = true)
   public ProgressionResponse getProgression(UUID userId) {
     return toResponse(findOrCreate(userId));
   }
+
+  @CacheEvict(cacheNames = "progression", key = "#userId")
+  public void evictUserCache(UUID userId) {}
 
   private UserProgression findOrCreate(UUID userId) {
     return userProgressionRepository
