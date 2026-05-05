@@ -36,6 +36,9 @@ Questify is built as a **microservices** application:
 | `questify-admin-service` | Admin panel | 8086 |
 | `gateway` | Nginx reverse proxy | 8080 |
 | `frontend` | React/Vite UI | 80 |
+| `postgres` | Persistent data store | 5432 |
+| `rabbitmq` | Domain event broker | 5672 / 15672 |
+| `redis` | Cache-aside store for read models | 6379 |
 
 ## Getting Started
 
@@ -96,6 +99,12 @@ cd services/questify-<service-name>
 ```bash
 ./mvnw spotless:check  # Check formatting
 ./mvnw spotless:apply  # Fix formatting
+```
+
+**All services (run from repository root):**
+```bash
+make spotless        # Fix service formatting
+make spotless-check  # Check service formatting
 ```
 
 **Frontend:**
