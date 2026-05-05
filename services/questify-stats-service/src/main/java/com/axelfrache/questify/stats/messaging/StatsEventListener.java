@@ -2,6 +2,7 @@ package com.axelfrache.questify.stats.messaging;
 
 import com.axelfrache.questify.stats.model.QuestCompletionEntry;
 import com.axelfrache.questify.stats.repository.QuestCompletionEntryRepository;
+import com.axelfrache.questify.stats.service.StatsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class StatsEventListener {
 
   private final QuestCompletionEntryRepository repository;
+  private final StatsService statsService;
 
   @RabbitListener(queues = QueueConstants.QUEST_COMPLETED_QUEUE)
   @Transactional
@@ -28,6 +30,7 @@ public class StatsEventListener {
             .categoryName(event.categoryName())
             .completedAt(event.completedAt())
             .build());
+    statsService.evictUserCache(event.userId());
   }
 
   @RabbitListener(queues = QueueConstants.USER_DELETED_QUEUE)
@@ -35,5 +38,6 @@ public class StatsEventListener {
   public void onUserDeleted(UserDeletedEvent event) {
     log.info("Deleting stats for user {}", event.userId());
     repository.deleteByUserId(event.userId());
+    statsService.evictUserCache(event.userId());
   }
 }
