@@ -97,12 +97,19 @@ public class CategoryService {
     var category = findOrThrow(categoryId);
     validateOwnership(category, userId);
 
-    var templates = questTemplateRepository.findByCategoryAndDeletedFalse(category);
+    var templates = questTemplateRepository.findByCategory(category);
 
     switch (questAction) {
-      case MOVE_TO_INBOX -> questTemplateRepository.clearCategory(category);
+      case MOVE_TO_INBOX -> {
+        templates.forEach(template -> template.setCategory(null));
+        questTemplateRepository.saveAll(templates);
+      }
       case DELETE_ALL -> {
-        templates.forEach(t -> t.setDeleted(true));
+        templates.forEach(
+            template -> {
+              template.setDeleted(true);
+              template.setCategory(null);
+            });
         questTemplateRepository.saveAll(templates);
       }
     }

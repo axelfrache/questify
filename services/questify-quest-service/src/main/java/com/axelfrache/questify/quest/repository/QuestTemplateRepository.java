@@ -20,7 +20,7 @@ public interface QuestTemplateRepository extends JpaRepository<QuestTemplate, UU
 
   List<QuestTemplate> findByUserIdAndRecurrenceRuleTypeIsNotNullAndDeletedFalse(UUID userId);
 
-  List<QuestTemplate> findByCategoryAndDeletedFalse(Category category);
+  List<QuestTemplate> findByCategory(Category category);
 
   @Query("SELECT q FROM QuestTemplate q WHERE q.id = :id AND q.userId = :userId")
   Optional<QuestTemplate> findByIdAndUserId(@Param("id") UUID id, @Param("userId") UUID userId);
@@ -33,10 +33,6 @@ public interface QuestTemplateRepository extends JpaRepository<QuestTemplate, UU
         AND sq.deleted = false AND sq.active = true
       """)
   List<QuestTemplate> findSubquestsWithOccurrences(@Param("parentId") UUID parentId);
-
-  @Modifying
-  @Query("UPDATE QuestTemplate q SET q.category = null WHERE q.category = :category")
-  void clearCategory(@Param("category") Category category);
 
   @Modifying
   @Query("UPDATE QuestTemplate q SET q.projectId = null WHERE q.projectId = :projectId")
