@@ -34,7 +34,7 @@ public class CacheConfig implements CachingConfigurer {
             .copy()
             .activateDefaultTyping(
                 LaissezFaireSubTypeValidator.instance,
-                ObjectMapper.DefaultTyping.NON_FINAL,
+                ObjectMapper.DefaultTyping.EVERYTHING,
                 JsonTypeInfo.As.PROPERTY);
 
     var serializer = new GenericJackson2JsonRedisSerializer(cacheMapper);
