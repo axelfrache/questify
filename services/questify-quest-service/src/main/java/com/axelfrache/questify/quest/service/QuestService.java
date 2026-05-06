@@ -102,6 +102,8 @@ public class QuestService {
                 .hasDueDate(true)
                 .build();
         questOccurrenceRepository.save(occurrence);
+        questEventPublisher.publishQuestScheduled(
+            userId, template.getId(), occurrence.getId(), template.getTitle(), scheduledDate);
         return toResponse(occurrence);
       }
       return toResponse(template);
@@ -121,7 +123,14 @@ public class QuestService {
         if (occurrence.getStatus() != QuestStatus.PENDING)
           throw new IllegalStateException(
               "Cannot update the due date of a completed or cancelled quest occurrence");
-        occurrence.setScheduledDate(request.dueDate().atZone(ZoneOffset.UTC).toLocalDate());
+        var newDate = request.dueDate().atZone(ZoneOffset.UTC).toLocalDate();
+        occurrence.setScheduledDate(newDate);
+        questEventPublisher.publishQuestScheduled(
+            userId,
+            occurrence.getQuestTemplate().getId(),
+            occurrence.getId(),
+            occurrence.getQuestTemplate().getTitle(),
+            newDate);
       }
 
       var template = occurrence.getQuestTemplate();
@@ -166,6 +175,12 @@ public class QuestService {
                         .hasDueDate(true)
                         .build();
                 questOccurrenceRepository.save(occurrence);
+                questEventPublisher.publishQuestScheduled(
+                    userId,
+                    template.getId(),
+                    occurrence.getId(),
+                    template.getTitle(),
+                    scheduledDate);
                 return toResponse(occurrence);
               });
     }

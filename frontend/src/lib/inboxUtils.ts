@@ -112,11 +112,13 @@ export function groupByRegion(
 export function groupByProject(
   quests: QuestResponse[],
   collapsedSections: Set<string>,
-  pinnedProjectIds: string[]
+  pinnedProjectIds: string[],
+  projects: Array<{ id: string; name: string; icon: string }> = []
 ): GroupedQuests[] {
   const looseSectionId = '__loose__';
   const looseQuests: QuestResponse[] = [];
   const projectMap = new Map<string, QuestResponse[]>();
+  const projectInfoMap = new Map(projects.map((p) => [p.id, { name: p.name, icon: p.icon }]));
 
   for (const quest of quests) {
     const projectId = quest.projectId;
@@ -133,10 +135,11 @@ export function groupByProject(
 
   const projectGroups: GroupedQuests[] = [];
   for (const [projectId, projectQuests] of projectMap) {
+    const info = projectInfoMap.get(projectId);
     projectGroups.push({
       regionId: projectId,
-      regionName: 'Project',
-      regionIcon: '📁',
+      regionName: info?.name ?? 'Project',
+      regionIcon: info?.icon ?? '📁',
       regionColor: '#0ea5e9',
       quests: projectQuests,
       totalCount: projectQuests.length,

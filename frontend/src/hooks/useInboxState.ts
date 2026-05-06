@@ -46,7 +46,11 @@ function saveToStorage<T>(key: string, value: T): void {
   } catch {} // eslint-disable-line no-empty
 }
 
-export function useInboxState(allQuests: QuestResponse[], pinnedProjectIds: string[] = []) {
+export function useInboxState(
+  allQuests: QuestResponse[],
+  pinnedProjectIds: string[] = [],
+  projects: Array<{ id: string; name: string; icon: string }> = []
+) {
   const [search, setSearchRaw] = useState('');
   const [groupBy, setGroupByRaw] = useState<GroupBy>(() =>
     sanitizeGroupBy(loadFromStorage<unknown>(GROUPBY_KEY, DEFAULT_INBOX_STATE.groupBy))
@@ -179,11 +183,11 @@ export function useInboxState(allQuests: QuestResponse[], pinnedProjectIds: stri
     }
 
     if (groupBy === 'project') {
-      return groupByProject(processedQuests, collapsedRegions, pinnedProjectIds);
+      return groupByProject(processedQuests, collapsedRegions, pinnedProjectIds, projects);
     }
 
     return groupByRegion(processedQuests, pinnedRegions, collapsedRegions);
-  }, [groupBy, processedQuests, collapsedRegions, pinnedProjectIds, pinnedRegions]);
+  }, [groupBy, processedQuests, collapsedRegions, pinnedProjectIds, pinnedRegions, projects]);
 
   const paginatedQuests = useMemo(() => {
     return processedQuests.slice(0, page * pageSize);

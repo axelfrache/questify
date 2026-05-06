@@ -6,18 +6,21 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE USER project_svc     WITH PASSWORD '${PROJECT_DB_PASSWORD:-project_svc}';
     CREATE USER progression_svc WITH PASSWORD '${PROGRESSION_DB_PASSWORD:-progression_svc}';
     CREATE USER stats_svc       WITH PASSWORD '${STATS_DB_PASSWORD:-stats_svc}';
-    CREATE USER admin_svc       WITH PASSWORD '${ADMIN_DB_PASSWORD:-admin_svc}';
+    CREATE USER admin_svc         WITH PASSWORD '${ADMIN_DB_PASSWORD:-admin_svc}';
+    CREATE USER notification_svc  WITH PASSWORD '${NOTIFICATION_DB_PASSWORD:-notification_svc}';
 
     GRANT CONNECT, CREATE ON DATABASE $POSTGRES_DB TO quest_svc;
     GRANT CONNECT, CREATE ON DATABASE $POSTGRES_DB TO project_svc;
     GRANT CONNECT, CREATE ON DATABASE $POSTGRES_DB TO progression_svc;
     GRANT CONNECT, CREATE ON DATABASE $POSTGRES_DB TO stats_svc;
     GRANT CONNECT, CREATE ON DATABASE $POSTGRES_DB TO admin_svc;
+    GRANT CONNECT, CREATE ON DATABASE $POSTGRES_DB TO notification_svc;
 
     CREATE SCHEMA IF NOT EXISTS auth;
-    CREATE SCHEMA IF NOT EXISTS quests       AUTHORIZATION quest_svc;
-    CREATE SCHEMA IF NOT EXISTS projects     AUTHORIZATION project_svc;
-    CREATE SCHEMA IF NOT EXISTS progression  AUTHORIZATION progression_svc;
-    CREATE SCHEMA IF NOT EXISTS stats        AUTHORIZATION stats_svc;
-    CREATE SCHEMA IF NOT EXISTS admin        AUTHORIZATION admin_svc;
+    CREATE SCHEMA IF NOT EXISTS quests        AUTHORIZATION quest_svc;
+    CREATE SCHEMA IF NOT EXISTS projects      AUTHORIZATION project_svc;
+    CREATE SCHEMA IF NOT EXISTS progression   AUTHORIZATION progression_svc;
+    CREATE SCHEMA IF NOT EXISTS stats         AUTHORIZATION stats_svc;
+    CREATE SCHEMA IF NOT EXISTS admin         AUTHORIZATION admin_svc;
+    CREATE SCHEMA IF NOT EXISTS notifications AUTHORIZATION notification_svc;
 EOSQL

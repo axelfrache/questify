@@ -28,6 +28,7 @@ jobs:
           - progression-service
           - stats-service
           - admin-service
+          - notification-service
     defaults:
       run:
         working-directory: services/questify-${{ matrix.service }}
@@ -88,6 +89,7 @@ jobs:
           - progression-service
           - stats-service
           - admin-service
+          - notification-service
     defaults:
       run:
         working-directory: services/questify-${{ matrix.service }}
@@ -154,6 +156,7 @@ jobs:
           - progression-service
           - stats-service
           - admin-service
+          - notification-service
     steps:
       - uses: actions/checkout@v4
 
@@ -269,6 +272,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Image | Registry |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|----------|" >> $GITHUB_STEP_SUMMARY
-          for svc in auth-service quest-service project-service progression-service stats-service admin-service frontend garage; do
+          for svc in auth-service quest-service project-service progression-service stats-service admin-service notification-service frontend garage; do
             echo "| \`${{ env.IMAGE_PREFIX }}-${svc}\` | docker.io |" >> $GITHUB_STEP_SUMMARY
           done

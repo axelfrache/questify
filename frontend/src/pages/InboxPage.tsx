@@ -82,6 +82,16 @@ export function InboxPage() {
     [projectSidebar]
   );
 
+  const allProjects = useMemo(() => {
+    if (!projectSidebar) return [];
+    const seen = new Set<string>();
+    return [...(projectSidebar.pinned ?? []), ...(projectSidebar.recent ?? [])].filter((p) => {
+      if (seen.has(p.id)) return false;
+      seen.add(p.id);
+      return true;
+    });
+  }, [projectSidebar]);
+
   const {
     search,
     groupBy,
@@ -104,7 +114,7 @@ export function InboxPage() {
     togglePinRegion,
     toggleCollapseRegion,
     loadMore,
-  } = useInboxState(pendingQuests, pinnedProjectIds);
+  } = useInboxState(pendingQuests, pinnedProjectIds, allProjects);
 
   const handleComplete = (id: string, checkboxElement?: HTMLElement) => {
     if (checkboxElement) {

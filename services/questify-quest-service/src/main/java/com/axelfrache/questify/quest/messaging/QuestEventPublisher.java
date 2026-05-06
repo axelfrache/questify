@@ -5,6 +5,7 @@ import com.axelfrache.questify.quest.repository.OutboxEventRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,28 @@ public class QuestEventPublisher {
           xpEarned);
     } catch (JsonProcessingException e) {
       throw new RuntimeException("Failed to serialize QuestCompletedEvent", e);
+    }
+  }
+
+  public void publishQuestScheduled(
+      UUID userId, UUID templateId, UUID occurrenceId, String questTitle, LocalDate scheduledDate) {
+    var event =
+        new QuestScheduledEvent(
+            userId, templateId, occurrenceId, questTitle, scheduledDate.toString());
+    try {
+      outboxEventRepository.save(
+          OutboxEvent.builder()
+              .routingKey(QueueConstants.QUEST_SCHEDULED_ROUTING_KEY)
+              .payload(objectMapper.writeValueAsString(event))
+              .typeId(QuestScheduledEvent.class.getName())
+              .build());
+      log.debug(
+          "Queued QuestScheduledEvent to outbox: userId={} occurrenceId={} date={}",
+          userId,
+          occurrenceId,
+          scheduledDate);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Failed to serialize QuestScheduledEvent", e);
     }
   }
 }
