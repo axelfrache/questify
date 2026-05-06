@@ -1,6 +1,7 @@
 SERVICES := \
 	questify-admin-service \
 	questify-auth-service \
+	questify-notification-service \
 	questify-progression-service \
 	questify-project-service \
 	questify-quest-service \

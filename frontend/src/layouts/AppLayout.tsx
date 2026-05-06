@@ -37,7 +37,7 @@ export function AppLayout() {
       <div className="flex min-h-svh w-full">
         <AppSidebar />
         <div className="flex flex-1 flex-col min-w-0">
-          <header className="flex h-12 items-center gap-3 border-b bg-card px-4 sticky top-0 z-10">
+          <header className="flex h-12 items-center gap-3 border-b bg-card px-4 sticky top-0 z-20">
             <SidebarTrigger className="h-8 w-8" />
             {title && (
               <span className="text-[13px] font-medium tracking-tight text-foreground">
