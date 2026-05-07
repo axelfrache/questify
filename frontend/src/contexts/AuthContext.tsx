@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type UserDto } from '@/lib/api';
-import { clearOidcSession, isOidcEnabled, startOidcLogin } from '@/lib/oidc';
+import { clearOidcSession, isOidcEnabled, loginWithOidcPassword, startOidcLogin } from '@/lib/oidc';
 import { queryKeys } from '@/hooks/use-api';
 
 interface User {
@@ -73,7 +73,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     if (isOidcEnabled()) {
-      await startOidcLogin('/inbox');
+      queryClient.removeQueries({
+        predicate: ({ queryKey }) => queryKey[0] !== 'auth',
+      });
+      await loginWithOidcPassword(email, password);
+      await refreshCurrentUser();
       return;
     }
     queryClient.removeQueries({

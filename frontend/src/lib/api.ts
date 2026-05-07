@@ -297,7 +297,7 @@ class ApiClient {
       headers.set('Content-Type', 'application/json');
     }
 
-    const accessToken = getAccessToken();
+    const accessToken = await getAccessToken();
     if (accessToken && !headers.has('Authorization')) {
       headers.set('Authorization', `Bearer ${accessToken}`);
     }
