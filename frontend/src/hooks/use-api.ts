@@ -15,6 +15,7 @@ import {
   type UpdateProjectRequest,
   type UpdateQuestRequest,
   type UserDto,
+  type NotificationResponse,
 } from '@/lib/api';
 
 type QuestStatus = 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'SKIPPED';
@@ -61,6 +62,11 @@ export const queryKeys = {
       ['projects', 'list', { search, sort, includeArchived }] as const,
     detail: (id: string) => ['projects', 'detail', id] as const,
     all: ['projects'] as const,
+  },
+  notifications: {
+    all: ['notifications'] as const,
+    list: ['notifications', 'list'] as const,
+    unreadCount: ['notifications', 'unread-count'] as const,
   },
 };
 
@@ -608,6 +614,45 @@ export function useAdminDeleteUser() {
     mutationFn: (id: string) => api.adminDeleteUser(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.usersAll });
+    },
+  });
+}
+
+export function useNotifications() {
+  return useQuery<NotificationResponse[]>({
+    queryKey: queryKeys.notifications.list,
+    queryFn: ({ signal }) => api.getNotifications(signal),
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+}
+
+export function useMarkNotificationRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.markNotificationRead(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+    },
+  });
+}
+
+export function useMarkAllNotificationsRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.markAllNotificationsRead(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+    },
+  });
+}
+
+export function useDeleteNotification() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.deleteNotification(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
     },
   });
 }

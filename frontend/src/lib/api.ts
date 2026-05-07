@@ -666,6 +666,26 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  async getNotifications(signal?: AbortSignal): Promise<NotificationResponse[]> {
+    return this.request('/api/notifications', { signal });
+  }
+
+  async getUnreadCount(signal?: AbortSignal): Promise<UnreadCountResponse> {
+    return this.request('/api/notifications/unread-count', { signal });
+  }
+
+  async markNotificationRead(id: string): Promise<void> {
+    return this.request<void>(`/api/notifications/${id}/read`, { method: 'PATCH' });
+  }
+
+  async markAllNotificationsRead(): Promise<void> {
+    return this.request<void>('/api/notifications/read-all', { method: 'POST' });
+  }
+
+  async deleteNotification(id: string): Promise<void> {
+    return this.request<void>(`/api/notifications/${id}`, { method: 'DELETE' });
+  }
 }
 
 export interface Page<T> {
@@ -843,6 +863,27 @@ export interface UserDto {
   isEnabled: boolean;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export type NotificationType =
+  | 'QUEST_DUE_SOON'
+  | 'QUEST_OVERDUE'
+  | 'QUEST_COMPLETED'
+  | 'LEVEL_UP'
+  | 'STREAK_AT_RISK';
+
+export interface NotificationResponse {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  questId?: string;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface UnreadCountResponse {
+  count: number;
 }
 
 export const api = new ApiClient(API_BASE_URL);

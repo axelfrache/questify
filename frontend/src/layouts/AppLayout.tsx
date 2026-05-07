@@ -5,6 +5,7 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { Button } from '@/components/ui/button';
 import { Plus, Zap } from 'lucide-react';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
+import { NotificationInbox } from '@/components/NotificationInbox';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProgression } from '@/hooks/use-api';
 
@@ -55,6 +56,7 @@ export function AppLayout() {
                 <span className="text-[11px] text-muted-foreground">Lvl {progression.level}</span>
               </div>
             )}
+            <NotificationInbox />
           </header>
           <main className="flex-1 overflow-auto p-6">
             <Outlet />
