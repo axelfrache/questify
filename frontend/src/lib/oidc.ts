@@ -19,6 +19,13 @@ interface TokenResponse {
   expires_in?: number;
 }
 
+export class OidcAuthenticationError extends Error {
+  constructor() {
+    super('Invalid email or password');
+    this.name = 'OidcAuthenticationError';
+  }
+}
+
 function trimTrailingSlash(value: string) {
   return value.replace(/\/+$/, '');
 }
@@ -83,7 +90,7 @@ async function requestToken(body: URLSearchParams) {
   });
 
   if (!response.ok) {
-    throw new Error('OIDC token exchange failed');
+    throw new OidcAuthenticationError();
   }
 
   return (await response.json()) as TokenResponse;

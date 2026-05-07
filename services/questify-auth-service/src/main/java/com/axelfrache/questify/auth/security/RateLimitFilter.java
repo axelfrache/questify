@@ -98,6 +98,19 @@ public class RateLimitFilter extends OncePerRequestFilter {
           sendRateLimitResponse(response, clientIp, "register");
           return;
         }
+        var body = request.getInputStream().readAllBytes();
+        var email = extractEmailFromBody(body);
+        if (email != null) {
+          var normalizedEmail = email.toLowerCase().trim();
+          if (!checkRateLimit(
+              "register:email:" + clientIp + ":" + normalizedEmail,
+              rateLimitConfig.getRegisterEmailPerMinute())) {
+            sendRateLimitResponse(response, clientIp, "register");
+            return;
+          }
+        }
+        filterChain.doFilter(new CachedBodyRequest(request, body), response);
+        return;
       }
       case "/api/auth/refresh" -> {
         if (!checkRateLimit("refresh:ip:" + clientIp, rateLimitConfig.getRefreshIpPerMinute())) {

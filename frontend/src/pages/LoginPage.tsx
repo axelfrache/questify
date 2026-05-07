@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Loader2, Eye, EyeOff, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { OidcAuthenticationError } from '@/lib/oidc';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -43,7 +44,9 @@ export function LoginPage() {
       await login(data.email, data.password);
       navigate('/inbox');
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'message' in err) {
+      if (err instanceof OidcAuthenticationError) {
+        setError('Invalid email or password');
+      } else if (err && typeof err === 'object' && 'message' in err) {
         setError((err as { message: string }).message);
       } else {
         setError('Invalid email or password');

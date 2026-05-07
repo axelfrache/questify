@@ -12,6 +12,7 @@ import { Eye, EyeOff, Check, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { ModeToggle } from '@/components/mode-toggle';
+import { OidcAuthenticationError } from '@/lib/oidc';
 
 const signupSchema = z.object({
   username: z.string().min(3, 'Name must be at least 3 characters'),
@@ -63,7 +64,9 @@ export function SignupPage() {
       await registerUser(data.username, data.email, data.password);
       navigate('/inbox');
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'message' in err) {
+      if (err instanceof OidcAuthenticationError) {
+        setError('Account created, but automatic sign-in failed. Please try signing in.');
+      } else if (err && typeof err === 'object' && 'message' in err) {
         setError((err as { message: string }).message);
       } else {
         setError('Registration failed. Please try again.');

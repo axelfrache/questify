@@ -19,6 +19,7 @@ public class RateLimitConfig {
   private int loginIpPerMinute = 10;
   private int loginEmailPerMinute = 5;
   private int registerIpPerMinute = 3;
+  private int registerEmailPerMinute = 2;
   private int refreshIpPerMinute = 30;
 
   @Bean

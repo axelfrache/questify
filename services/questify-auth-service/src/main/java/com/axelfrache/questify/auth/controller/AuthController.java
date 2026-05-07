@@ -9,6 +9,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -26,6 +27,9 @@ public class AuthController {
   private final UserRepository userRepository;
   private final TokenClaimsExtractor tokenClaimsExtractor;
   private final PasswordEncoder passwordEncoder;
+
+  @Value("${questify.oidc.allow-admin-provisioning:false}")
+  private boolean allowAdminProvisioning;
 
   @GetMapping("/validate")
   public ResponseEntity<Void> validate(Authentication authentication) {
@@ -66,7 +70,7 @@ public class AuthController {
   private User createUser(Authentication authentication, String email) {
     var userId = tokenClaimsExtractor.extractUserId(authentication).flatMap(this::parseUuid);
     var username = uniqueUsername(extractUsername(authentication, email));
-    var role = Role.valueOf(tokenClaimsExtractor.extractRole(authentication).orElse("USER"));
+    var role = provisionedRole(authentication);
 
     var user =
         User.builder()
@@ -93,6 +97,15 @@ public class AuthController {
         user.getUpdatedAt(),
         user.getRole(),
         user.isEnabled());
+  }
+
+  private Role provisionedRole(Authentication authentication) {
+    var extractedRole =
+        Role.valueOf(tokenClaimsExtractor.extractRole(authentication).orElse("USER"));
+    if (extractedRole == Role.ADMIN && !allowAdminProvisioning) {
+      return Role.USER;
+    }
+    return extractedRole;
   }
 
   private String extractEmail(Authentication authentication) {
