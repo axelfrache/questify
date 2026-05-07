@@ -119,10 +119,7 @@ export async function completeOidcLogin(search = window.location.search) {
   if (tokens.id_token) {
     sessionStorage.setItem(ID_TOKEN_KEY, tokens.id_token);
   }
-  sessionStorage.setItem(
-    EXPIRES_AT_KEY,
-    String(Date.now() + (tokens.expires_in ?? 300) * 1000)
-  );
+  sessionStorage.setItem(EXPIRES_AT_KEY, String(Date.now() + (tokens.expires_in ?? 300) * 1000));
   sessionStorage.removeItem(PKCE_VERIFIER_KEY);
   sessionStorage.removeItem(STATE_KEY);
 
