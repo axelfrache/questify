@@ -43,6 +43,8 @@ public class SecurityConfig {
             auth -> {
               auth.requestMatchers("/api/auth/**").permitAll();
               auth.requestMatchers("/actuator/health", "/actuator/health/**").permitAll();
+              auth.requestMatchers(org.springframework.http.HttpMethod.POST, "/api/auth/register")
+                  .permitAll();
               auth.requestMatchers("/actuator/**").denyAll();
               auth.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
                   .denyAll();

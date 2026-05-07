@@ -106,7 +106,13 @@ public class AuthController {
     if (authentication instanceof JwtAuthenticationToken jwt) {
       var claims = jwt.getToken().getClaims();
       var preferredUsername = stringClaim(claims, "preferred_username");
-      if (preferredUsername != null && !preferredUsername.isBlank()) return preferredUsername;
+      if (preferredUsername != null
+          && !preferredUsername.isBlank()
+          && !preferredUsername.equals(email)) {
+        return preferredUsername;
+      }
+      var givenName = stringClaim(claims, "given_name");
+      if (givenName != null && !givenName.isBlank()) return givenName;
       var name = stringClaim(claims, "name");
       if (name != null && !name.isBlank()) return name;
     }
