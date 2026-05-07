@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -68,13 +69,11 @@ public class AuthController {
   }
 
   private User createUser(Authentication authentication, String email) {
-    var userId = tokenClaimsExtractor.extractUserId(authentication).flatMap(this::parseUuid);
     var username = uniqueUsername(extractUsername(authentication, email));
     var role = provisionedRole(authentication);
 
     var user =
         User.builder()
-            .id(userId.orElse(null))
             .username(username)
             .email(email)
             .password(passwordEncoder.encode(UUID.randomUUID().toString()))
@@ -82,7 +81,11 @@ public class AuthController {
             .isEnabled(true)
             .build();
 
-    return userRepository.save(user);
+    try {
+      return userRepository.saveAndFlush(user);
+    } catch (DataIntegrityViolationException ex) {
+      return userRepository.findByEmail(email).orElseThrow(() -> ex);
+    }
   }
 
   private UserDto toUserDto(User user) {
@@ -150,11 +153,4 @@ public class AuthController {
     return username;
   }
 
-  private java.util.Optional<UUID> parseUuid(String value) {
-    try {
-      return java.util.Optional.of(UUID.fromString(value));
-    } catch (IllegalArgumentException ignored) {
-      return java.util.Optional.empty();
-    }
-  }
 }
