@@ -22,4 +22,8 @@ public interface ScheduledReminderRepository extends JpaRepository<ScheduledRemi
   List<ScheduledReminder> findDueReminders(LocalDate cutoffDate);
 
   void deleteByUserId(UUID userId);
+
+  void deleteByTemplateId(UUID templateId);
+
+  void deleteByOccurrenceId(UUID occurrenceId);
 }

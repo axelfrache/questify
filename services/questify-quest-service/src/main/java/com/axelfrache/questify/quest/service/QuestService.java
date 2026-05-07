@@ -505,9 +505,16 @@ public class QuestService {
       var occurrence = occurrenceOpt.get();
       var template = occurrence.getQuestTemplate();
       questOccurrenceRepository.delete(occurrence);
-      if (template.getRecurrenceRule() == null) deleteTemplate(template);
+      if (template.getRecurrenceRule() == null) {
+        deleteTemplate(template);
+        questEventPublisher.publishQuestDeleted(userId, template.getId(), null);
+      } else {
+        questEventPublisher.publishQuestDeleted(userId, template.getId(), occurrence.getId());
+      }
     } else {
-      deleteTemplate(findTemplateByIdAndUserOrThrow(id, userId));
+      var template = findTemplateByIdAndUserOrThrow(id, userId);
+      deleteTemplate(template);
+      questEventPublisher.publishQuestDeleted(userId, template.getId(), null);
     }
   }
 
