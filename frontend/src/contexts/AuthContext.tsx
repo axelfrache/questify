@@ -96,6 +96,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    if (isOidcEnabled()) {
+      clearOidcSession();
+      clearSessionQueries();
+      return;
+    }
     clearOidcSession();
     await api.logout();
     clearSessionQueries();

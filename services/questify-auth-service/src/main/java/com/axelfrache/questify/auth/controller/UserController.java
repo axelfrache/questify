@@ -11,8 +11,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,53 +24,52 @@ public class UserController {
   private final SecurityUtils securityUtils;
 
   @GetMapping("/{id}")
-  public ResponseEntity<UserDto> getUser(
-      @AuthenticationPrincipal UserDetails userDetails, @PathVariable UUID id) {
-    securityUtils.validateOwnership(userDetails, id);
+  public ResponseEntity<UserDto> getUser(Authentication authentication, @PathVariable UUID id) {
+    securityUtils.validateOwnership(authentication, id);
     return ResponseEntity.ok(userService.getUserById(id));
   }
 
   @PutMapping("/{id}")
   public ResponseEntity<UserDto> updateUser(
-      @AuthenticationPrincipal UserDetails userDetails,
+      Authentication authentication,
       @PathVariable UUID id,
       @Valid @RequestBody UpdateUserRequest request) {
-    securityUtils.validateOwnership(userDetails, id);
+    securityUtils.validateOwnership(authentication, id);
     return ResponseEntity.ok(userService.updateProfile(id, request));
   }
 
   @PostMapping("/{id}/password")
   public ResponseEntity<Void> changePassword(
-      @AuthenticationPrincipal UserDetails userDetails,
+      Authentication authentication,
       @PathVariable UUID id,
       @Valid @RequestBody ChangePasswordRequest request) {
-    securityUtils.validateOwnership(userDetails, id);
+    securityUtils.validateOwnership(authentication, id);
     userService.changePassword(id, request);
     return ResponseEntity.ok().build();
   }
 
   @PostMapping(value = "/{id}/profile-picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<UserDto> uploadProfilePicture(
-      @AuthenticationPrincipal UserDetails userDetails,
+      Authentication authentication,
       @PathVariable UUID id,
       @RequestParam("file") MultipartFile file) {
-    securityUtils.validateOwnership(userDetails, id);
+    securityUtils.validateOwnership(authentication, id);
     return ResponseEntity.ok(userService.updateProfilePicture(id, file));
   }
 
   @DeleteMapping("/{id}/profile-picture")
   public ResponseEntity<UserDto> deleteProfilePicture(
-      @AuthenticationPrincipal UserDetails userDetails, @PathVariable UUID id) {
-    securityUtils.validateOwnership(userDetails, id);
+      Authentication authentication, @PathVariable UUID id) {
+    securityUtils.validateOwnership(authentication, id);
     return ResponseEntity.ok(userService.deleteProfilePicture(id));
   }
 
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteAccount(
-      @AuthenticationPrincipal UserDetails userDetails,
+      Authentication authentication,
       @PathVariable UUID id,
       @Valid @RequestBody DeleteAccountRequest request) {
-    securityUtils.validateOwnership(userDetails, id);
+    securityUtils.validateOwnership(authentication, id);
     userService.deleteAccount(id, request.password());
     return ResponseEntity.noContent().build();
   }
