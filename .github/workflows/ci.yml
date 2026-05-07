@@ -256,7 +256,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            VITE_OIDC_ISSUER_URL=https://auth.getquestify.com/realms/questify
+            VITE_OIDC_ISSUER_URL=https://auth.getquestify.com/api/realms/questify
             VITE_OIDC_CLIENT_ID=questify-frontend
             VITE_OIDC_REDIRECT_URI=https://app.getquestify.com/auth/callback
             VITE_OIDC_SCOPES=openid profile email roles
