@@ -54,6 +54,30 @@ public class RabbitMQConfig {
   }
 
   @Bean
+  public Queue userLeveledUpQueue() {
+    return new Queue(QueueConstants.USER_LEVELED_UP_QUEUE, true);
+  }
+
+  @Bean
+  public Queue streakAtRiskQueue() {
+    return new Queue(QueueConstants.STREAK_AT_RISK_QUEUE, true);
+  }
+
+  @Bean
+  public Binding userLeveledUpBinding(Queue userLeveledUpQueue, TopicExchange questifyExchange) {
+    return BindingBuilder.bind(userLeveledUpQueue)
+        .to(questifyExchange)
+        .with(QueueConstants.USER_LEVELED_UP_ROUTING_KEY);
+  }
+
+  @Bean
+  public Binding streakAtRiskBinding(Queue streakAtRiskQueue, TopicExchange questifyExchange) {
+    return BindingBuilder.bind(streakAtRiskQueue)
+        .to(questifyExchange)
+        .with(QueueConstants.STREAK_AT_RISK_ROUTING_KEY);
+  }
+
+  @Bean
   public Jackson2JsonMessageConverter messageConverter() {
     return new Jackson2JsonMessageConverter();
   }

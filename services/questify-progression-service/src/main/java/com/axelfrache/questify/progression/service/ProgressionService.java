@@ -2,6 +2,8 @@ package com.axelfrache.questify.progression.service;
 
 import com.axelfrache.questify.progression.config.LevelConfig;
 import com.axelfrache.questify.progression.dto.ProgressionResponse;
+import com.axelfrache.questify.progression.messaging.QueueConstants;
+import com.axelfrache.questify.progression.messaging.UserLeveledUpEvent;
 import com.axelfrache.questify.progression.model.Grade;
 import com.axelfrache.questify.progression.model.QuestCompletionRecord;
 import com.axelfrache.questify.progression.model.UserProgression;
@@ -11,6 +13,7 @@ import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -24,6 +27,7 @@ public class ProgressionService {
   private final UserProgressionRepository userProgressionRepository;
   private final QuestCompletionRecordRepository questCompletionRecordRepository;
   private final LevelConfig levelConfig;
+  private final RabbitTemplate rabbitTemplate;
 
   @Transactional
   @CacheEvict(cacheNames = "progression", key = "#userId")
@@ -50,8 +54,14 @@ public class ProgressionService {
             .completedAt(completedAt != null ? completedAt : Instant.now())
             .build());
 
-    if (newLevel > previousLevel)
+    if (newLevel > previousLevel) {
       log.info("User {} leveled up: {} -> {}", userId, previousLevel, newLevel);
+      rabbitTemplate.convertAndSend(
+          QueueConstants.EXCHANGE,
+          QueueConstants.USER_LEVELED_UP_ROUTING_KEY,
+          new UserLeveledUpEvent(
+              userId, previousLevel, newLevel, newGrade.getLabel(), newGrade != previousGrade));
+    }
     if (newGrade != previousGrade)
       log.info("User {} grade changed: {} -> {}", userId, previousGrade, newGrade);
   }
