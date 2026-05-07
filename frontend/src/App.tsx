@@ -22,6 +22,11 @@ const SignupPage = lazy(async () => {
   return { default: module.SignupPage };
 });
 
+const AuthCallbackPage = lazy(async () => {
+  const module = await import('@/pages/AuthCallbackPage');
+  return { default: module.AuthCallbackPage };
+});
+
 const InboxPage = lazy(async () => {
   const module = await import('@/pages/InboxPage');
   return { default: module.InboxPage };
@@ -118,6 +123,7 @@ function App() {
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
+                <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
                 <Route
                   element={

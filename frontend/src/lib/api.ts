@@ -1,3 +1,5 @@
+import { getAccessToken, isOidcEnabled } from './oidc';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 const REFRESH_LOCK_KEY = 'questify.auth.refresh.lock';
 const REFRESH_RESULT_KEY = 'questify.auth.refresh.result';
@@ -295,11 +297,23 @@ class ApiClient {
       headers.set('Content-Type', 'application/json');
     }
 
+    const accessToken = getAccessToken();
+    if (accessToken && !headers.has('Authorization')) {
+      headers.set('Authorization', `Bearer ${accessToken}`);
+    }
+
     const response = await fetch(url, {
       ...options,
       headers,
       credentials: 'include',
     });
+
+    if (response.status === 401 && isOidcEnabled()) {
+      if (this.onUnauthorized) {
+        this.onUnauthorized();
+      }
+      throw new ApiError('Session expired. Please log in again.', response.status, 'UNAUTHORIZED');
+    }
 
     if (response.status === 401 && retry && !endpoint.startsWith('/api/auth/')) {
       const refreshed = await this.tryRefreshToken();

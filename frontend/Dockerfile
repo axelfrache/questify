@@ -13,6 +13,16 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 
+ARG VITE_OIDC_ISSUER_URL=""
+ARG VITE_OIDC_CLIENT_ID=""
+ARG VITE_OIDC_REDIRECT_URI=""
+ARG VITE_OIDC_SCOPES="openid profile email roles"
+
+ENV VITE_OIDC_ISSUER_URL=$VITE_OIDC_ISSUER_URL
+ENV VITE_OIDC_CLIENT_ID=$VITE_OIDC_CLIENT_ID
+ENV VITE_OIDC_REDIRECT_URI=$VITE_OIDC_REDIRECT_URI
+ENV VITE_OIDC_SCOPES=$VITE_OIDC_SCOPES
+
 RUN pnpm run build
 
 FROM nginxinc/nginx-unprivileged:alpine AS runtime
@@ -29,7 +39,7 @@ RUN echo 'server { \
     add_header X-Frame-Options "DENY" always; \
     add_header Referrer-Policy "strict-origin-when-cross-origin" always; \
     add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always; \
-    add_header Content-Security-Policy "default-src '"'"'self'"'"'; script-src '"'"'self'"'"' '"'"'unsafe-eval'"'"'; worker-src '"'"'self'"'"' blob:; style-src '"'"'self'"'"' '"'"'unsafe-inline'"'"'; img-src '"'"'self'"'"' data: https:; font-src '"'"'self'"'"' data:; connect-src '"'"'self'"'"'" always; \
+    add_header Content-Security-Policy "default-src '"'"'self'"'"'; script-src '"'"'self'"'"' '"'"'unsafe-eval'"'"'; worker-src '"'"'self'"'"' blob:; style-src '"'"'self'"'"' '"'"'unsafe-inline'"'"'; img-src '"'"'self'"'"' data: https:; font-src '"'"'self'"'"' data:; connect-src '"'"'self'"'"' https://auth.getquestify.com" always; \
     \
     gzip on; \
     gzip_vary on; \

@@ -1,155 +1,141 @@
 package com.axelfrache.questify.auth.controller;
 
-import com.axelfrache.questify.auth.config.CookieConfig;
-import com.axelfrache.questify.auth.config.JwtConfig;
-import com.axelfrache.questify.auth.dto.AuthResponse;
-import com.axelfrache.questify.auth.dto.LoginRequest;
-import com.axelfrache.questify.auth.dto.RefreshTokenRequest;
-import com.axelfrache.questify.auth.dto.RegisterRequest;
 import com.axelfrache.questify.auth.dto.UserDto;
-import com.axelfrache.questify.auth.repository.InstanceSettingsRepository;
+import com.axelfrache.questify.auth.model.Role;
+import com.axelfrache.questify.auth.model.User;
 import com.axelfrache.questify.auth.repository.UserRepository;
-import com.axelfrache.questify.auth.service.AuthService;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
-import java.util.Arrays;
+import com.axelfrache.questify.auth.security.TokenClaimsExtractor;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
-  private final AuthService authService;
-  private final CookieConfig cookieConfig;
-  private final JwtConfig jwtConfig;
   private final UserRepository userRepository;
-  private final InstanceSettingsRepository instanceSettingsRepository;
-
-  @PostMapping("/register")
-  public ResponseEntity<AuthResponse> register(
-      @Valid @RequestBody RegisterRequest request, HttpServletResponse response) {
-    var settings =
-        instanceSettingsRepository
-            .findFirstByOrderByUpdatedAtDesc()
-            .orElseThrow(() -> new IllegalStateException("Instance settings not initialized"));
-
-    if (!settings.isRegistrationEnabled()) {
-      return ResponseEntity.status(403).build();
-    }
-
-    var authResponse = authService.register(request);
-    addAuthCookies(response, authResponse);
-    return ResponseEntity.status(HttpStatus.CREATED).body(authResponse);
-  }
-
-  @PostMapping("/login")
-  public ResponseEntity<AuthResponse> login(
-      @Valid @RequestBody LoginRequest request, HttpServletResponse response) {
-    var authResponse = authService.login(request);
-    addAuthCookies(response, authResponse);
-    return ResponseEntity.ok(authResponse);
-  }
-
-  @PostMapping("/refresh")
-  public ResponseEntity<AuthResponse> refresh(
-      @Valid @RequestBody RefreshTokenRequest request, HttpServletResponse response) {
-    var authResponse = authService.refresh(request);
-    addAuthCookies(response, authResponse);
-    return ResponseEntity.ok(authResponse);
-  }
-
-  @PostMapping("/refresh-cookie")
-  public ResponseEntity<AuthResponse> refreshFromCookie(
-      HttpServletRequest request, HttpServletResponse response) {
-    var refreshToken = extractCookieValue(request, CookieConfig.REFRESH_TOKEN_NAME);
-    if (refreshToken == null) {
-      return ResponseEntity.status(401).build();
-    }
-    var authResponse = authService.refresh(new RefreshTokenRequest(refreshToken));
-    addAuthCookies(response, authResponse);
-    return ResponseEntity.ok(authResponse);
-  }
-
-  @PostMapping("/logout")
-  public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
-    var refreshToken = extractCookieValue(request, CookieConfig.REFRESH_TOKEN_NAME);
-    if (refreshToken != null) {
-      authService.logout(new RefreshTokenRequest(refreshToken));
-    }
-    clearAuthCookies(response);
-    return ResponseEntity.ok().build();
-  }
+  private final TokenClaimsExtractor tokenClaimsExtractor;
+  private final PasswordEncoder passwordEncoder;
 
   @GetMapping("/validate")
-  public ResponseEntity<Void> validate(@AuthenticationPrincipal UserDetails userDetails) {
-    if (userDetails == null) {
+  public ResponseEntity<Void> validate(Authentication authentication) {
+    if (authentication == null || !authentication.isAuthenticated()) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
-    return userRepository
-        .findByEmail(userDetails.getUsername())
-        .filter(user -> user.isEnabled())
-        .map(
-            user ->
-                ResponseEntity.ok()
-                    .header("X-User-Id", user.getId().toString())
-                    .header("X-User-Role", user.getRole().name())
-                    .<Void>build())
-        .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+    var user = findOrProvisionUser(authentication);
+    if (user.getId() == null) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+    return ResponseEntity.ok()
+        .header("X-User-Id", user.getId().toString())
+        .header("X-User-Role", user.getRole().name())
+        .build();
   }
 
   @GetMapping("/me")
-  public ResponseEntity<UserDto> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
-    if (userDetails == null) {
+  public ResponseEntity<UserDto> getCurrentUser(Authentication authentication) {
+    if (authentication == null || !authentication.isAuthenticated()) {
       return ResponseEntity.status(401).build();
     }
-    return userRepository
-        .findByEmail(userDetails.getUsername())
-        .map(
-            user ->
-                ResponseEntity.ok(
-                    new UserDto(
-                        user.getId(),
-                        user.getUsername(),
-                        user.getEmail(),
-                        user.getTimezone(),
-                        user.getBio(),
-                        user.getProfilePictureUrl(),
-                        user.getCreatedAt(),
-                        user.getUpdatedAt(),
-                        user.getRole(),
-                        user.isEnabled())))
-        .orElse(ResponseEntity.status(401).build());
+    return ResponseEntity.ok(toUserDto(findOrProvisionUser(authentication)));
   }
 
-  private void addAuthCookies(HttpServletResponse response, AuthResponse authResponse) {
-    int accessMaxAge = (int) (jwtConfig.getAccessExpiration() / 1000);
-    int refreshMaxAge = (int) (jwtConfig.getRefreshExpiration() / 1000);
+  private User findOrProvisionUser(Authentication authentication) {
+    var email = extractEmail(authentication);
+    if (email == null || email.isBlank()) {
+      throw new org.springframework.security.access.AccessDeniedException("Email claim is missing");
+    }
 
-    response.addCookie(
-        cookieConfig.createAccessTokenCookie(authResponse.accessToken(), accessMaxAge));
-    response.addCookie(
-        cookieConfig.createRefreshTokenCookie(authResponse.refreshToken(), refreshMaxAge));
+    var user = userRepository.findByEmail(email).orElseGet(() -> createUser(authentication, email));
+    if (!user.isEnabled()) {
+      throw new org.springframework.security.access.AccessDeniedException("User is disabled");
+    }
+    return user;
   }
 
-  private void clearAuthCookies(HttpServletResponse response) {
-    response.addCookie(cookieConfig.createExpiredAccessTokenCookie());
-    response.addCookie(cookieConfig.createExpiredRefreshTokenCookie());
+  private User createUser(Authentication authentication, String email) {
+    var userId = tokenClaimsExtractor.extractUserId(authentication).flatMap(this::parseUuid);
+    var username = uniqueUsername(extractUsername(authentication, email));
+    var role = Role.valueOf(tokenClaimsExtractor.extractRole(authentication).orElse("USER"));
+
+    var user =
+        User.builder()
+            .id(userId.orElse(null))
+            .username(username)
+            .email(email)
+            .password(passwordEncoder.encode(UUID.randomUUID().toString()))
+            .role(role)
+            .isEnabled(true)
+            .build();
+
+    return userRepository.save(user);
   }
 
-  private String extractCookieValue(HttpServletRequest request, String cookieName) {
-    if (request.getCookies() == null) return null;
-    return Arrays.stream(request.getCookies())
-        .filter(c -> cookieName.equals(c.getName()))
-        .map(Cookie::getValue)
-        .findFirst()
-        .orElse(null);
+  private UserDto toUserDto(User user) {
+    return new UserDto(
+        user.getId(),
+        user.getUsername(),
+        user.getEmail(),
+        user.getTimezone(),
+        user.getBio(),
+        user.getProfilePictureUrl(),
+        user.getCreatedAt(),
+        user.getUpdatedAt(),
+        user.getRole(),
+        user.isEnabled());
+  }
+
+  private String extractEmail(Authentication authentication) {
+    if (authentication instanceof JwtAuthenticationToken jwt) {
+      return jwt.getToken().getClaimAsString("email");
+    }
+    return authentication.getName();
+  }
+
+  private String extractUsername(Authentication authentication, String email) {
+    if (authentication instanceof JwtAuthenticationToken jwt) {
+      var claims = jwt.getToken().getClaims();
+      var preferredUsername = stringClaim(claims, "preferred_username");
+      if (preferredUsername != null && !preferredUsername.isBlank()) return preferredUsername;
+      var name = stringClaim(claims, "name");
+      if (name != null && !name.isBlank()) return name;
+    }
+    return email.substring(0, email.indexOf('@'));
+  }
+
+  private String stringClaim(Map<String, Object> claims, String name) {
+    var value = claims.get(name);
+    return value == null ? null : value.toString();
+  }
+
+  private String uniqueUsername(String candidate) {
+    var base = candidate.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_-]", "-");
+    if (base.length() < 3) base = "user-" + base;
+    if (base.length() > 45) base = base.substring(0, 45);
+
+    var username = base;
+    var suffix = 1;
+    while (userRepository.existsByUsername(username)) {
+      username = "%s-%d".formatted(base, suffix++);
+    }
+    return username;
+  }
+
+  private java.util.Optional<UUID> parseUuid(String value) {
+    try {
+      return java.util.Optional.of(UUID.fromString(value));
+    } catch (IllegalArgumentException ignored) {
+      return java.util.Optional.empty();
+    }
   }
 }
