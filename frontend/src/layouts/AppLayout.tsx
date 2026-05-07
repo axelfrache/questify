@@ -8,6 +8,7 @@ import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import { NotificationInbox } from '@/components/NotificationInbox';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProgression } from '@/hooks/use-api';
+import { useNotificationStream } from '@/hooks/useNotificationStream';
 
 const PAGE_TITLES: Record<string, string> = {
   '/inbox': 'Inbox',
@@ -28,6 +29,7 @@ export function AppLayout() {
   const { user } = useAuth();
   const { data: progression } = useUserProgression(user?.id);
   const location = useLocation();
+  useNotificationStream();
 
   const title =
     PAGE_TITLES[location.pathname] ??

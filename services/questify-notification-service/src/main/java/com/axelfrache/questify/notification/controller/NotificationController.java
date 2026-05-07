@@ -5,11 +5,13 @@ import com.axelfrache.questify.notification.dto.PushSubscriptionRequest;
 import com.axelfrache.questify.notification.dto.UnreadCountResponse;
 import com.axelfrache.questify.notification.service.NotificationService;
 import com.axelfrache.questify.notification.service.PushNotificationService;
+import com.axelfrache.questify.notification.service.SseEmitterRegistry;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -29,6 +32,7 @@ public class NotificationController {
 
   private final NotificationService notificationService;
   private final PushNotificationService pushNotificationService;
+  private final SseEmitterRegistry sseEmitterRegistry;
 
   @GetMapping
   public List<NotificationResponse> getNotifications(@AuthenticationPrincipal String userId) {
@@ -58,6 +62,11 @@ public class NotificationController {
       @PathVariable UUID id, @AuthenticationPrincipal String userId) {
     notificationService.delete(id, UUID.fromString(userId));
     return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+  public SseEmitter stream(@AuthenticationPrincipal String userId) {
+    return sseEmitterRegistry.subscribe(UUID.fromString(userId));
   }
 
   @GetMapping("/push/status")

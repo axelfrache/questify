@@ -18,6 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +30,7 @@ public class NotificationService {
   private final ScheduledReminderRepository scheduledReminderRepository;
   private final PushSubscriptionRepository pushSubscriptionRepository;
   private final PushNotificationService pushNotificationService;
+  private final SseEmitterRegistry sseEmitterRegistry;
 
   @Value("${questify.notification.max-per-user:100}")
   private int maxPerUser;
@@ -81,9 +84,12 @@ public class NotificationService {
 
     if (existing.isPresent()) {
       var reminder = existing.get();
+      boolean dateChanged = !scheduledDate.equals(reminder.getScheduledDate());
       reminder.setQuestTitle(event.questTitle());
       reminder.setScheduledDate(scheduledDate);
-      reminder.setReminderSent(false);
+      if (dateChanged) {
+        reminder.setReminderSent(false);
+      }
       scheduledReminderRepository.save(reminder);
     } else {
       scheduledReminderRepository.save(
@@ -128,6 +134,15 @@ public class NotificationService {
       pushNotificationService.send(sub, title, body);
     }
 
+    var response = toResponse(notification);
+    TransactionSynchronizationManager.registerSynchronization(
+        new TransactionSynchronization() {
+          @Override
+          public void afterCommit() {
+            sseEmitterRegistry.sendToUser(userId, response);
+          }
+        });
+
     log.debug("Notification created: type={} userId={} questId={}", type, userId, questId);
   }
 
@@ -149,6 +164,15 @@ public class NotificationService {
   @Transactional
   public void unsubscribe(UUID userId, String endpoint) {
     pushSubscriptionRepository.deleteByUserIdAndEndpoint(userId, endpoint);
+  }
+
+  @Transactional
+  public void cleanupRemindersForDeletedQuest(UUID templateId, UUID occurrenceId) {
+    if (occurrenceId != null) {
+      scheduledReminderRepository.deleteByOccurrenceId(occurrenceId);
+    } else {
+      scheduledReminderRepository.deleteByTemplateId(templateId);
+    }
   }
 
   @Transactional

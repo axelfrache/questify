@@ -622,8 +622,8 @@ export function useNotifications() {
   return useQuery<NotificationResponse[]>({
     queryKey: queryKeys.notifications.list,
     queryFn: ({ signal }) => api.getNotifications(signal),
-    refetchInterval: 30_000,
-    staleTime: 15_000,
+    refetchInterval: 5 * 60_000,
+    staleTime: 60_000,
   });
 }
 
