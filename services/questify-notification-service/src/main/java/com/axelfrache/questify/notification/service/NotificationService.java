@@ -90,17 +90,39 @@ public class NotificationService {
       if (dateChanged) {
         reminder.setReminderSent(false);
       }
-      scheduledReminderRepository.save(reminder);
+      var saved = scheduledReminderRepository.save(reminder);
+      if (!saved.isReminderSent()) {
+        fireImmediatelyIfDue(saved, scheduledDate);
+      }
     } else {
-      scheduledReminderRepository.save(
-          ScheduledReminder.builder()
-              .userId(event.userId())
-              .templateId(event.templateId())
-              .occurrenceId(event.occurrenceId())
-              .questTitle(event.questTitle())
-              .scheduledDate(scheduledDate)
-              .build());
+      var saved =
+          scheduledReminderRepository.save(
+              ScheduledReminder.builder()
+                  .userId(event.userId())
+                  .templateId(event.templateId())
+                  .occurrenceId(event.occurrenceId())
+                  .questTitle(event.questTitle())
+                  .scheduledDate(scheduledDate)
+                  .build());
+      fireImmediatelyIfDue(saved, scheduledDate);
     }
+  }
+
+  private void fireImmediatelyIfDue(ScheduledReminder reminder, LocalDate scheduledDate) {
+    var today = LocalDate.now();
+    if (scheduledDate.isAfter(today)) return;
+
+    var isOverdue = scheduledDate.isBefore(today);
+    var type = isOverdue ? NotificationType.QUEST_OVERDUE : NotificationType.QUEST_DUE_SOON;
+    var title = isOverdue ? "Quest overdue ⚠️" : "Quest due soon ⏰";
+    var body =
+        isOverdue
+            ? "\"" + reminder.getQuestTitle() + "\" is overdue"
+            : "\"" + reminder.getQuestTitle() + "\" is due today";
+
+    createAndSendNotification(reminder.getUserId(), type, title, body, reminder.getTemplateId());
+    reminder.setReminderSent(true);
+    scheduledReminderRepository.save(reminder);
   }
 
   @Transactional
