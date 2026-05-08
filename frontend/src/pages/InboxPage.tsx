@@ -5,6 +5,7 @@ import {
   useCategories,
   useCompleteQuest,
   useDeleteQuest,
+  useProjectsList,
   useProjectsSidebar,
 } from '@/hooks/use-api';
 import { useInboxState } from '@/hooks/useInboxState';
@@ -54,6 +55,7 @@ export function InboxPage() {
     error: errorQuests,
   } = useQuests(undefined, 'inbox');
   const { data: projectSidebar } = useProjectsSidebar();
+  const { data: projects } = useProjectsList('', 'name', true);
   const { data: categories, isLoading: isLoadingCategories } = useCategories();
   const completeQuestMutation = useCompleteQuest();
   const deleteQuestMutation = useDeleteQuest();
@@ -83,14 +85,17 @@ export function InboxPage() {
   );
 
   const allProjects = useMemo(() => {
-    if (!projectSidebar) return [];
     const seen = new Set<string>();
-    return [...(projectSidebar.pinned ?? []), ...(projectSidebar.recent ?? [])].filter((p) => {
+    return [
+      ...(projects ?? []),
+      ...(projectSidebar?.pinned ?? []),
+      ...(projectSidebar?.recent ?? []),
+    ].filter((p) => {
       if (seen.has(p.id)) return false;
       seen.add(p.id);
       return true;
     });
-  }, [projectSidebar]);
+  }, [projects, projectSidebar]);
 
   const {
     search,
