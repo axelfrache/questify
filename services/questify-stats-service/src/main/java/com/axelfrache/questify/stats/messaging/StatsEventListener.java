@@ -40,4 +40,15 @@ public class StatsEventListener {
     repository.deleteByUserId(event.userId());
     statsService.evictUserCache(event.userId());
   }
+
+  @RabbitListener(queues = QueueConstants.CATEGORY_DELETED_QUEUE)
+  @Transactional
+  public void onCategoryDeleted(CategoryDeletedEvent event) {
+    log.info(
+        "Clearing deleted category from stats: userId={} category={}",
+        event.userId(),
+        event.categoryName());
+    repository.clearCategoryName(event.userId(), event.categoryName());
+    statsService.evictUserCache(event.userId());
+  }
 }

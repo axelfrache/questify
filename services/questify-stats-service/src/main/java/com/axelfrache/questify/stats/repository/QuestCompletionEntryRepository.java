@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -42,6 +43,15 @@ public interface QuestCompletionEntryRepository extends JpaRepository<QuestCompl
       ORDER BY COUNT(e) DESC
       """)
   List<CategoryStatsResponse> findCategoryStatsByUserId(@Param("userId") UUID userId);
+
+  @Modifying
+  @Query(
+      """
+      UPDATE QuestCompletionEntry e
+      SET e.categoryName = null
+      WHERE e.userId = :userId AND e.categoryName = :categoryName
+      """)
+  void clearCategoryName(@Param("userId") UUID userId, @Param("categoryName") String categoryName);
 
   void deleteByUserId(UUID userId);
 }

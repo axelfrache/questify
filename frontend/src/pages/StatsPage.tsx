@@ -64,9 +64,11 @@ export function StatsPage() {
   // By region: compute percentages, join with category colors
   const regionData = useMemo(() => {
     if (!categoryStats || categoryStats.length === 0) return [];
-    const total = categoryStats.reduce((s, c) => s + c.questsCompleted, 0) || 1;
-    return categoryStats
-      .filter((c) => c.questsCompleted > 0)
+    const activeRegionStats = categoryStats.filter(
+      (c) => c.questsCompleted > 0 && categories?.some((cat) => cat.name === c.categoryName)
+    );
+    const total = activeRegionStats.reduce((s, c) => s + c.questsCompleted, 0) || 1;
+    return activeRegionStats
       .map((c) => ({
         name: c.categoryName,
         count: c.questsCompleted,

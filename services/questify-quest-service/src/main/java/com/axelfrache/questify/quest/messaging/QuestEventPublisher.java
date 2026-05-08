@@ -86,4 +86,20 @@ public class QuestEventPublisher {
       throw new RuntimeException("Failed to serialize QuestDeletedEvent", e);
     }
   }
+
+  public void publishCategoryDeleted(UUID userId, String categoryName) {
+    var event = new CategoryDeletedEvent(userId, categoryName);
+    try {
+      outboxEventRepository.save(
+          OutboxEvent.builder()
+              .routingKey(QueueConstants.CATEGORY_DELETED_ROUTING_KEY)
+              .payload(objectMapper.writeValueAsString(event))
+              .typeId(CategoryDeletedEvent.class.getName())
+              .build());
+      log.debug(
+          "Queued CategoryDeletedEvent to outbox: userId={} category={}", userId, categoryName);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Failed to serialize CategoryDeletedEvent", e);
+    }
+  }
 }

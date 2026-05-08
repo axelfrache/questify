@@ -32,6 +32,11 @@ public class RabbitMQConfig {
   }
 
   @Bean
+  public Queue categoryDeletedQueue() {
+    return QueueBuilder.durable(QueueConstants.CATEGORY_DELETED_QUEUE).build();
+  }
+
+  @Bean
   public Binding questCompletedBinding() {
     return BindingBuilder.bind(questCompletedQueue())
         .to(questifyExchange())
@@ -43,6 +48,13 @@ public class RabbitMQConfig {
     return BindingBuilder.bind(userDeletedQueue())
         .to(questifyExchange())
         .with(QueueConstants.USER_DELETED_ROUTING_KEY);
+  }
+
+  @Bean
+  public Binding categoryDeletedBinding() {
+    return BindingBuilder.bind(categoryDeletedQueue())
+        .to(questifyExchange())
+        .with(QueueConstants.CATEGORY_DELETED_ROUTING_KEY);
   }
 
   @Bean

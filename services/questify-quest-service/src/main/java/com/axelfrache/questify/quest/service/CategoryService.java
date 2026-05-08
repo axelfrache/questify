@@ -2,6 +2,7 @@ package com.axelfrache.questify.quest.service;
 
 import com.axelfrache.questify.quest.dto.CategoryResponse;
 import com.axelfrache.questify.quest.dto.CreateCategoryRequest;
+import com.axelfrache.questify.quest.messaging.QuestEventPublisher;
 import com.axelfrache.questify.quest.model.Category;
 import com.axelfrache.questify.quest.model.CategorySource;
 import com.axelfrache.questify.quest.model.QuestAction;
@@ -29,6 +30,7 @@ public class CategoryService {
 
   private final CategoryRepository categoryRepository;
   private final QuestTemplateRepository questTemplateRepository;
+  private final QuestEventPublisher questEventPublisher;
 
   @Transactional
   public CategoryResponse create(UUID userId, CreateCategoryRequest request) {
@@ -96,6 +98,7 @@ public class CategoryService {
   public void delete(UUID categoryId, QuestAction questAction, UUID userId) {
     var category = findOrThrow(categoryId);
     validateOwnership(category, userId);
+    var categoryName = category.getName();
 
     var templates = questTemplateRepository.findByCategory(category);
 
@@ -115,6 +118,7 @@ public class CategoryService {
     }
 
     categoryRepository.delete(category);
+    questEventPublisher.publishCategoryDeleted(userId, categoryName);
   }
 
   private void validateOwnership(Category category, UUID userId) {
