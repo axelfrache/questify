@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, type UserDto } from '@/lib/api';
+import { ApiError, api, type UserDto } from '@/lib/api';
 import { clearOidcSession, isOidcEnabled, loginWithOidcPassword } from '@/lib/oidc';
 import { queryKeys } from '@/hooks/use-api';
 
@@ -37,6 +37,14 @@ function toAuthUser(userDto: UserDto | null | undefined): User | null {
     profilePictureUrl: userDto.profilePictureUrl,
     role: userDto.role,
   };
+}
+
+function isAccountAlreadyRegistered(error: unknown) {
+  return (
+    error instanceof ApiError &&
+    error.status === 400 &&
+    error.message.toLowerCase().includes('already in use')
+  );
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -92,8 +100,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.removeQueries({
         predicate: ({ queryKey }) => queryKey[0] !== 'auth',
       });
-      await api.register({ username, email, password });
-      await loginWithOidcPassword(email, password);
+      let accountAlreadyExists = false;
+      try {
+        await api.register({ username, email, password });
+      } catch (err) {
+        if (isAccountAlreadyRegistered(err)) {
+          accountAlreadyExists = true;
+        } else {
+          throw err;
+        }
+      }
+      try {
+        await loginWithOidcPassword(email, password);
+      } catch (err) {
+        if (accountAlreadyExists) {
+          throw new Error('An account already exists with this email. Please log in.');
+        }
+        throw err;
+      }
       await refreshCurrentUser();
       return;
     }

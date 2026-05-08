@@ -34,7 +34,9 @@ public class FerrisKeyRegistrationService {
           .retrieve()
           .toBodilessEntity();
     } catch (RestClientResponseException ex) {
-      if (ex.getStatusCode() == HttpStatus.BAD_REQUEST) {
+      if (ex.getStatusCode() == HttpStatus.BAD_REQUEST
+          || ex.getStatusCode() == HttpStatus.CONFLICT
+          || ex.getStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR) {
         throw new IllegalArgumentException("Email or username already in use");
       }
       if (ex.getStatusCode() == HttpStatus.FORBIDDEN) {
