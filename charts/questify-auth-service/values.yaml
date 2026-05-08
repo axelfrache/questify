@@ -14,9 +14,21 @@ serviceAccount:
   name: ""
 
 spring:
-  profile: production
+  profile: prod
   jpa:
     ddlAuto: update
+
+app:
+  publicUrl: "https://app.getquestify.com"
+
+ferriskey:
+  issuerUri: ""
+  passwordResetUri: ""
+  adminTokenUri: ""
+  adminClientId: ""
+  existingSecret: ""
+  secretKeys:
+    adminClientSecretKey: admin-client-secret
 
 database:
   host: questify-postgresql
@@ -64,7 +76,10 @@ rateLimit:
   loginIpPerMinute: 10
   loginEmailPerMinute: 5
   registerIpPerMinute: 3
+  registerEmailPerMinute: 2
   refreshIpPerMinute: 30
+  passwordResetIpPerMinute: 3
+  passwordResetEmailPerMinute: 2
 
 cors:
   allowedOrigins: "https://app.getquestify.com,https://getquestify.com"

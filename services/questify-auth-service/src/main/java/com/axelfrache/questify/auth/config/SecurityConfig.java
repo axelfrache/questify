@@ -56,7 +56,7 @@ public class SecurityConfig {
   }
 
   @Bean
-  @Profile("prod")
+  @Profile({"prod", "production"})
   public SecurityFilterChain prodSecurityFilterChain(HttpSecurity http) throws Exception {
     return http.csrf(AbstractHttpConfigurer::disable)
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -64,6 +64,11 @@ public class SecurityConfig {
             auth -> {
               auth.requestMatchers("/actuator/health", "/actuator/health/**").permitAll();
               auth.requestMatchers(org.springframework.http.HttpMethod.POST, "/api/auth/register")
+                  .permitAll();
+              auth.requestMatchers(
+                      org.springframework.http.HttpMethod.POST,
+                      "/api/auth/forgot-password",
+                      "/api/auth/reset-password")
                   .permitAll();
               auth.requestMatchers("/actuator/**").denyAll();
               auth.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")

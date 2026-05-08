@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
-@Profile("prod")
+@Profile({"prod", "production"})
 @RequiredArgsConstructor
 public class ProdRegistrationController {
 

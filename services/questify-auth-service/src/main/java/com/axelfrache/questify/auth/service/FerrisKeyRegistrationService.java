@@ -11,7 +11,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
 @Service
-@Profile("prod")
+@Profile({"prod", "production"})
 @RequiredArgsConstructor
 public class FerrisKeyRegistrationService {
 

@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Profile("dev")
 @RequiredArgsConstructor
 @Slf4j
-public class PasswordResetService {
+public class PasswordResetService implements PasswordResetProvider {
 
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -39,6 +39,7 @@ public class PasswordResetService {
   private long ttlMinutes;
 
   @Transactional
+  @Override
   public void requestReset(String email) {
     var normalizedEmail = email.trim();
     userRepository
@@ -61,6 +62,7 @@ public class PasswordResetService {
   }
 
   @Transactional
+  @Override
   public void resetPassword(String token, String newPassword) {
     var resetToken =
         passwordResetTokenRepository

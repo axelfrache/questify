@@ -11,7 +11,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("prod")
+@Profile({"prod", "production"})
 public class OidcTokenClaimsExtractor implements TokenClaimsExtractor {
 
   private static final List<String> KNOWN_ROLES = List.of("ADMIN", "USER");

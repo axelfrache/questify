@@ -2,6 +2,7 @@ package com.axelfrache.questify.auth.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class MailService {
 
-  private final JavaMailSender mailSender;
+  private final ObjectProvider<JavaMailSender> mailSenderProvider;
 
   @Value("${spring.mail.host:}")
   private String mailHost;
@@ -22,7 +23,8 @@ public class MailService {
   private String from;
 
   public void sendPasswordResetEmail(String to, String resetUrl) {
-    if (mailHost == null || mailHost.isBlank()) {
+    var mailSender = mailSenderProvider.getIfAvailable();
+    if (mailSender == null || mailHost == null || mailHost.isBlank()) {
       log.info("SMTP is not configured. Password reset link for {}: {}", maskEmail(to), resetUrl);
       return;
     }

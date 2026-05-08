@@ -3,14 +3,11 @@ package com.axelfrache.questify.auth.controller;
 import com.axelfrache.questify.auth.config.CookieConfig;
 import com.axelfrache.questify.auth.config.JwtConfig;
 import com.axelfrache.questify.auth.dto.AuthResponse;
-import com.axelfrache.questify.auth.dto.ForgotPasswordRequest;
 import com.axelfrache.questify.auth.dto.LoginRequest;
 import com.axelfrache.questify.auth.dto.RefreshTokenRequest;
 import com.axelfrache.questify.auth.dto.RegisterRequest;
-import com.axelfrache.questify.auth.dto.ResetPasswordRequest;
 import com.axelfrache.questify.auth.repository.InstanceSettingsRepository;
 import com.axelfrache.questify.auth.service.AuthService;
-import com.axelfrache.questify.auth.service.PasswordResetService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -35,7 +32,6 @@ public class DevAuthController {
   private final CookieConfig cookieConfig;
   private final JwtConfig jwtConfig;
   private final InstanceSettingsRepository instanceSettingsRepository;
-  private final PasswordResetService passwordResetService;
 
   @PostMapping("/register")
   public ResponseEntity<AuthResponse> register(
@@ -90,18 +86,6 @@ public class DevAuthController {
     }
     clearAuthCookies(response);
     return ResponseEntity.ok().build();
-  }
-
-  @PostMapping("/forgot-password")
-  public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-    passwordResetService.requestReset(request.email());
-    return ResponseEntity.noContent().build();
-  }
-
-  @PostMapping("/reset-password")
-  public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-    passwordResetService.resetPassword(request.token(), request.newPassword());
-    return ResponseEntity.noContent().build();
   }
 
   private void addAuthCookies(HttpServletResponse response, AuthResponse authResponse) {

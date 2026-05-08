@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ModeToggle } from '@/components/mode-toggle';
-import { api } from '@/lib/api';
+import { ApiError, api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { Loader2, X } from 'lucide-react';
 
@@ -46,7 +46,11 @@ export function ResetPasswordPage() {
       await api.resetPassword({ token, newPassword: data.password });
       setCompleted(true);
       window.setTimeout(() => navigate('/login'), 1200);
-    } catch {
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 501) {
+        setError('Password reset is handled by FerrisKey. Use the link from the email.');
+        return;
+      }
       setError('This reset link is invalid or expired.');
     }
   };

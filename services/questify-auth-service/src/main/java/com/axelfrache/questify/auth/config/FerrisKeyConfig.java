@@ -7,11 +7,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @Configuration
-@Profile("prod")
+@Profile({"prod", "production"})
 @ConfigurationProperties(prefix = "questify.ferriskey")
 @Getter
 @Setter
 public class FerrisKeyConfig {
 
   private String issuerUri;
+  private String passwordResetUri;
+  private String adminTokenUri;
+  private String adminClientId;
+  private String adminClientSecret;
 }

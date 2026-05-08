@@ -64,6 +64,25 @@ spec:
               value: "org.postgresql.Driver"
             - name: SPRING_JPA_DDL_AUTO
               value: {{ .Values.spring.jpa.ddlAuto | quote }}
+            # Public application URL
+            - name: APP_PUBLIC_URL
+              value: {{ .Values.app.publicUrl | quote }}
+            # FerrisKey OIDC configuration
+            - name: FERRISKEY_ISSUER_URI
+              value: {{ .Values.ferriskey.issuerUri | quote }}
+            - name: FERRISKEY_PASSWORD_RESET_URI
+              value: {{ .Values.ferriskey.passwordResetUri | quote }}
+            - name: FERRISKEY_ADMIN_TOKEN_URI
+              value: {{ .Values.ferriskey.adminTokenUri | quote }}
+            - name: FERRISKEY_ADMIN_CLIENT_ID
+              value: {{ .Values.ferriskey.adminClientId | quote }}
+            {{- if .Values.ferriskey.existingSecret }}
+            - name: FERRISKEY_ADMIN_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.ferriskey.existingSecret }}
+                  key: {{ .Values.ferriskey.secretKeys.adminClientSecretKey }}
+            {{- end }}
             # RabbitMQ configuration
             - name: SPRING_RABBITMQ_HOST
               value: {{ .Values.rabbitmq.host | quote }}
@@ -132,8 +151,14 @@ spec:
               value: {{ .Values.rateLimit.loginEmailPerMinute | quote }}
             - name: REGISTER_RATE_LIMIT_IP
               value: {{ .Values.rateLimit.registerIpPerMinute | quote }}
+            - name: REGISTER_RATE_LIMIT_EMAIL
+              value: {{ .Values.rateLimit.registerEmailPerMinute | quote }}
             - name: REFRESH_RATE_LIMIT_IP
               value: {{ .Values.rateLimit.refreshIpPerMinute | quote }}
+            - name: PASSWORD_RESET_RATE_LIMIT_IP
+              value: {{ .Values.rateLimit.passwordResetIpPerMinute | quote }}
+            - name: PASSWORD_RESET_RATE_LIMIT_EMAIL
+              value: {{ .Values.rateLimit.passwordResetEmailPerMinute | quote }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             httpGet:
