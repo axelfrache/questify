@@ -21,6 +21,8 @@ public class RateLimitConfig {
   private int registerIpPerMinute = 3;
   private int registerEmailPerMinute = 2;
   private int refreshIpPerMinute = 30;
+  private int passwordResetIpPerMinute = 3;
+  private int passwordResetEmailPerMinute = 2;
 
   @Bean
   @ConditionalOnMissingBean

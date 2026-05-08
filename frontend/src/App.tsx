@@ -22,6 +22,16 @@ const SignupPage = lazy(async () => {
   return { default: module.SignupPage };
 });
 
+const ForgotPasswordPage = lazy(async () => {
+  const module = await import('@/pages/ForgotPasswordPage');
+  return { default: module.ForgotPasswordPage };
+});
+
+const ResetPasswordPage = lazy(async () => {
+  const module = await import('@/pages/ResetPasswordPage');
+  return { default: module.ResetPasswordPage };
+});
+
 const AuthCallbackPage = lazy(async () => {
   const module = await import('@/pages/AuthCallbackPage');
   return { default: module.AuthCallbackPage };
@@ -123,6 +133,8 @@ function App() {
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
                 <Route

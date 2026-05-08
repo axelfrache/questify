@@ -25,3 +25,18 @@ WHERE status = 'FAILED';
 CREATE INDEX IF NOT EXISTS idx_auth_outbox_pending_retry
     ON auth.outbox_events (next_attempt_at, created_at)
     WHERE status = 'PENDING';
+
+CREATE TABLE IF NOT EXISTS auth.password_reset_tokens (
+    id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     UUID         NOT NULL,
+    token_hash  VARCHAR(64)  NOT NULL UNIQUE,
+    expires_at  TIMESTAMPTZ  NOT NULL,
+    used_at     TIMESTAMPTZ,
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_token_hash
+    ON auth.password_reset_tokens (token_hash);
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_user_active
+    ON auth.password_reset_tokens (user_id, used_at, expires_at);

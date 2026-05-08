@@ -112,6 +112,26 @@ public class RateLimitFilter extends OncePerRequestFilter {
         filterChain.doFilter(new CachedBodyRequest(request, body), response);
         return;
       }
+      case "/api/auth/forgot-password" -> {
+        if (!checkRateLimit(
+            "password-reset:ip:" + clientIp, rateLimitConfig.getPasswordResetIpPerMinute())) {
+          sendRateLimitResponse(response, clientIp, "password-reset");
+          return;
+        }
+        var body = request.getInputStream().readAllBytes();
+        var email = extractEmailFromBody(body);
+        if (email != null) {
+          var normalizedEmail = email.toLowerCase().trim();
+          if (!checkRateLimit(
+              "password-reset:email:" + clientIp + ":" + normalizedEmail,
+              rateLimitConfig.getPasswordResetEmailPerMinute())) {
+            sendRateLimitResponse(response, clientIp, "password-reset");
+            return;
+          }
+        }
+        filterChain.doFilter(new CachedBodyRequest(request, body), response);
+        return;
+      }
       case "/api/auth/refresh" -> {
         if (!checkRateLimit("refresh:ip:" + clientIp, rateLimitConfig.getRefreshIpPerMinute())) {
           sendRateLimitResponse(response, clientIp, "refresh");

@@ -29,6 +29,15 @@ export interface RegisterRequest {
   password: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
@@ -389,6 +398,20 @@ class ApiClient {
 
   async register(data: RegisterRequest): Promise<AuthResponse> {
     return this.request<AuthResponse>('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async forgotPassword(data: ForgotPasswordRequest): Promise<void> {
+    return this.request<void>('/api/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async resetPassword(data: ResetPasswordRequest): Promise<void> {
+    return this.request<void>('/api/auth/reset-password', {
       method: 'POST',
       body: JSON.stringify(data),
     });
