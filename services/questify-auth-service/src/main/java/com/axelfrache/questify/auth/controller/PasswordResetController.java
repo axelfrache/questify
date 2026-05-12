@@ -28,7 +28,8 @@ public class PasswordResetController {
   @PostMapping("/reset-password")
   public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
     try {
-      passwordResetProvider.resetPassword(request.token(), request.newPassword());
+      passwordResetProvider.resetPassword(
+          request.tokenId(), request.token(), request.newPassword());
       return ResponseEntity.noContent().build();
     } catch (UnsupportedOperationException ex) {
       return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();

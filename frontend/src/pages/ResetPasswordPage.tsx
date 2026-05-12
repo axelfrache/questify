@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ModeToggle } from '@/components/mode-toggle';
-import { ApiError, api } from '@/lib/api';
+import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { Loader2, X } from 'lucide-react';
 
@@ -28,6 +28,7 @@ export function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = useMemo(() => searchParams.get('token') ?? '', [searchParams]);
+  const tokenId = useMemo(() => searchParams.get('token_id') ?? '', [searchParams]);
   const [error, setError] = useState<string | null>(null);
   const [completed, setCompleted] = useState(false);
 
@@ -43,14 +44,10 @@ export function ResetPasswordPage() {
   const onSubmit = async (data: ResetPasswordFormValues) => {
     setError(null);
     try {
-      await api.resetPassword({ token, newPassword: data.password });
+      await api.resetPassword({ tokenId: tokenId || undefined, token, newPassword: data.password });
       setCompleted(true);
       window.setTimeout(() => navigate('/login'), 1200);
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 501) {
-        setError('Password reset is handled by FerrisKey. Use the link from the email.');
-        return;
-      }
+    } catch {
       setError('This reset link is invalid or expired.');
     }
   };
