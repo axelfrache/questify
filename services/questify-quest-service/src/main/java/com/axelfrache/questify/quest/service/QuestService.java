@@ -90,6 +90,13 @@ public class QuestService {
             .build();
 
     questTemplateRepository.save(template);
+    log.info(
+        "Quest created quest_id={} title=\"{}\" difficulty={} recurrence={} user={}",
+        template.getId(),
+        template.getTitle(),
+        template.getDifficulty(),
+        recurrenceRule != null ? recurrenceRule.getType() : "none",
+        userId);
 
     if (recurrenceRule == null) {
       if (request.dueDate() != null) {
@@ -230,6 +237,7 @@ public class QuestService {
 
   @Transactional
   public QuestResponse complete(UUID id, UUID userId) {
+    log.info("Completing quest occurrence={} user={}", id, userId);
     var occurrence = questOccurrenceRepository.findByIdAndUserId(id, userId).orElse(null);
 
     if (occurrence == null) {
@@ -260,6 +268,14 @@ public class QuestService {
         (int) Math.round(template.getBaseXpReward() * template.getDifficulty().getMultiplier());
     occurrence.setXpEarned(xpEarned);
     questOccurrenceRepository.save(occurrence);
+
+    log.info(
+        "Quest completed quest_id={} title=\"{}\" difficulty={} xp_earned={} user={}",
+        template.getId(),
+        template.getTitle(),
+        template.getDifficulty(),
+        xpEarned,
+        userId);
 
     var categoryName = template.getCategory() != null ? template.getCategory().getName() : null;
     questEventPublisher.publishQuestCompleted(
@@ -300,6 +316,7 @@ public class QuestService {
 
   @Transactional
   public QuestResponse cancel(UUID id, UUID userId) {
+    log.info("Cancelling quest occurrence={} user={}", id, userId);
     var occurrenceOpt = questOccurrenceRepository.findByIdAndUserId(id, userId);
     if (occurrenceOpt.isPresent()) {
       var occurrence = occurrenceOpt.get();
@@ -307,12 +324,17 @@ public class QuestService {
         throw new IllegalStateException("Quest is already completed or cancelled");
       occurrence.setStatus(QuestStatus.CANCELLED);
       questOccurrenceRepository.save(occurrence);
+      log.info(
+          "Quest occurrence cancelled quest_id={} user={}",
+          occurrence.getQuestTemplate().getId(),
+          userId);
       return toResponse(occurrence);
     }
 
     var template = findTemplateByIdAndUserOrThrow(id, userId);
     template.setActive(false);
     questTemplateRepository.save(template);
+    log.info("Quest template deactivated quest_id={} user={}", template.getId(), userId);
     return toResponse(template);
   }
 
