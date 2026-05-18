@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <springProperty scope="context" name="appName" source="spring.application.name"/>
+
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) [${appName}] [trace=%mdc{trace_id:--} span=%mdc{span_id:--}] %cyan(%logger{36}) - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+  </root>
+</configuration>
