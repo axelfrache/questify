@@ -1,6 +1,7 @@
 package com.axelfrache.questify.auth.service;
 
 import com.axelfrache.questify.auth.config.FerrisKeyConfig;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,12 +28,25 @@ public class FerrisKeyPasswordResetProvider implements PasswordResetProvider {
         .body(new FerrisKeyPasswordResetRequest(email.trim()))
         .retrieve()
         .toBodilessEntity();
+
     log.info("FerrisKey password reset requested for email={}", maskEmail(email));
   }
 
   @Override
-  public void resetPassword(String token, String newPassword) {
-    throw new UnsupportedOperationException("Password reset confirmation is handled by FerrisKey");
+  public void resetPassword(String tokenId, String token, String newPassword) {
+    if (tokenId == null || tokenId.isBlank()) {
+      throw new UnsupportedOperationException("FerrisKey reset token_id is required");
+    }
+
+    restClient
+        .post()
+        .uri(resetPasswordUri())
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(new FerrisKeyResetPasswordRequest(tokenId, token, newPassword))
+        .retrieve()
+        .toBodilessEntity();
+
+    log.info("FerrisKey password reset completed with tokenId={}", tokenId);
   }
 
   private URI passwordResetUri() {
@@ -41,11 +55,19 @@ public class FerrisKeyPasswordResetProvider implements PasswordResetProvider {
       return URI.create(configured);
     }
 
+    return URI.create(issuerUri() + "/login-actions/forgot-password");
+  }
+
+  private URI resetPasswordUri() {
+    return URI.create(issuerUri() + "/login-actions/reset-password");
+  }
+
+  private String issuerUri() {
     var issuer = ferrisKeyConfig.getIssuerUri();
     if (issuer == null || issuer.isBlank()) {
       throw new IllegalStateException("FerrisKey issuer URI is not configured");
     }
-    return URI.create(trimTrailingSlash(issuer) + "/login-actions/forgot-password");
+    return trimTrailingSlash(issuer);
   }
 
   private String trimTrailingSlash(String value) {
@@ -59,4 +81,9 @@ public class FerrisKeyPasswordResetProvider implements PasswordResetProvider {
   }
 
   private record FerrisKeyPasswordResetRequest(String email) {}
+
+  private record FerrisKeyResetPasswordRequest(
+      @JsonProperty("token_id") String tokenId,
+      String token,
+      @JsonProperty("new_password") String newPassword) {}
 }

@@ -63,7 +63,7 @@ public class PasswordResetService implements PasswordResetProvider {
 
   @Transactional
   @Override
-  public void resetPassword(String token, String newPassword) {
+  public void resetPassword(String tokenId, String token, String newPassword) {
     var resetToken =
         passwordResetTokenRepository
             .findByTokenHash(hash(token))
