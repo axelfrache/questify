@@ -48,7 +48,5 @@ public interface QuestOccurrenceRepository extends JpaRepository<QuestOccurrence
           + " AND qo.questTemplate.active = true"
           + " AND qo.questTemplate.deleted = false")
   List<QuestOccurrence> findPendingWithDueDateBetween(
-      @Param("userId") UUID userId,
-      @Param("from") LocalDate from,
-      @Param("to") LocalDate to);
+      @Param("userId") UUID userId, @Param("from") LocalDate from, @Param("to") LocalDate to);
 }
