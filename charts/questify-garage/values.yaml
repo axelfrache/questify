@@ -1,5 +1,5 @@
 image:
-  repository: axelfrache/questify-garage
+  repository: ghcr.io/axelfrache/questify-garage
   tag: "latest"
   pullPolicy: Always
 

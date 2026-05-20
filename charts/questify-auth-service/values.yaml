@@ -1,5 +1,5 @@
 image:
-  repository: axelfrache/questify-auth-service
+  repository: ghcr.io/axelfrache/questify-auth-service
   tag: "latest"
   pullPolicy: Always
 

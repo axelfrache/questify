@@ -1,5 +1,5 @@
 image:
-  repository: axelfrache/questify-progression-service
+  repository: ghcr.io/axelfrache/questify-progression-service
   tag: "latest"
   pullPolicy: Always
 

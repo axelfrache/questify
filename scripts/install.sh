@@ -373,7 +373,7 @@ services:
       - questify-network
 
   garage:
-    image: axelfrache/questify-garage:latest
+    image: ghcr.io/axelfrache/questify-garage:latest
     container_name: questify-garage
     restart: unless-stopped
     ports:
@@ -397,7 +397,7 @@ services:
       - questify-network
 
   auth-service:
-    image: axelfrache/questify-auth-service:latest
+    image: ghcr.io/axelfrache/questify-auth-service:latest
     container_name: questify-auth-service
     restart: unless-stopped
     environment:
@@ -437,7 +437,7 @@ services:
       - questify-network
 
   quest-service:
-    image: axelfrache/questify-quest-service:latest
+    image: ghcr.io/axelfrache/questify-quest-service:latest
     container_name: questify-quest-service
     restart: unless-stopped
     environment:
@@ -465,7 +465,7 @@ services:
       - questify-network
 
   project-service:
-    image: axelfrache/questify-project-service:latest
+    image: ghcr.io/axelfrache/questify-project-service:latest
     container_name: questify-project-service
     restart: unless-stopped
     environment:
@@ -493,7 +493,7 @@ services:
       - questify-network
 
   progression-service:
-    image: axelfrache/questify-progression-service:latest
+    image: ghcr.io/axelfrache/questify-progression-service:latest
     container_name: questify-progression-service
     restart: unless-stopped
     environment:
@@ -521,7 +521,7 @@ services:
       - questify-network
 
   stats-service:
-    image: axelfrache/questify-stats-service:latest
+    image: ghcr.io/axelfrache/questify-stats-service:latest
     container_name: questify-stats-service
     restart: unless-stopped
     environment:
@@ -549,7 +549,7 @@ services:
       - questify-network
 
   admin-service:
-    image: axelfrache/questify-admin-service:latest
+    image: ghcr.io/axelfrache/questify-admin-service:latest
     container_name: questify-admin-service
     restart: unless-stopped
     environment:
@@ -605,7 +605,7 @@ services:
       - questify-network
 
   frontend:
-    image: axelfrache/questify-frontend:latest
+    image: ghcr.io/axelfrache/questify-frontend:latest
     container_name: questify-frontend
     restart: unless-stopped
     ports:

@@ -1,5 +1,5 @@
 image:
-  repository: axelfrache/questify-frontend
+  repository: ghcr.io/axelfrache/questify-frontend
   tag: "latest"
   pullPolicy: Always
 
