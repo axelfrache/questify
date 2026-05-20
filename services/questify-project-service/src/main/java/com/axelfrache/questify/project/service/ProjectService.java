@@ -95,7 +95,7 @@ public class ProjectService {
   @WithSpan("project.create")
   @Transactional
   public ProjectDetailResponse create(UUID userId, CreateProjectRequest request) {
-    setUuidAttribute("user.id", userId);
+    setUuidAttribute("questify.user.id", userId);
     var project =
         projectRepository.save(
             Project.builder()
@@ -115,8 +115,8 @@ public class ProjectService {
   @WithSpan("project.find_by_id")
   @Transactional(readOnly = true)
   public ProjectDetailResponse findById(UUID projectId, UUID userId) {
-    setUuidAttribute("user.id", userId);
-    setUuidAttribute("project.id", projectId);
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.project.id", projectId);
     var project = requireMember(projectId, userId);
     var pinned = userProjectPinRepository.existsByUserIdAndProject(userId, project);
     return toDetail(project, pinned);
@@ -125,8 +125,8 @@ public class ProjectService {
   @WithSpan("project.update")
   @Transactional
   public ProjectDetailResponse update(UUID projectId, UUID userId, UpdateProjectRequest request) {
-    setUuidAttribute("user.id", userId);
-    setUuidAttribute("project.id", projectId);
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.project.id", projectId);
     var project = requireMember(projectId, userId);
 
     if (request.name() != null) {
@@ -149,8 +149,8 @@ public class ProjectService {
   @WithSpan("project.pin")
   @Transactional
   public void pin(UUID projectId, UUID userId) {
-    setUuidAttribute("user.id", userId);
-    setUuidAttribute("project.id", projectId);
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.project.id", projectId);
     var project = requireMember(projectId, userId);
     setProjectAttributes(project);
     if (project.getArchivedAt() != null)
@@ -165,8 +165,8 @@ public class ProjectService {
   @WithSpan("project.unpin")
   @Transactional
   public void unpin(UUID projectId, UUID userId) {
-    setUuidAttribute("user.id", userId);
-    setUuidAttribute("project.id", projectId);
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.project.id", projectId);
     var project = requireMember(projectId, userId);
     setProjectAttributes(project);
     userProjectPinRepository.deleteByUserIdAndProject(userId, project);
@@ -175,8 +175,8 @@ public class ProjectService {
   @WithSpan("project.delete")
   @Transactional
   public void delete(UUID projectId, UUID userId) {
-    setUuidAttribute("user.id", userId);
-    setUuidAttribute("project.id", projectId);
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.project.id", projectId);
     var projectOpt = projectRepository.findById(projectId);
     if (projectOpt.isEmpty()) return;
 
@@ -242,9 +242,9 @@ public class ProjectService {
 
   private static void setProjectAttributes(Project project) {
     if (project == null) return;
-    setUuidAttribute("project.id", project.getId());
-    setUuidAttribute("project.owner_user.id", project.getOwnerUserId());
-    Span.current().setAttribute("project.archived", project.getArchivedAt() != null);
+    setUuidAttribute("questify.project.id", project.getId());
+    setUuidAttribute("questify.project.owner_user.id", project.getOwnerUserId());
+    Span.current().setAttribute("questify.project.archived", project.getArchivedAt() != null);
   }
 
   private static void setUuidAttribute(String key, UUID value) {

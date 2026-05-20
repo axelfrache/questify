@@ -40,7 +40,7 @@ public class NotificationService {
   @WithSpan("notification.get_all")
   @Transactional(readOnly = true)
   public List<NotificationResponse> getNotifications(UUID userId) {
-    setUuidAttribute("user.id", userId);
+    setUuidAttribute("questify.user.id", userId);
     return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
         .map(this::toResponse)
         .toList();
@@ -49,15 +49,15 @@ public class NotificationService {
   @WithSpan("notification.get_unread_count")
   @Transactional(readOnly = true)
   public long getUnreadCount(UUID userId) {
-    setUuidAttribute("user.id", userId);
+    setUuidAttribute("questify.user.id", userId);
     return notificationRepository.countByUserIdAndReadFalse(userId);
   }
 
   @WithSpan("notification.mark_read")
   @Transactional
   public void markRead(UUID notificationId, UUID userId) {
-    setUuidAttribute("user.id", userId);
-    setUuidAttribute("notification.id", notificationId);
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.notification.id", notificationId);
     notificationRepository
         .findById(notificationId)
         .filter(n -> n.getUserId().equals(userId))
@@ -71,15 +71,15 @@ public class NotificationService {
   @WithSpan("notification.mark_all_read")
   @Transactional
   public void markAllRead(UUID userId) {
-    setUuidAttribute("user.id", userId);
+    setUuidAttribute("questify.user.id", userId);
     notificationRepository.markAllReadByUserId(userId);
   }
 
   @WithSpan("notification.delete")
   @Transactional
   public void delete(UUID notificationId, UUID userId) {
-    setUuidAttribute("user.id", userId);
-    setUuidAttribute("notification.id", notificationId);
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.notification.id", notificationId);
     notificationRepository
         .findById(notificationId)
         .filter(n -> n.getUserId().equals(userId))
@@ -89,9 +89,9 @@ public class NotificationService {
   @WithSpan("notification.create_scheduled_reminder")
   @Transactional
   public void createScheduledReminder(QuestScheduledEvent event) {
-    setUuidAttribute("user.id", event.userId());
-    setUuidAttribute("quest.id", event.templateId());
-    setUuidAttribute("quest.occurrence.id", event.occurrenceId());
+    setUuidAttribute("questify.user.id", event.userId());
+    setUuidAttribute("questify.quest.id", event.templateId());
+    setUuidAttribute("questify.quest.occurrence.id", event.occurrenceId());
     if (event.occurrenceId() == null) return;
 
     var existing =
@@ -146,8 +146,8 @@ public class NotificationService {
   @WithSpan("notification.mark_reminder_completed")
   @Transactional
   public void markReminderCompleted(UUID userId, UUID occurrenceId) {
-    setUuidAttribute("user.id", userId);
-    setUuidAttribute("quest.occurrence.id", occurrenceId);
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.quest.occurrence.id", occurrenceId);
     scheduledReminderRepository
         .findByUserIdAndOccurrenceId(userId, occurrenceId)
         .ifPresent(
@@ -161,9 +161,9 @@ public class NotificationService {
   @Transactional
   public void createAndSendNotification(
       UUID userId, NotificationType type, String title, String body, UUID questId) {
-    setUuidAttribute("user.id", userId);
-    setUuidAttribute("quest.id", questId);
-    if (type != null) Span.current().setAttribute("notification.type", type.name());
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.quest.id", questId);
+    if (type != null) Span.current().setAttribute("questify.notification.type", type.name());
     var notification =
         notificationRepository.save(
             Notification.builder()
@@ -177,7 +177,8 @@ public class NotificationService {
     notificationRepository.pruneOldestForUser(userId, maxPerUser);
 
     var subscriptions = pushSubscriptionRepository.findByUserId(userId);
-    Span.current().setAttribute("notification.push_subscription_count", subscriptions.size());
+    Span.current()
+        .setAttribute("questify.notification.push_subscription_count", subscriptions.size());
     for (var sub : subscriptions) {
       pushNotificationService.send(sub, title, body);
     }
@@ -197,7 +198,7 @@ public class NotificationService {
   @WithSpan("notification.subscribe_push")
   @Transactional
   public void subscribe(UUID userId, PushSubscriptionRequest request) {
-    setUuidAttribute("user.id", userId);
+    setUuidAttribute("questify.user.id", userId);
     pushSubscriptionRepository
         .findByUserIdAndEndpoint(userId, request.endpoint())
         .orElseGet(
@@ -214,15 +215,15 @@ public class NotificationService {
   @WithSpan("notification.unsubscribe_push")
   @Transactional
   public void unsubscribe(UUID userId, String endpoint) {
-    setUuidAttribute("user.id", userId);
+    setUuidAttribute("questify.user.id", userId);
     pushSubscriptionRepository.deleteByUserIdAndEndpoint(userId, endpoint);
   }
 
   @WithSpan("notification.cleanup_reminders")
   @Transactional
   public void cleanupRemindersForDeletedQuest(UUID templateId, UUID occurrenceId) {
-    setUuidAttribute("quest.id", templateId);
-    setUuidAttribute("quest.occurrence.id", occurrenceId);
+    setUuidAttribute("questify.quest.id", templateId);
+    setUuidAttribute("questify.quest.occurrence.id", occurrenceId);
     if (occurrenceId != null) {
       scheduledReminderRepository.deleteByOccurrenceId(occurrenceId);
     } else {
@@ -233,7 +234,7 @@ public class NotificationService {
   @WithSpan("notification.delete_user_data")
   @Transactional
   public void deleteUserData(UUID userId) {
-    setUuidAttribute("user.id", userId);
+    setUuidAttribute("questify.user.id", userId);
     notificationRepository.deleteByUserId(userId);
     scheduledReminderRepository.deleteByUserId(userId);
     pushSubscriptionRepository.deleteByUserId(userId);

@@ -62,7 +62,9 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
     log.error("Unexpected error", ex);
     Span.current().recordException(ex);
-    Span.current().setStatus(StatusCode.ERROR, ex.getMessage());
+    Span.current().setStatus(StatusCode.ERROR);
+    Span.current().setAttribute("exception.type", ex.getClass().getName());
+    Span.current().setAttribute("error.category", "unexpected");
     return ResponseEntity.internalServerError()
         .body(new ErrorResponse("INTERNAL_ERROR", "An unexpected error occurred"));
   }

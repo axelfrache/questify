@@ -1,6 +1,9 @@
 package com.axelfrache.questify.quest.messaging;
 
 import com.axelfrache.questify.quest.service.CategoryService;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -16,8 +19,10 @@ public class UserRegisteredListener {
 
   @RabbitListener(queues = QueueConstants.USER_REGISTERED_QUEST_QUEUE)
   @Transactional
+  @WithSpan("messaging.user_registered_quest")
   public void onUserRegistered(UserRegisteredEvent event) {
     var userId = event.userId();
+    setEventAttributes("user.registered", userId);
     if (userId == null) {
       log.warn("Received UserRegisteredEvent without userId, ignoring.");
       return;
@@ -25,5 +30,10 @@ public class UserRegisteredListener {
 
     categoryService.seedDefaultCategoriesForUser(userId);
     log.info("Default categories ensured for user: {}", userId);
+  }
+
+  private static void setEventAttributes(String eventType, UUID userId) {
+    Span.current().setAttribute("questify.event.type", eventType);
+    if (userId != null) Span.current().setAttribute("questify.user.id", userId.toString());
   }
 }

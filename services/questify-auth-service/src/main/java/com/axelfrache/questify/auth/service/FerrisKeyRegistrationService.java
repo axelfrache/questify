@@ -22,10 +22,10 @@ public class FerrisKeyRegistrationService {
 
   @WithSpan("auth.ferriskey_register")
   public void register(RegisterRequest request) {
-    Span.current().setAttribute("auth.flow", "ferriskey_register");
+    Span.current().setAttribute("questify.auth.flow", "ferriskey_register");
     var issuer = ferrisKeyConfig.getIssuerUri();
     if (issuer == null || issuer.isBlank()) {
-      Span.current().setAttribute("auth.result", "missing_issuer");
+      Span.current().setAttribute("questify.auth.result", "missing_issuer");
       throw new IllegalStateException("FerrisKey issuer URI is not configured");
     }
 
@@ -38,9 +38,9 @@ public class FerrisKeyRegistrationService {
                   request.email(), request.email(), request.username(), null, request.password()))
           .retrieve()
           .toBodilessEntity();
-      Span.current().setAttribute("auth.result", "success");
+      Span.current().setAttribute("questify.auth.result", "success");
     } catch (RestClientResponseException ex) {
-      Span.current().setAttribute("auth.result", "failure");
+      Span.current().setAttribute("questify.auth.result", "failure");
       Span.current().setAttribute("http.response.status_code", ex.getStatusCode().value());
       if (ex.getStatusCode() == HttpStatus.BAD_REQUEST
           || ex.getStatusCode() == HttpStatus.CONFLICT

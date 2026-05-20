@@ -48,11 +48,11 @@ public class QuestService {
   @WithSpan("quest.create")
   @Transactional
   public QuestResponse create(UUID userId, CreateQuestRequest request) {
-    setUuidAttribute("user.id", userId);
-    setUuidAttribute("quest.parent.id", request.parentId());
-    setUuidAttribute("quest.category.id", request.categoryId());
-    setEnumAttribute("quest.difficulty", request.difficulty());
-    Span.current().setAttribute("quest.has_due_date", request.dueDate() != null);
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.quest.parent.id", request.parentId());
+    setUuidAttribute("questify.quest.category.id", request.categoryId());
+    setEnumAttribute("questify.quest.difficulty", request.difficulty());
+    Span.current().setAttribute("questify.quest.has_due_date", request.dueDate() != null);
 
     var category =
         request.categoryId() != null
@@ -133,17 +133,17 @@ public class QuestService {
   @WithSpan("quest.update")
   @Transactional
   public QuestResponse update(UUID id, UUID userId, UpdateQuestRequest request) {
-    setUuidAttribute("user.id", userId);
-    setUuidAttribute("quest.requested_id", id);
-    setUuidAttribute("quest.project.id", request.projectId());
-    setUuidAttribute("quest.category.id", request.categoryId());
-    setEnumAttribute("quest.difficulty", request.difficulty());
-    Span.current().setAttribute("quest.has_due_date_update", request.dueDate() != null);
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.quest.requested_id", id);
+    setUuidAttribute("questify.project.id", request.projectId());
+    setUuidAttribute("questify.quest.category.id", request.categoryId());
+    setEnumAttribute("questify.quest.difficulty", request.difficulty());
+    Span.current().setAttribute("questify.quest.has_due_date_update", request.dueDate() != null);
 
     var occurrenceOpt = questOccurrenceRepository.findByIdAndUserId(id, userId);
     if (occurrenceOpt.isPresent()) {
       var occurrence = occurrenceOpt.get();
-      Span.current().setAttribute("quest.target", "occurrence");
+      Span.current().setAttribute("questify.quest.target", "occurrence");
       setQuestOccurrenceAttributes(occurrence);
 
       if (request.dueDate() != null) {
@@ -184,7 +184,7 @@ public class QuestService {
     }
 
     var template = findTemplateByIdAndUserOrThrow(id, userId);
-    Span.current().setAttribute("quest.target", "template");
+    Span.current().setAttribute("questify.quest.target", "template");
     setQuestTemplateAttributes(template);
     updateTemplateFields(template, request, userId);
     questTemplateRepository.save(template);
@@ -260,8 +260,8 @@ public class QuestService {
   @WithSpan("quest.complete")
   @Transactional
   public QuestResponse complete(UUID id, UUID userId) {
-    setUuidAttribute("user.id", userId);
-    setUuidAttribute("quest.requested_id", id);
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.quest.requested_id", id);
     log.info("Completing quest occurrence={} user={}", id, userId);
     var occurrence = questOccurrenceRepository.findByIdAndUserId(id, userId).orElse(null);
 
@@ -294,7 +294,7 @@ public class QuestService {
     occurrence.setXpEarned(xpEarned);
     questOccurrenceRepository.save(occurrence);
     setQuestOccurrenceAttributes(occurrence);
-    Span.current().setAttribute("quest.xp_earned", xpEarned);
+    Span.current().setAttribute("questify.quest.xp_earned", xpEarned);
 
     log.info(
         "Quest completed quest_id={} title=\"{}\" difficulty={} xp_earned={} user={}",
@@ -344,13 +344,13 @@ public class QuestService {
   @WithSpan("quest.cancel")
   @Transactional
   public QuestResponse cancel(UUID id, UUID userId) {
-    setUuidAttribute("user.id", userId);
-    setUuidAttribute("quest.requested_id", id);
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.quest.requested_id", id);
     log.info("Cancelling quest occurrence={} user={}", id, userId);
     var occurrenceOpt = questOccurrenceRepository.findByIdAndUserId(id, userId);
     if (occurrenceOpt.isPresent()) {
       var occurrence = occurrenceOpt.get();
-      Span.current().setAttribute("quest.target", "occurrence");
+      Span.current().setAttribute("questify.quest.target", "occurrence");
       setQuestOccurrenceAttributes(occurrence);
       if (occurrence.getStatus() != QuestStatus.PENDING)
         throw new IllegalStateException("Quest is already completed or cancelled");
@@ -364,7 +364,7 @@ public class QuestService {
     }
 
     var template = findTemplateByIdAndUserOrThrow(id, userId);
-    Span.current().setAttribute("quest.target", "template");
+    Span.current().setAttribute("questify.quest.target", "template");
     setQuestTemplateAttributes(template);
     template.setActive(false);
     questTemplateRepository.save(template);
@@ -375,8 +375,8 @@ public class QuestService {
   @WithSpan("quest.skip")
   @Transactional
   public QuestResponse skip(UUID id, UUID userId) {
-    setUuidAttribute("user.id", userId);
-    setUuidAttribute("quest.occurrence.id", id);
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.quest.occurrence.id", id);
     var occurrence =
         questOccurrenceRepository
             .findByIdAndUserId(id, userId)
@@ -398,9 +398,9 @@ public class QuestService {
   @WithSpan("quest.ensure_daily_occurrences")
   @Transactional
   public void ensureDailyOccurrences(UUID userId) {
-    setUuidAttribute("user.id", userId);
+    setUuidAttribute("questify.user.id", userId);
     var templates = questTemplateRepository.findByUserIdAndActiveTrueAndDeletedFalse(userId);
-    Span.current().setAttribute("quest.template_count", templates.size());
+    Span.current().setAttribute("questify.quest.template_count", templates.size());
     var today = LocalDate.now(ZoneOffset.UTC);
 
     for (var template : templates) {
@@ -557,8 +557,8 @@ public class QuestService {
   @WithSpan("quest.find_by_status")
   @Transactional(readOnly = true)
   public List<QuestResponse> findByUserAndStatus(UUID userId, QuestStatus status) {
-    setUuidAttribute("user.id", userId);
-    setEnumAttribute("quest.status", status);
+    setUuidAttribute("questify.user.id", userId);
+    setEnumAttribute("questify.quest.status", status);
     return questOccurrenceRepository.findByUserIdAndStatus(userId, status).stream()
         .filter(o -> o.getQuestTemplate().isActive() && !o.getQuestTemplate().isDeleted())
         .map(this::toResponse)
@@ -568,8 +568,8 @@ public class QuestService {
   @WithSpan("quest.find_by_id")
   @Transactional(readOnly = true)
   public QuestResponse findById(UUID id, UUID userId) {
-    setUuidAttribute("user.id", userId);
-    setUuidAttribute("quest.requested_id", id);
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.quest.requested_id", id);
     return questOccurrenceRepository
         .findByIdAndUserId(id, userId)
         .map(this::toResponse)
@@ -579,13 +579,13 @@ public class QuestService {
   @WithSpan("quest.delete")
   @Transactional
   public void delete(UUID id, UUID userId) {
-    setUuidAttribute("user.id", userId);
-    setUuidAttribute("quest.requested_id", id);
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.quest.requested_id", id);
     var occurrenceOpt = questOccurrenceRepository.findByIdAndUserId(id, userId);
     if (occurrenceOpt.isPresent()) {
       var occurrence = occurrenceOpt.get();
       var template = occurrence.getQuestTemplate();
-      Span.current().setAttribute("quest.target", "occurrence");
+      Span.current().setAttribute("questify.quest.target", "occurrence");
       setQuestOccurrenceAttributes(occurrence);
       questOccurrenceRepository.delete(occurrence);
       if (template.getRecurrenceRule() == null) {
@@ -596,7 +596,7 @@ public class QuestService {
       }
     } else {
       var template = findTemplateByIdAndUserOrThrow(id, userId);
-      Span.current().setAttribute("quest.target", "template");
+      Span.current().setAttribute("questify.quest.target", "template");
       setQuestTemplateAttributes(template);
       deleteTemplate(template);
       questEventPublisher.publishQuestDeleted(userId, template.getId(), null);
@@ -631,7 +631,7 @@ public class QuestService {
   @WithSpan("quest.toggle_active")
   @Transactional
   public QuestResponse toggleActive(UUID id, UUID userId) {
-    setUuidAttribute("user.id", userId);
+    setUuidAttribute("questify.user.id", userId);
     var template = findTemplateByIdAndUserOrThrow(id, userId);
     template.setActive(!template.isActive());
     questTemplateRepository.save(template);
@@ -642,8 +642,8 @@ public class QuestService {
   @WithSpan("quest.find_subquests")
   @Transactional(readOnly = true)
   public List<QuestResponse> findSubquests(UUID parentId, UUID userId) {
-    setUuidAttribute("user.id", userId);
-    setUuidAttribute("quest.parent.id", parentId);
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.quest.parent.id", parentId);
     findTemplateByIdAndUserOrThrow(parentId, userId);
     return questTemplateRepository.findSubquestsWithOccurrences(parentId).stream()
         .map(
@@ -661,8 +661,8 @@ public class QuestService {
   @WithSpan("quest.find_by_project")
   @Transactional(readOnly = true)
   public List<QuestResponse> findByProject(UUID projectId, UUID userId) {
-    setUuidAttribute("user.id", userId);
-    setUuidAttribute("quest.project.id", projectId);
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.project.id", projectId);
     ensureDailyOccurrences(userId);
     var allOccurrences = questOccurrenceRepository.findAllByUserIdWithSubquests(userId);
 
@@ -712,25 +712,27 @@ public class QuestService {
 
   private void setQuestOccurrenceAttributes(QuestOccurrence occurrence) {
     if (occurrence == null) return;
-    setUuidAttribute("quest.occurrence.id", occurrence.getId());
-    setEnumAttribute("quest.status", occurrence.getStatus());
+    setUuidAttribute("questify.quest.occurrence.id", occurrence.getId());
+    setEnumAttribute("questify.quest.status", occurrence.getStatus());
     setQuestTemplateAttributes(occurrence.getQuestTemplate());
   }
 
   private void setQuestTemplateAttributes(QuestTemplate template) {
     if (template == null) return;
-    setUuidAttribute("quest.id", template.getId());
-    setUuidAttribute("quest.project.id", template.getProjectId());
+    setUuidAttribute("questify.quest.id", template.getId());
+    setUuidAttribute("questify.project.id", template.getProjectId());
     setUuidAttribute(
-        "quest.parent.id", template.getParent() != null ? template.getParent().getId() : null);
-    setEnumAttribute("quest.difficulty", template.getDifficulty());
-    Span.current().setAttribute("quest.base_xp_reward", template.getBaseXpReward());
-    Span.current().setAttribute("quest.active", template.isActive());
-    Span.current().setAttribute("quest.has_parent", template.getParent() != null);
-    Span.current().setAttribute("quest.has_category", template.getCategory() != null);
-    Span.current().setAttribute("quest.recurrence.enabled", template.getRecurrenceRule() != null);
+        "questify.quest.parent.id",
+        template.getParent() != null ? template.getParent().getId() : null);
+    setEnumAttribute("questify.quest.difficulty", template.getDifficulty());
+    Span.current().setAttribute("questify.quest.base_xp_reward", template.getBaseXpReward());
+    Span.current().setAttribute("questify.quest.active", template.isActive());
+    Span.current().setAttribute("questify.quest.has_parent", template.getParent() != null);
+    Span.current().setAttribute("questify.quest.has_category", template.getCategory() != null);
+    Span.current()
+        .setAttribute("questify.quest.recurrence.enabled", template.getRecurrenceRule() != null);
     if (template.getRecurrenceRule() != null) {
-      setEnumAttribute("quest.recurrence.type", template.getRecurrenceRule().getType());
+      setEnumAttribute("questify.quest.recurrence.type", template.getRecurrenceRule().getType());
     }
   }
 

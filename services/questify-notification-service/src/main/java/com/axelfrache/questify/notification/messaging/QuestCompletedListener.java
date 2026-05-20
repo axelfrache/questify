@@ -2,6 +2,9 @@ package com.axelfrache.questify.notification.messaging;
 
 import com.axelfrache.questify.notification.model.NotificationType;
 import com.axelfrache.questify.notification.service.NotificationService;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -17,7 +20,11 @@ public class QuestCompletedListener {
 
   @RabbitListener(queues = QueueConstants.QUEST_COMPLETED_QUEUE)
   @Transactional
+  @WithSpan("messaging.quest_completed_notification")
   public void onQuestCompleted(QuestCompletedEvent event) {
+    setEventAttributes("quest.completed", event.userId());
+    setUuidAttribute("questify.quest.id", event.questId());
+    Span.current().setAttribute("questify.quest.xp_earned", event.xpEarned());
     log.debug(
         "Received quest.completed: userId={} quest={} xp={}",
         event.userId(),
@@ -32,5 +39,14 @@ public class QuestCompletedListener {
         "Quest completed! 🎉",
         "+" + event.xpEarned() + " XP — \"" + event.questTitle() + "\"",
         event.questId());
+  }
+
+  private static void setEventAttributes(String eventType, UUID userId) {
+    Span.current().setAttribute("questify.event.type", eventType);
+    setUuidAttribute("questify.user.id", userId);
+  }
+
+  private static void setUuidAttribute(String key, UUID value) {
+    if (value != null) Span.current().setAttribute(key, value.toString());
   }
 }

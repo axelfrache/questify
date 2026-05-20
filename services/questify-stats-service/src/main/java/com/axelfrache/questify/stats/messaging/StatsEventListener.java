@@ -4,6 +4,7 @@ import com.axelfrache.questify.stats.model.QuestCompletionEntry;
 import com.axelfrache.questify.stats.repository.QuestCompletionEntryRepository;
 import com.axelfrache.questify.stats.service.StatsService;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,12 +22,13 @@ public class StatsEventListener {
 
   @RabbitListener(queues = QueueConstants.QUEST_COMPLETED_QUEUE)
   @Transactional
+  @WithSpan("messaging.quest_completed_stats")
   public void onQuestCompleted(QuestCompletedEvent event) {
-    setUuidAttribute("user.id", event.userId());
-    setUuidAttribute("quest.id", event.questId());
-    Span.current().setAttribute("messaging.event.type", "quest.completed");
-    Span.current().setAttribute("quest.xp_earned", event.xpEarned());
-    Span.current().setAttribute("quest.has_category", event.categoryName() != null);
+    setUuidAttribute("questify.user.id", event.userId());
+    setUuidAttribute("questify.quest.id", event.questId());
+    Span.current().setAttribute("questify.event.type", "quest.completed");
+    Span.current().setAttribute("questify.quest.xp_earned", event.xpEarned());
+    Span.current().setAttribute("questify.quest.has_category", event.categoryName() != null);
     log.debug("Recording completion: questId={} userId={}", event.questId(), event.userId());
     repository.save(
         QuestCompletionEntry.builder()
@@ -42,9 +44,10 @@ public class StatsEventListener {
 
   @RabbitListener(queues = QueueConstants.USER_DELETED_QUEUE)
   @Transactional
+  @WithSpan("messaging.user_deleted_stats")
   public void onUserDeleted(UserDeletedEvent event) {
-    setUuidAttribute("user.id", event.userId());
-    Span.current().setAttribute("messaging.event.type", "user.deleted");
+    setUuidAttribute("questify.user.id", event.userId());
+    Span.current().setAttribute("questify.event.type", "user.deleted");
     log.info("Deleting stats for user {}", event.userId());
     repository.deleteByUserId(event.userId());
     statsService.invalidateUserStatsCache(event.userId());
@@ -52,9 +55,10 @@ public class StatsEventListener {
 
   @RabbitListener(queues = QueueConstants.CATEGORY_DELETED_QUEUE)
   @Transactional
+  @WithSpan("messaging.category_deleted_stats")
   public void onCategoryDeleted(CategoryDeletedEvent event) {
-    setUuidAttribute("user.id", event.userId());
-    Span.current().setAttribute("messaging.event.type", "category.deleted");
+    setUuidAttribute("questify.user.id", event.userId());
+    Span.current().setAttribute("questify.event.type", "category.deleted");
     log.info(
         "Clearing deleted category from stats: userId={} category={}",
         event.userId(),

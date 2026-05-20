@@ -5,6 +5,9 @@ import com.axelfrache.questify.project.model.OutboxStatus;
 import com.axelfrache.questify.project.repository.OutboxEventRepository;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -37,11 +40,14 @@ public class OutboxProcessor {
 
   @Scheduled(fixedDelayString = "${outbox.processor.fixed-delay-ms:5000}")
   @Transactional
+  @WithSpan("outbox.process")
   public void process() {
     var pending = outboxEventRepository.findPendingBatchForUpdate();
+    Span.current().setAttribute("outbox.pending_count", pending.size());
     if (pending.isEmpty()) return;
 
     for (OutboxEvent event : pending) {
+      setOutboxAttributes(event);
       try {
         rabbitMqCircuitBreaker.executeCallable(
             () -> {
@@ -52,18 +58,28 @@ public class OutboxProcessor {
         event.setProcessedAt(Instant.now());
         event.setNextAttemptAt(null);
         event.setLastError(null);
+        setOutboxAttributes(event);
         log.debug("Outbox event sent: id={} routingKey={}", event.getId(), event.getRoutingKey());
       } catch (CallNotPermittedException ex) {
+        Span.current().recordException(ex);
+        Span.current().setStatus(StatusCode.ERROR);
+        Span.current().setAttribute("error.category", "circuit_open");
         log.warn("Circuit OPEN — outbox processing paused");
         break;
       } catch (Exception ex) {
         scheduleRetry(event, ex);
+        setOutboxAttributes(event);
+        Span.current().recordException(ex);
+        Span.current().setStatus(StatusCode.ERROR);
+        Span.current().setAttribute("error.category", "outbox_publish_failed");
         log.warn("Failed to send outbox event: id={} — {}", event.getId(), errorMessage(ex));
       }
     }
   }
 
+  @WithSpan("outbox.send")
   private void send(OutboxEvent event) throws Exception {
+    setOutboxAttributes(event);
     var message =
         MessageBuilder.withBody(event.getPayload().getBytes(StandardCharsets.UTF_8))
             .setContentType(MessageProperties.CONTENT_TYPE_JSON)
@@ -109,5 +125,18 @@ public class OutboxProcessor {
   private String errorMessage(Exception ex) {
     var message = ex.getMessage();
     return message == null || message.isBlank() ? ex.toString() : message;
+  }
+
+  private static void setOutboxAttributes(OutboxEvent event) {
+    if (event == null) return;
+    if (event.getId() != null)
+      Span.current().setAttribute("outbox.event_id", event.getId().toString());
+    if (event.getTypeId() != null)
+      Span.current().setAttribute("outbox.event_type", event.getTypeId());
+    if (event.getRoutingKey() != null)
+      Span.current().setAttribute("messaging.destination", event.getRoutingKey());
+    if (event.getStatus() != null)
+      Span.current().setAttribute("outbox.status", event.getStatus().name());
+    Span.current().setAttribute("outbox.retry_count", event.getAttempts());
   }
 }
