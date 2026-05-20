@@ -365,7 +365,7 @@ export function UpcomingPage() {
         )}
       </aside>
 
-      <div className="hidden lg:block w-px bg-border shrink-0" />
+      <div className="hidden lg:block w-px bg-border shrink-0 sticky top-6 self-start h-[calc(100svh-4.5rem)]" />
 
       <div className="flex-1 min-w-0 space-y-8">
         <div>
