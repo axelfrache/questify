@@ -9,6 +9,7 @@ import com.axelfrache.questify.progression.model.QuestCompletionRecord;
 import com.axelfrache.questify.progression.model.UserProgression;
 import com.axelfrache.questify.progression.repository.QuestCompletionRecordRepository;
 import com.axelfrache.questify.progression.repository.UserProgressionRepository;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class ProgressionService {
   private final LevelConfig levelConfig;
   private final RabbitTemplate rabbitTemplate;
 
+  @WithSpan("progression.award_xp")
   @Transactional
   @CacheEvict(cacheNames = "progression", key = "#userId")
   public void awardXp(
@@ -66,6 +68,7 @@ public class ProgressionService {
       log.info("User {} grade changed: {} -> {}", userId, previousGrade, newGrade);
   }
 
+  @WithSpan("progression.get")
   @Cacheable(cacheNames = "progression", key = "#userId")
   @Transactional(readOnly = true)
   public ProgressionResponse getProgression(UUID userId) {
@@ -73,7 +76,7 @@ public class ProgressionService {
   }
 
   @CacheEvict(cacheNames = "progression", key = "#userId")
-  public void evictUserCache(UUID userId) {}
+  public void invalidateUserProgressionCache(UUID userId) {}
 
   private UserProgression findOrCreate(UUID userId) {
     return userProgressionRepository

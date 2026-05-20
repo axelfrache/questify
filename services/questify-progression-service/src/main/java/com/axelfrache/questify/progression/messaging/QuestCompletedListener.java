@@ -26,6 +26,6 @@ public class QuestCompletedListener {
         event.questId(),
         event.categoryName(),
         event.completedAt());
-    achievementService.checkAndUnlock(event.userId());
+    achievementService.evaluateAndUnlockAchievements(event.userId());
   }
 }

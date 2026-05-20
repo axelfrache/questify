@@ -13,6 +13,7 @@ import com.axelfrache.questify.project.model.UserProjectPin;
 import com.axelfrache.questify.project.repository.ProjectMemberRepository;
 import com.axelfrache.questify.project.repository.ProjectRepository;
 import com.axelfrache.questify.project.repository.UserProjectPinRepository;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -41,6 +42,7 @@ public class ProjectService {
   private final UserProjectPinRepository userProjectPinRepository;
   private final ProjectEventPublisher projectEventPublisher;
 
+  @WithSpan("project.get_sidebar")
   @Transactional(readOnly = true)
   public ProjectSidebarResponse getSidebar(UUID userId) {
     var projects = projectRepository.findAllByMemberUserId(userId);
@@ -67,6 +69,7 @@ public class ProjectService {
     return new ProjectSidebarResponse(pinned, recent);
   }
 
+  @WithSpan("project.list")
   @Transactional(readOnly = true)
   public List<ProjectSummaryResponse> list(
       UUID userId, String search, String sort, boolean includeArchived) {
@@ -88,6 +91,7 @@ public class ProjectService {
         .toList();
   }
 
+  @WithSpan("project.create")
   @Transactional
   public ProjectDetailResponse create(UUID userId, CreateProjectRequest request) {
     var project =
@@ -105,6 +109,7 @@ public class ProjectService {
     return toDetail(project, false);
   }
 
+  @WithSpan("project.find_by_id")
   @Transactional(readOnly = true)
   public ProjectDetailResponse findById(UUID projectId, UUID userId) {
     var project = requireMember(projectId, userId);
@@ -112,6 +117,7 @@ public class ProjectService {
     return toDetail(project, pinned);
   }
 
+  @WithSpan("project.update")
   @Transactional
   public ProjectDetailResponse update(UUID projectId, UUID userId, UpdateProjectRequest request) {
     var project = requireMember(projectId, userId);
@@ -132,6 +138,7 @@ public class ProjectService {
     return toDetail(project, pinned);
   }
 
+  @WithSpan("project.pin")
   @Transactional
   public void pin(UUID projectId, UUID userId) {
     var project = requireMember(projectId, userId);
@@ -144,12 +151,14 @@ public class ProjectService {
     }
   }
 
+  @WithSpan("project.unpin")
   @Transactional
   public void unpin(UUID projectId, UUID userId) {
     var project = requireMember(projectId, userId);
     userProjectPinRepository.deleteByUserIdAndProject(userId, project);
   }
 
+  @WithSpan("project.delete")
   @Transactional
   public void delete(UUID projectId, UUID userId) {
     var projectOpt = projectRepository.findById(projectId);

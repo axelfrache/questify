@@ -8,6 +8,7 @@ import com.axelfrache.questify.quest.model.CategorySource;
 import com.axelfrache.questify.quest.model.QuestAction;
 import com.axelfrache.questify.quest.repository.CategoryRepository;
 import com.axelfrache.questify.quest.repository.QuestTemplateRepository;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class CategoryService {
   private final QuestTemplateRepository questTemplateRepository;
   private final QuestEventPublisher questEventPublisher;
 
+  @WithSpan("category.create")
   @Transactional
   public CategoryResponse create(UUID userId, CreateCategoryRequest request) {
     var category =
@@ -46,6 +48,7 @@ public class CategoryService {
     return toResponse(category);
   }
 
+  @WithSpan("category.seed_defaults")
   @Transactional
   public void seedDefaultCategoriesForUser(UUID userId) {
     for (var defaultCategory : DEFAULT_CATEGORIES) {
@@ -64,6 +67,7 @@ public class CategoryService {
     }
   }
 
+  @WithSpan("category.backfill_sources")
   @Transactional
   public void backfillCategorySources() {
     var categories = categoryRepository.findBySourceIsNull();
@@ -76,11 +80,13 @@ public class CategoryService {
     log.info("Backfilled category source for {} categories", categories.size());
   }
 
+  @WithSpan("category.find_all_for_user")
   @Transactional(readOnly = true)
   public List<CategoryResponse> findAllForUser(UUID userId) {
     return categoryRepository.findAllForUser(userId).stream().map(this::toResponse).toList();
   }
 
+  @WithSpan("category.update")
   @Transactional
   public CategoryResponse update(UUID categoryId, CreateCategoryRequest request, UUID userId) {
     var category = findOrThrow(categoryId);
@@ -94,6 +100,7 @@ public class CategoryService {
     return toResponse(category);
   }
 
+  @WithSpan("category.delete")
   @Transactional
   public void delete(UUID categoryId, QuestAction questAction, UUID userId) {
     var category = findOrThrow(categoryId);

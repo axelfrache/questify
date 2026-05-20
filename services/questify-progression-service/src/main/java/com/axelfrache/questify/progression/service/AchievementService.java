@@ -7,6 +7,7 @@ import com.axelfrache.questify.progression.model.UserAchievement;
 import com.axelfrache.questify.progression.repository.AchievementRepository;
 import com.axelfrache.questify.progression.repository.QuestCompletionRecordRepository;
 import com.axelfrache.questify.progression.repository.UserAchievementRepository;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -33,8 +34,9 @@ public class AchievementService {
   private final UserAchievementRepository userAchievementRepository;
   private final QuestCompletionRecordRepository questCompletionRecordRepository;
 
+  @WithSpan("achievement.evaluate_and_unlock")
   @Transactional
-  public List<AchievementResponse> checkAndUnlock(UUID userId) {
+  public List<AchievementResponse> evaluateAndUnlockAchievements(UUID userId) {
     var allAchievements = achievementRepository.findAll();
     Set<UUID> alreadyUnlocked =
         userAchievementRepository.findByUserIdOrderByUnlockedAtDesc(userId).stream()
@@ -57,6 +59,7 @@ public class AchievementService {
     return responses;
   }
 
+  @WithSpan("achievement.get_all")
   @Transactional(readOnly = true)
   public List<AchievementResponse> getAllAchievements(UUID userId) {
     var allAchievements = achievementRepository.findAll();
@@ -70,6 +73,7 @@ public class AchievementService {
         .toList();
   }
 
+  @WithSpan("achievement.get_unlocked")
   @Transactional(readOnly = true)
   public List<AchievementResponse> getUnlockedAchievements(UUID userId) {
     return userAchievementRepository.findByUserIdOrderByUnlockedAtDesc(userId).stream()

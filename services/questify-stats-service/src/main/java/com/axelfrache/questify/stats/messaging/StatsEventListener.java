@@ -30,7 +30,7 @@ public class StatsEventListener {
             .categoryName(event.categoryName())
             .completedAt(event.completedAt())
             .build());
-    statsService.evictUserCache(event.userId());
+    statsService.invalidateUserStatsCache(event.userId());
   }
 
   @RabbitListener(queues = QueueConstants.USER_DELETED_QUEUE)
@@ -38,7 +38,7 @@ public class StatsEventListener {
   public void onUserDeleted(UserDeletedEvent event) {
     log.info("Deleting stats for user {}", event.userId());
     repository.deleteByUserId(event.userId());
-    statsService.evictUserCache(event.userId());
+    statsService.invalidateUserStatsCache(event.userId());
   }
 
   @RabbitListener(queues = QueueConstants.CATEGORY_DELETED_QUEUE)
@@ -49,6 +49,6 @@ public class StatsEventListener {
         event.userId(),
         event.categoryName());
     repository.clearCategoryName(event.userId(), event.categoryName());
-    statsService.evictUserCache(event.userId());
+    statsService.invalidateUserStatsCache(event.userId());
   }
 }

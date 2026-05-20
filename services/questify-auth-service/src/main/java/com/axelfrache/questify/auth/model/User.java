@@ -39,8 +39,8 @@ public class User {
   private Role role = Role.USER;
 
   @Builder.Default
-  @Column(nullable = false)
-  private boolean isEnabled = true;
+  @Column(name = "is_enabled", nullable = false)
+  private boolean enabled = true;
 
   @Builder.Default
   @Column(nullable = false)

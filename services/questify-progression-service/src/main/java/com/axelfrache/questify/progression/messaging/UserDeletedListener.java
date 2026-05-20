@@ -27,6 +27,6 @@ public class UserDeletedListener {
     questCompletionRecordRepository.deleteByUserId(event.userId());
     userAchievementRepository.deleteByUserId(event.userId());
     userProgressionRepository.deleteByUserId(event.userId());
-    progressionService.evictUserCache(event.userId());
+    progressionService.invalidateUserProgressionCache(event.userId());
   }
 }

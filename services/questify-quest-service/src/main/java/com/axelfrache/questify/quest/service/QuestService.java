@@ -18,6 +18,7 @@ import com.axelfrache.questify.quest.repository.CategoryRepository;
 import com.axelfrache.questify.quest.repository.QuestHistoryRepository;
 import com.axelfrache.questify.quest.repository.QuestOccurrenceRepository;
 import com.axelfrache.questify.quest.repository.QuestTemplateRepository;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -43,6 +44,7 @@ public class QuestService {
   private final QuestHistoryRepository questHistoryRepository;
   private final QuestEventPublisher questEventPublisher;
 
+  @WithSpan("quest.create")
   @Transactional
   public QuestResponse create(UUID userId, CreateQuestRequest request) {
     var category =
@@ -120,6 +122,7 @@ public class QuestService {
     return toResponse(template);
   }
 
+  @WithSpan("quest.update")
   @Transactional
   public QuestResponse update(UUID id, UUID userId, UpdateQuestRequest request) {
     var occurrenceOpt = questOccurrenceRepository.findByIdAndUserId(id, userId);
@@ -235,6 +238,7 @@ public class QuestService {
     }
   }
 
+  @WithSpan("quest.complete")
   @Transactional
   public QuestResponse complete(UUID id, UUID userId) {
     log.info("Completing quest occurrence={} user={}", id, userId);
@@ -314,6 +318,7 @@ public class QuestService {
     questHistoryRepository.save(history);
   }
 
+  @WithSpan("quest.cancel")
   @Transactional
   public QuestResponse cancel(UUID id, UUID userId) {
     log.info("Cancelling quest occurrence={} user={}", id, userId);
@@ -338,6 +343,7 @@ public class QuestService {
     return toResponse(template);
   }
 
+  @WithSpan("quest.skip")
   @Transactional
   public QuestResponse skip(UUID id, UUID userId) {
     var occurrence =
@@ -357,6 +363,7 @@ public class QuestService {
     return toResponse(occurrence);
   }
 
+  @WithSpan("quest.ensure_daily_occurrences")
   @Transactional
   public void ensureDailyOccurrences(UUID userId) {
     var templates = questTemplateRepository.findByUserIdAndActiveTrueAndDeletedFalse(userId);
@@ -421,6 +428,7 @@ public class QuestService {
     };
   }
 
+  @WithSpan("quest.find_by_user")
   @Transactional(readOnly = true)
   public List<QuestResponse> findByUser(UUID userId) {
     return questTemplateRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(userId).stream()
@@ -428,6 +436,7 @@ public class QuestService {
         .toList();
   }
 
+  @WithSpan("quest.find_today")
   @Transactional
   public List<QuestResponse> findTodayQuests(UUID userId) {
     ensureDailyOccurrences(userId);
@@ -446,6 +455,7 @@ public class QuestService {
         .toList();
   }
 
+  @WithSpan("quest.find_inbox")
   @Transactional
   public List<QuestResponse> findInboxQuests(UUID userId) {
     ensureDailyOccurrences(userId);
@@ -476,6 +486,7 @@ public class QuestService {
     return result;
   }
 
+  @WithSpan("quest.find_upcoming")
   @Transactional(readOnly = true)
   public List<QuestResponse> findUpcomingQuests(UUID userId) {
     var templates = questTemplateRepository.findByUserIdAndActiveTrueAndDeletedFalse(userId);
@@ -504,6 +515,7 @@ public class QuestService {
     return upcoming;
   }
 
+  @WithSpan("quest.find_by_status")
   @Transactional(readOnly = true)
   public List<QuestResponse> findByUserAndStatus(UUID userId, QuestStatus status) {
     return questOccurrenceRepository.findByUserIdAndStatus(userId, status).stream()
@@ -512,6 +524,7 @@ public class QuestService {
         .toList();
   }
 
+  @WithSpan("quest.find_by_id")
   @Transactional(readOnly = true)
   public QuestResponse findById(UUID id, UUID userId) {
     return questOccurrenceRepository
@@ -520,6 +533,7 @@ public class QuestService {
         .orElseGet(() -> toResponse(findTemplateByIdAndUserOrThrow(id, userId)));
   }
 
+  @WithSpan("quest.delete")
   @Transactional
   public void delete(UUID id, UUID userId) {
     var occurrenceOpt = questOccurrenceRepository.findByIdAndUserId(id, userId);
@@ -555,6 +569,7 @@ public class QuestService {
     questTemplateRepository.save(template);
   }
 
+  @WithSpan("quest.find_recurring_templates")
   @Transactional(readOnly = true)
   public List<QuestResponse> findRecurringTemplates(UUID userId) {
     return questTemplateRepository
@@ -564,6 +579,7 @@ public class QuestService {
         .toList();
   }
 
+  @WithSpan("quest.toggle_active")
   @Transactional
   public QuestResponse toggleActive(UUID id, UUID userId) {
     var template = findTemplateByIdAndUserOrThrow(id, userId);
@@ -572,6 +588,7 @@ public class QuestService {
     return toResponse(template);
   }
 
+  @WithSpan("quest.find_subquests")
   @Transactional(readOnly = true)
   public List<QuestResponse> findSubquests(UUID parentId, UUID userId) {
     findTemplateByIdAndUserOrThrow(parentId, userId);
@@ -588,6 +605,7 @@ public class QuestService {
         .toList();
   }
 
+  @WithSpan("quest.find_by_project")
   @Transactional(readOnly = true)
   public List<QuestResponse> findByProject(UUID projectId, UUID userId) {
     ensureDailyOccurrences(userId);

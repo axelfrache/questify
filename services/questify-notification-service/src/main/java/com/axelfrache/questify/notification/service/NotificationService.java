@@ -10,6 +10,7 @@ import com.axelfrache.questify.notification.model.ScheduledReminder;
 import com.axelfrache.questify.notification.repository.NotificationRepository;
 import com.axelfrache.questify.notification.repository.PushSubscriptionRepository;
 import com.axelfrache.questify.notification.repository.ScheduledReminderRepository;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -35,6 +36,7 @@ public class NotificationService {
   @Value("${questify.notification.max-per-user:100}")
   private int maxPerUser;
 
+  @WithSpan("notification.get_all")
   @Transactional(readOnly = true)
   public List<NotificationResponse> getNotifications(UUID userId) {
     return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
@@ -42,11 +44,13 @@ public class NotificationService {
         .toList();
   }
 
+  @WithSpan("notification.get_unread_count")
   @Transactional(readOnly = true)
   public long getUnreadCount(UUID userId) {
     return notificationRepository.countByUserIdAndReadFalse(userId);
   }
 
+  @WithSpan("notification.mark_read")
   @Transactional
   public void markRead(UUID notificationId, UUID userId) {
     notificationRepository
@@ -59,11 +63,13 @@ public class NotificationService {
             });
   }
 
+  @WithSpan("notification.mark_all_read")
   @Transactional
   public void markAllRead(UUID userId) {
     notificationRepository.markAllReadByUserId(userId);
   }
 
+  @WithSpan("notification.delete")
   @Transactional
   public void delete(UUID notificationId, UUID userId) {
     notificationRepository
@@ -72,6 +78,7 @@ public class NotificationService {
         .ifPresent(notificationRepository::delete);
   }
 
+  @WithSpan("notification.create_scheduled_reminder")
   @Transactional
   public void createScheduledReminder(QuestScheduledEvent event) {
     if (event.occurrenceId() == null) return;
@@ -125,6 +132,7 @@ public class NotificationService {
     scheduledReminderRepository.save(reminder);
   }
 
+  @WithSpan("notification.mark_reminder_completed")
   @Transactional
   public void markReminderCompleted(UUID userId, UUID occurrenceId) {
     scheduledReminderRepository
@@ -136,6 +144,7 @@ public class NotificationService {
             });
   }
 
+  @WithSpan("notification.create_and_send")
   @Transactional
   public void createAndSendNotification(
       UUID userId, NotificationType type, String title, String body, UUID questId) {
@@ -168,6 +177,7 @@ public class NotificationService {
     log.debug("Notification created: type={} userId={} questId={}", type, userId, questId);
   }
 
+  @WithSpan("notification.subscribe_push")
   @Transactional
   public void subscribe(UUID userId, PushSubscriptionRequest request) {
     pushSubscriptionRepository
@@ -183,11 +193,13 @@ public class NotificationService {
                         .build()));
   }
 
+  @WithSpan("notification.unsubscribe_push")
   @Transactional
   public void unsubscribe(UUID userId, String endpoint) {
     pushSubscriptionRepository.deleteByUserIdAndEndpoint(userId, endpoint);
   }
 
+  @WithSpan("notification.cleanup_reminders")
   @Transactional
   public void cleanupRemindersForDeletedQuest(UUID templateId, UUID occurrenceId) {
     if (occurrenceId != null) {
@@ -197,6 +209,7 @@ public class NotificationService {
     }
   }
 
+  @WithSpan("notification.delete_user_data")
   @Transactional
   public void deleteUserData(UUID userId) {
     notificationRepository.deleteByUserId(userId);

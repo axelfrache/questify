@@ -6,6 +6,7 @@ import com.axelfrache.questify.stats.dto.OverallStatsResponse;
 import com.axelfrache.questify.stats.dto.QuestHistoryResponse;
 import com.axelfrache.questify.stats.model.QuestCompletionEntry;
 import com.axelfrache.questify.stats.repository.QuestCompletionEntryRepository;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Comparator;
@@ -27,6 +28,7 @@ public class StatsService {
 
   private final QuestCompletionEntryRepository repository;
 
+  @WithSpan("stats.get_overview")
   @Cacheable(cacheNames = "stats.overview", key = "#userId")
   @Transactional(readOnly = true)
   public OverallStatsResponse getOverallStats(UUID userId) {
@@ -36,6 +38,7 @@ public class StatsService {
     return new OverallStatsResponse(total, totalXp, streak);
   }
 
+  @WithSpan("stats.get_history")
   @Transactional(readOnly = true)
   public Page<QuestHistoryResponse> getHistory(UUID userId, int page, int size) {
     return repository
@@ -50,12 +53,14 @@ public class StatsService {
                     e.getCompletedAt()));
   }
 
+  @WithSpan("stats.get_by_category")
   @Cacheable(cacheNames = "stats.categories", key = "#userId")
   @Transactional(readOnly = true)
   public List<CategoryStatsResponse> getCategoryStats(UUID userId) {
     return repository.findCategoryStatsByUserId(userId);
   }
 
+  @WithSpan("stats.get_daily")
   @Cacheable(cacheNames = "stats.daily", key = "#userId + '-' + #days")
   @Transactional(readOnly = true)
   public List<DailyStatsResponse> getDailyStats(UUID userId, int days) {
@@ -84,7 +89,7 @@ public class StatsService {
         @CacheEvict(cacheNames = "stats.categories", key = "#userId"),
         @CacheEvict(cacheNames = "stats.daily", allEntries = true)
       })
-  public void evictUserCache(UUID userId) {}
+  public void invalidateUserStatsCache(UUID userId) {}
 
   private int computeCurrentStreak(UUID userId) {
     var today = LocalDate.now(ZoneOffset.UTC);

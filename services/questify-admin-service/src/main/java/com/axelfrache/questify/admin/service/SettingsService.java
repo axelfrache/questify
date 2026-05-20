@@ -4,6 +4,7 @@ import com.axelfrache.questify.admin.dto.InstanceSettingsResponse;
 import com.axelfrache.questify.admin.dto.UpdateSettingsRequest;
 import com.axelfrache.questify.admin.model.InstanceSettings;
 import com.axelfrache.questify.admin.repository.InstanceSettingsRepository;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,12 +17,14 @@ public class SettingsService {
 
   private final InstanceSettingsRepository instanceSettingsRepository;
 
+  @WithSpan("admin.settings.get")
   @Transactional(readOnly = true)
   public InstanceSettingsResponse getSettings() {
     var settings = getOrCreate();
     return toResponse(settings);
   }
 
+  @WithSpan("admin.settings.update")
   @Transactional
   public InstanceSettingsResponse updateSettings(UpdateSettingsRequest request) {
     var settings = getOrCreate();

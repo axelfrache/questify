@@ -4,6 +4,7 @@ import com.axelfrache.questify.admin.dto.UserSummaryResponse;
 import com.axelfrache.questify.admin.messaging.AdminEventPublisher;
 import com.axelfrache.questify.admin.model.UserSnapshot;
 import com.axelfrache.questify.admin.repository.UserSnapshotRepository;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ public class AdminUserService {
   private final UserSnapshotRepository userSnapshotRepository;
   private final AdminEventPublisher adminEventPublisher;
 
+  @WithSpan("admin.user.list")
   public Page<UserSummaryResponse> listUsers(String search, int page, int size) {
     var pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
     var results =
@@ -33,6 +35,7 @@ public class AdminUserService {
     return results.map(this::toResponse);
   }
 
+  @WithSpan("admin.user.get")
   public UserSummaryResponse getUser(UUID id) {
     return userSnapshotRepository
         .findById(id)
@@ -40,6 +43,7 @@ public class AdminUserService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
   }
 
+  @WithSpan("admin.user.update_role")
   @Transactional
   public UserSummaryResponse updateRole(UUID userId, String newRole) {
     var snapshot =
@@ -53,6 +57,7 @@ public class AdminUserService {
     return toResponse(saved);
   }
 
+  @WithSpan("admin.user.update_status")
   @Transactional
   public UserSummaryResponse updateStatus(UUID userId, boolean enabled) {
     var snapshot =
@@ -66,6 +71,7 @@ public class AdminUserService {
     return toResponse(saved);
   }
 
+  @WithSpan("admin.user.delete")
   @Transactional
   public void deleteUser(UUID userId) {
     if (!userSnapshotRepository.existsById(userId)) {
