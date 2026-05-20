@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import {
   keepPreviousData,
   useMutation,
@@ -5,6 +6,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import {
   api,
   type CreateCategoryRequest,
@@ -305,30 +307,60 @@ export function useCancelQuest() {
   });
 }
 
-export function useDeleteQuest() {
+export function useDeleteQuest(label = 'Quest deleted') {
   const queryClient = useQueryClient();
-  return useMutation({
+
+  const mutation = useMutation({
     mutationFn: (id: string) => api.deleteQuest(id),
-    onMutate: async (id: string) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.quests.all });
-      const listSnapshot = getQuestListSnapshot(queryClient);
-      const detailSnapshot = queryClient.getQueryData<QuestResponse>(queryKeys.quests.detail(id));
-      removeQuestFromListCaches(queryClient, id);
-      queryClient.removeQueries({ queryKey: queryKeys.quests.detail(id) });
-      return { id, listSnapshot, detailSnapshot };
-    },
-    onError: (_error, _id, context) => {
-      if (!context) return;
-      restoreQuestListSnapshot(queryClient, context.listSnapshot);
-      queryClient.setQueryData<QuestResponse | undefined>(
-        queryKeys.quests.detail(context.id),
-        context.detailSnapshot
-      );
-    },
     onSettled: () => {
       invalidateQuestData(queryClient);
     },
   });
+
+  return useCallback(
+    (id: string) => {
+      const listSnapshot = getQuestListSnapshot(queryClient);
+      const detailSnapshot = queryClient.getQueryData<QuestResponse>(queryKeys.quests.detail(id));
+
+      removeQuestFromListCaches(queryClient, id);
+      queryClient.removeQueries({ queryKey: queryKeys.quests.detail(id) });
+
+      let undone = false;
+
+      const timeoutId = setTimeout(() => {
+        if (!undone) {
+          mutation.mutate(id, {
+            onError: () => {
+              restoreQuestListSnapshot(queryClient, listSnapshot);
+              if (detailSnapshot) {
+                queryClient.setQueryData<QuestResponse>(
+                  queryKeys.quests.detail(id),
+                  detailSnapshot
+                );
+              }
+              toast.error('Failed to delete quest');
+            },
+          });
+        }
+      }, 5000);
+
+      toast(label, {
+        duration: 5000,
+        action: {
+          label: 'Undo',
+          onClick: () => {
+            undone = true;
+            clearTimeout(timeoutId);
+            restoreQuestListSnapshot(queryClient, listSnapshot);
+            if (detailSnapshot) {
+              queryClient.setQueryData<QuestResponse>(queryKeys.quests.detail(id), detailSnapshot);
+            }
+          },
+        },
+      });
+    },
+    [queryClient, mutation, label]
+  );
 }
 
 export function useCategories() {

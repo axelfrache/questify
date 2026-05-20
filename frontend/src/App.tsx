@@ -6,6 +6,7 @@ import { ApiError } from '@/lib/api';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AdminGuard } from '@/components/AdminGuard';
+import { Toaster } from 'sonner';
 
 const AppLayout = lazy(async () => {
   const module = await import('@/layouts/AppLayout');
@@ -178,6 +179,7 @@ function App() {
             </Suspense>
           </AuthProvider>
         </BrowserRouter>
+        <Toaster theme="system" position="bottom-center" richColors />
       </ThemeProvider>
     </QueryClientProvider>
   );

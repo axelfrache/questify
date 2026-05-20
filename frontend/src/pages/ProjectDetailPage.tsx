@@ -11,7 +11,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { QuestCard } from '@/components/QuestCard';
-import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import { QuestViewDialog } from '@/components/QuestViewDialog';
 import { type QuestResponse } from '@/lib/api';
@@ -47,7 +46,6 @@ export function ProjectDetailPage() {
   const [viewingQuest, setViewingQuest] = useState<QuestResponse | null>(null);
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
   const [parentQuest, setParentQuest] = useState<QuestResponse | null>(null);
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const stats = useMemo(() => {
     if (!quests) return null;
@@ -73,7 +71,7 @@ export function ProjectDetailPage() {
     completeQuestMutation.mutate(questId);
   };
 
-  const handleDelete = (questId: string) => setPendingDeleteId(questId);
+  const handleDelete = deleteQuestMutation;
 
   if (isLoadingProject) {
     return (
@@ -252,14 +250,6 @@ export function ProjectDetailPage() {
         parentTitle={parentQuest?.title}
         parentRecurrence={parentQuest?.recurrenceInterval}
         projectId={id}
-      />
-
-      <ConfirmDialog
-        open={!!pendingDeleteId}
-        onOpenChange={(open) => !open && setPendingDeleteId(null)}
-        title="Delete quest?"
-        description="This action cannot be undone."
-        onConfirm={() => deleteQuestMutation.mutate(pendingDeleteId!)}
       />
     </div>
   );
