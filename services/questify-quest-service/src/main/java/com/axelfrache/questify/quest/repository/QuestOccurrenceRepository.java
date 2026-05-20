@@ -38,4 +38,17 @@ public interface QuestOccurrenceRepository extends JpaRepository<QuestOccurrence
   @Query(
       "SELECT qo FROM QuestOccurrence qo WHERE qo.id = :id AND qo.questTemplate.userId = :userId")
   Optional<QuestOccurrence> findByIdAndUserId(@Param("id") UUID id, @Param("userId") UUID userId);
+
+  @Query(
+      "SELECT qo FROM QuestOccurrence qo WHERE qo.questTemplate.userId = :userId"
+          + " AND qo.hasDueDate = true"
+          + " AND qo.status = 'PENDING'"
+          + " AND qo.scheduledDate > :from"
+          + " AND qo.scheduledDate <= :to"
+          + " AND qo.questTemplate.active = true"
+          + " AND qo.questTemplate.deleted = false")
+  List<QuestOccurrence> findPendingWithDueDateBetween(
+      @Param("userId") UUID userId,
+      @Param("from") LocalDate from,
+      @Param("to") LocalDate to);
 }

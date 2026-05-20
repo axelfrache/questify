@@ -512,6 +512,13 @@ public class QuestService {
         upcoming.add(response);
       }
     }
+
+    questOccurrenceRepository
+        .findPendingWithDueDateBetween(userId, today, endDate)
+        .stream()
+        .map(this::toResponse)
+        .forEach(upcoming::add);
+
     return upcoming;
   }
 
