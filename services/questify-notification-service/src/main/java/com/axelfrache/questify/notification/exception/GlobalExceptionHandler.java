@@ -25,7 +25,6 @@ public class GlobalExceptionHandler {
     log.error("Unexpected error", e);
     Span.current().recordException(e);
     Span.current().setStatus(StatusCode.ERROR);
-    Span.current().setAttribute("exception.type", e.getClass().getName());
     Span.current().setAttribute("error.category", "unexpected");
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(Map.of("error", "Internal server error", "timestamp", Instant.now().toString()));
