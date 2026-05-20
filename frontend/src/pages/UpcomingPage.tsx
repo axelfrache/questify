@@ -14,11 +14,38 @@ import {
   startOfWeek,
   subMonths,
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, Repeat2 } from 'lucide-react';
-import { useProjectsList, useQuests } from '@/hooks/use-api';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  useProjectsList,
+  useQuests,
+  useCompleteQuest,
+  useDeleteQuest,
+  useSkipQuest,
+} from '@/hooks/use-api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import type { QuestResponse, ProjectSummaryResponse } from '@/lib/api';
+import { QuestCard } from '@/components/QuestCard';
+import { QuestViewDialog } from '@/components/QuestViewDialog';
+import { CreateQuestDialog } from '@/components/CreateQuestDialog';
+import confetti from 'canvas-confetti';
+
+const fireConfettiFromElement = (element: HTMLElement) => {
+  const rect = element.getBoundingClientRect();
+  confetti({
+    particleCount: 50,
+    spread: 60,
+    origin: {
+      x: (rect.left + rect.width / 2) / window.innerWidth,
+      y: (rect.top + rect.height / 2) / window.innerHeight,
+    },
+    colors: ['#4f46e5', '#818cf8', '#c7d2fe', '#a855f7', '#6366f1', '#e0e7ff'],
+    startVelocity: 25,
+    gravity: 0.8,
+    scalar: 0.9,
+    ticks: 100,
+  });
+};
 
 const PROJECT_PALETTE = [
   '#6366f1',
@@ -142,53 +169,20 @@ function StatRow({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function UpcomingQuestRow({ quest, accentColor }: { quest: QuestResponse; accentColor: string }) {
-  const isRecurring = quest.recurrenceInterval !== 'NONE';
-  const recurrenceLabel: Record<string, string> = {
-    DAILY: 'Daily',
-    WEEKLY: 'Weekly',
-    MONTHLY: 'Monthly',
-    CUSTOM: 'Custom',
-  };
-
-  return (
-    <div className="relative flex items-center gap-3 rounded-md border bg-card px-4 py-3 overflow-hidden">
-      <div
-        className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-md"
-        style={{ backgroundColor: accentColor }}
-      />
-      <div className="h-4 w-4 shrink-0 rounded border border-muted-foreground/25 ml-1" />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{quest.title}</p>
-        <div className="flex items-center gap-1.5 mt-0.5">
-          {isRecurring ? (
-            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <Repeat2 className="h-3 w-3 shrink-0" />
-              {recurrenceLabel[quest.recurrenceInterval] ?? quest.recurrenceInterval}
-            </span>
-          ) : quest.category ? (
-            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <span
-                className="h-2 w-2 shrink-0 rounded-sm"
-                style={{ backgroundColor: quest.category.color }}
-              />
-              {quest.category.icon && <span>{quest.category.icon}</span>}
-              {quest.category.name}
-            </span>
-          ) : null}
-        </div>
-      </div>
-      <span className="shrink-0 font-mono text-xs font-medium text-primary">
-        +{quest.totalXpReward}
-      </span>
-    </div>
-  );
-}
-
 export function UpcomingPage() {
   const { data: quests, isLoading } = useQuests(undefined, 'upcoming');
   const { data: projects } = useProjectsList('', 'name', false);
+  const completeQuestMutation = useCompleteQuest();
+  const deleteQuest = useDeleteQuest();
+  const skipQuestMutation = useSkipQuest();
   const [viewMonth, setViewMonth] = useState(() => new Date());
+  const [viewingQuest, setViewingQuest] = useState<QuestResponse | null>(null);
+  const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
+
+  const handleComplete = (id: string, checkboxElement?: HTMLElement) => {
+    if (checkboxElement) fireConfettiFromElement(checkboxElement);
+    completeQuestMutation.mutate(id);
+  };
 
   const today = useMemo(() => {
     const d = new Date();
@@ -207,13 +201,6 @@ export function UpcomingPage() {
     (projects ?? []).forEach((p) => map.set(p.id, p));
     return map;
   }, [projects]);
-
-  const getAccentColor = (quest: QuestResponse): string => {
-    if (quest.category?.color) return quest.category.color;
-    if (quest.projectId) return projectColorMap.get(quest.projectId) ?? PROJECT_PALETTE[0];
-    if (quest.recurrenceInterval !== 'NONE') return '#0ea5e9';
-    return PROJECT_PALETTE[0];
-  };
 
   const questDates = useMemo(() => {
     const set = new Set<string>();
@@ -447,10 +434,15 @@ export function UpcomingPage() {
                           </div>
                           <div className="flex-1 space-y-1.5">
                             {dayQuests.map((quest) => (
-                              <UpcomingQuestRow
+                              <QuestCard
                                 key={quest.id}
                                 quest={quest}
-                                accentColor={getAccentColor(quest)}
+                                onComplete={handleComplete}
+                                onView={setViewingQuest}
+                                onEdit={setEditingQuest}
+                                onDelete={deleteQuest}
+                                onSkip={(id) => skipQuestMutation.mutate(id)}
+                                isPending={completeQuestMutation.isPending}
                               />
                             ))}
                           </div>
@@ -464,6 +456,35 @@ export function UpcomingPage() {
           </div>
         )}
       </div>
+
+      <QuestViewDialog
+        quest={viewingQuest}
+        open={!!viewingQuest}
+        onOpenChange={(open) => !open && setViewingQuest(null)}
+        onEdit={setEditingQuest}
+        onComplete={handleComplete}
+      />
+
+      <CreateQuestDialog
+        open={!!editingQuest}
+        onOpenChange={(open) => !open && setEditingQuest(null)}
+        questToEdit={
+          editingQuest
+            ? {
+                id: editingQuest.id,
+                title: editingQuest.title,
+                description: editingQuest.description,
+                difficulty: editingQuest.difficulty,
+                categoryId: editingQuest.category?.id,
+                projectId: editingQuest.projectId,
+                dueDate: editingQuest.dueDate,
+                recurrenceInterval: editingQuest.recurrenceInterval,
+                recurrenceDays: editingQuest.recurrenceDays,
+                baseXpReward: editingQuest.baseXpReward,
+              }
+            : undefined
+        }
+      />
     </div>
   );
 }
