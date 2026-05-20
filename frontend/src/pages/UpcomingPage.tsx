@@ -316,7 +316,7 @@ export function UpcomingPage() {
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:gap-8 pb-10">
-      <aside className="hidden lg:block lg:w-56 lg:shrink-0 space-y-6">
+      <aside className="hidden lg:block lg:w-56 lg:shrink-0 space-y-6 sticky top-6 self-start">
         <MiniCalendar
           viewMonth={viewMonth}
           onPrev={() => setViewMonth(subMonths(viewMonth, 1))}
