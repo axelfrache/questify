@@ -212,6 +212,9 @@ export function useCompleteQuest() {
     onSettled: () => {
       invalidateQuestData(queryClient);
       queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.progression.all });
+      }, 1500);
     },
   });
 }
