@@ -75,7 +75,6 @@ export const queryKeys = {
 function invalidateQuestData(queryClient: QueryClient) {
   queryClient.invalidateQueries({ queryKey: queryKeys.quests.all });
   queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
-  queryClient.invalidateQueries({ queryKey: queryKeys.progression.all });
 }
 
 function invalidateProjectData(queryClient: QueryClient) {
@@ -216,7 +215,7 @@ export function useCompleteQuest() {
       queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: queryKeys.progression.all });
-      }, 1500);
+      }, 2500);
     },
   });
 }
