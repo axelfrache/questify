@@ -72,9 +72,13 @@ export function AppLayout() {
               <ProjectBreadcrumb projectId={projectMatch.params.id!} />
             ) : (
               title && (
-                <span className="text-[13px] font-medium tracking-tight text-foreground">
-                  {title}
-                </span>
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    <BreadcrumbItem>
+                      <BreadcrumbPage>{title}</BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
               )
             )}
             <div className="flex-1" />
