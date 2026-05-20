@@ -1,13 +1,17 @@
 package com.axelfrache.questify.notification.exception;
 
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
 import java.time.Instant;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
   @ExceptionHandler(IllegalArgumentException.class)
@@ -18,6 +22,9 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<Map<String, Object>> handleGeneric(Exception e) {
+    log.error("Unexpected error", e);
+    Span.current().recordException(e);
+    Span.current().setStatus(StatusCode.ERROR, e.getMessage());
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(Map.of("error", "Internal server error", "timestamp", Instant.now().toString()));
   }

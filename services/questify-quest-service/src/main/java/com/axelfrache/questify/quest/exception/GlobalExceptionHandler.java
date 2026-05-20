@@ -1,5 +1,7 @@
 package com.axelfrache.questify.quest.exception;
 
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -51,6 +53,8 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
     log.error("Unexpected error", ex);
+    Span.current().recordException(ex);
+    Span.current().setStatus(StatusCode.ERROR, ex.getMessage());
     return ResponseEntity.internalServerError()
         .body(new ErrorResponse("INTERNAL_ERROR", "An unexpected error occurred"));
   }

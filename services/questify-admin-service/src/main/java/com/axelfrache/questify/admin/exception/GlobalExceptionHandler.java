@@ -1,7 +1,10 @@
 package com.axelfrache.questify.admin.exception;
 
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -11,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
   @ExceptionHandler(ResponseStatusException.class)
@@ -46,5 +50,14 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
     return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+  }
+
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
+    log.error("Unexpected error", ex);
+    Span.current().recordException(ex);
+    Span.current().setStatus(StatusCode.ERROR, ex.getMessage());
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(Map.of("error", "An unexpected error occurred"));
   }
 }

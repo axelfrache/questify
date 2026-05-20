@@ -49,7 +49,6 @@ public class QuestService {
   @Transactional
   public QuestResponse create(UUID userId, CreateQuestRequest request) {
     setUuidAttribute("user.id", userId);
-    setUuidAttribute("quest.project.id", request.projectId());
     setUuidAttribute("quest.parent.id", request.parentId());
     setUuidAttribute("quest.category.id", request.categoryId());
     setEnumAttribute("quest.difficulty", request.difficulty());
