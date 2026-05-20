@@ -293,3 +293,11 @@
     transform: translateY(-36px) scale(0.9);
   }
 }
+
+.ProseMirror p.is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: color-mix(in srgb, var(--muted-foreground) 50%, transparent);
+  pointer-events: none;
+  height: 0;
+}

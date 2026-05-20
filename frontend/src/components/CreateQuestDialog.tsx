@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { type CreateQuestRequest } from '@/lib/api';
 import { useCategories, useCreateQuest, useUpdateQuest } from '@/hooks/use-api';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -62,6 +62,7 @@ export function CreateQuestDialog({
     reset,
     setValue,
     watch,
+    control,
     formState: { errors },
   } = useForm<CreateQuestRequest>({
     defaultValues: {
@@ -335,11 +336,16 @@ export function CreateQuestDialog({
             {/* Description */}
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">Description</Label>
-              <Textarea
-                placeholder="Add notes or details..."
-                className="resize-none min-h-[88px] bg-muted/40 border-border/60 text-sm"
-                rows={3}
-                {...register('description')}
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => (
+                  <RichTextEditor
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    placeholder="Add notes or details..."
+                  />
+                )}
               />
             </div>
 

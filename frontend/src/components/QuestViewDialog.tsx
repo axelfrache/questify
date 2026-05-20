@@ -72,7 +72,10 @@ export function QuestViewDialog({
 
         {/* Description */}
         {quest.description && (
-          <p className="text-sm text-muted-foreground leading-relaxed -mt-1">{quest.description}</p>
+          <div
+            className="text-sm text-muted-foreground -mt-1 [&_p]:leading-relaxed [&_p+p]:mt-1 [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_a:hover]:text-primary/80 [&_strong]:font-semibold [&_strong]:text-foreground [&_em]:italic [&_u]:underline"
+            dangerouslySetInnerHTML={{ __html: quest.description }}
+          />
         )}
 
         {/* Meta list */}
