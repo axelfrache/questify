@@ -6,6 +6,7 @@ import com.axelfrache.questify.stats.dto.OverallStatsResponse;
 import com.axelfrache.questify.stats.dto.QuestHistoryResponse;
 import com.axelfrache.questify.stats.model.QuestCompletionEntry;
 import com.axelfrache.questify.stats.repository.QuestCompletionEntryRepository;
+import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -32,15 +33,21 @@ public class StatsService {
   @Cacheable(cacheNames = "stats.overview", key = "#userId")
   @Transactional(readOnly = true)
   public OverallStatsResponse getOverallStats(UUID userId) {
+    setUuidAttribute("user.id", userId);
     var total = repository.countTotalByUserId(userId);
     var totalXp = repository.sumXpByUserId(userId);
     var streak = computeCurrentStreak(userId);
+    Span.current().setAttribute("stats.completed_total", total);
+    Span.current().setAttribute("stats.current_streak", streak);
     return new OverallStatsResponse(total, totalXp, streak);
   }
 
   @WithSpan("stats.get_history")
   @Transactional(readOnly = true)
   public Page<QuestHistoryResponse> getHistory(UUID userId, int page, int size) {
+    setUuidAttribute("user.id", userId);
+    Span.current().setAttribute("stats.page", page);
+    Span.current().setAttribute("stats.page_size", size);
     return repository
         .findByUserIdOrderByCompletedAtDesc(userId, PageRequest.of(page, size))
         .map(
@@ -57,6 +64,7 @@ public class StatsService {
   @Cacheable(cacheNames = "stats.categories", key = "#userId")
   @Transactional(readOnly = true)
   public List<CategoryStatsResponse> getCategoryStats(UUID userId) {
+    setUuidAttribute("user.id", userId);
     return repository.findCategoryStatsByUserId(userId);
   }
 
@@ -64,6 +72,8 @@ public class StatsService {
   @Cacheable(cacheNames = "stats.daily", key = "#userId + '-' + #days")
   @Transactional(readOnly = true)
   public List<DailyStatsResponse> getDailyStats(UUID userId, int days) {
+    setUuidAttribute("user.id", userId);
+    Span.current().setAttribute("stats.days", days);
     var today = LocalDate.now(ZoneOffset.UTC);
     var from = today.minusDays(days - 1L).atStartOfDay(ZoneOffset.UTC).toInstant();
     var to = today.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
@@ -109,5 +119,9 @@ public class StatsService {
       day = day.minusDays(1);
     }
     return streak;
+  }
+
+  private static void setUuidAttribute(String key, UUID value) {
+    if (value != null) Span.current().setAttribute(key, value.toString());
   }
 }

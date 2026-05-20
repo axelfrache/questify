@@ -8,6 +8,8 @@ import com.axelfrache.questify.auth.model.Role;
 import com.axelfrache.questify.auth.model.User;
 import com.axelfrache.questify.auth.repository.RefreshTokenRepository;
 import com.axelfrache.questify.auth.repository.UserRepository;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,12 +30,16 @@ public class UserService {
   private final UserEventPublisher userEventPublisher;
 
   @Transactional(readOnly = true)
+  @WithSpan("user.get_by_id")
   public UserDto getUserById(UUID id) {
+    setUuidAttribute("user.id", id);
     return toUserDto(findUserOrThrow(id));
   }
 
   @Transactional
+  @WithSpan("user.update_profile")
   public UserDto updateProfile(UUID userId, UpdateUserRequest request) {
+    setUuidAttribute("user.id", userId);
     var user = findUserOrThrow(userId);
 
     if (request.username() != null && !request.username().isBlank()) {
@@ -61,7 +67,9 @@ public class UserService {
   }
 
   @Transactional
+  @WithSpan("user.change_password")
   public void changePassword(UUID userId, ChangePasswordRequest request) {
+    setUuidAttribute("user.id", userId);
     var user = findUserOrThrow(userId);
 
     if (!passwordEncoder.matches(request.currentPassword(), user.getPassword()))
@@ -73,7 +81,9 @@ public class UserService {
   }
 
   @Transactional
+  @WithSpan("user.update_profile_picture")
   public UserDto updateProfilePicture(UUID userId, MultipartFile file) {
+    setUuidAttribute("user.id", userId);
     var user = findUserOrThrow(userId);
 
     Optional.ofNullable(user.getProfilePictureUrl()).ifPresent(storageService::deleteFile);
@@ -86,7 +96,9 @@ public class UserService {
   }
 
   @Transactional
+  @WithSpan("user.delete_profile_picture")
   public UserDto deleteProfilePicture(UUID userId) {
+    setUuidAttribute("user.id", userId);
     var user = findUserOrThrow(userId);
 
     if (user.getProfilePictureUrl() != null) {
@@ -99,7 +111,9 @@ public class UserService {
   }
 
   @Transactional
+  @WithSpan("user.delete_account")
   public void deleteAccount(UUID userId, String password) {
+    setUuidAttribute("user.id", userId);
     var user = findUserOrThrow(userId);
 
     if (!passwordEncoder.matches(password, user.getPassword()))
@@ -109,12 +123,17 @@ public class UserService {
   }
 
   @Transactional
+  @WithSpan("user.force_delete")
   public void forceDeleteUser(UUID userId) {
+    setUuidAttribute("user.id", userId);
     performDelete(findUserOrThrow(userId));
   }
 
   @Transactional
+  @WithSpan("user.update_role")
   public UserDto updateUserRole(UUID userId, Role role) {
+    setUuidAttribute("user.id", userId);
+    if (role != null) Span.current().setAttribute("user.role.target", role.name());
     var user = findUserOrThrow(userId);
     user.setRole(role);
     userRepository.save(user);
@@ -122,7 +141,10 @@ public class UserService {
   }
 
   @Transactional
+  @WithSpan("user.update_status")
   public UserDto updateUserStatus(UUID userId, boolean isEnabled) {
+    setUuidAttribute("user.id", userId);
+    Span.current().setAttribute("user.enabled.target", isEnabled);
     var user = findUserOrThrow(userId);
     user.setEnabled(isEnabled);
     userRepository.save(user);
@@ -158,5 +180,9 @@ public class UserService {
         user.getUpdatedAt(),
         user.getRole(),
         user.isEnabled());
+  }
+
+  private static void setUuidAttribute(String key, UUID value) {
+    if (value != null) Span.current().setAttribute(key, value.toString());
   }
 }

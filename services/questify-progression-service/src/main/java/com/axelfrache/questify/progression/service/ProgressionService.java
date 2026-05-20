@@ -9,6 +9,7 @@ import com.axelfrache.questify.progression.model.QuestCompletionRecord;
 import com.axelfrache.questify.progression.model.UserProgression;
 import com.axelfrache.questify.progression.repository.QuestCompletionRecordRepository;
 import com.axelfrache.questify.progression.repository.UserProgressionRepository;
+import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.time.Instant;
 import java.util.UUID;
@@ -35,10 +36,17 @@ public class ProgressionService {
   @CacheEvict(cacheNames = "progression", key = "#userId")
   public void awardXp(
       UUID userId, int amount, UUID questId, String categoryName, Instant completedAt) {
+    setUuidAttribute("user.id", userId);
+    setUuidAttribute("quest.id", questId);
+    Span.current().setAttribute("progression.xp_awarded", amount);
+    Span.current().setAttribute("progression.has_category", categoryName != null);
+
     var progression = findOrCreate(userId);
 
     var previousLevel = progression.getLevel();
     var previousGrade = progression.getGrade();
+    Span.current().setAttribute("progression.level.previous", previousLevel);
+    Span.current().setAttribute("progression.grade.previous", previousGrade.name());
 
     progression.setTotalXp(progression.getTotalXp() + amount);
 
@@ -47,6 +55,10 @@ public class ProgressionService {
     progression.setLevel(newLevel);
     progression.setGrade(newGrade);
     userProgressionRepository.save(progression);
+    Span.current().setAttribute("progression.level.current", newLevel);
+    Span.current().setAttribute("progression.grade.current", newGrade.name());
+    Span.current().setAttribute("progression.level_changed", newLevel > previousLevel);
+    Span.current().setAttribute("progression.grade_changed", newGrade != previousGrade);
 
     questCompletionRecordRepository.save(
         QuestCompletionRecord.builder()
@@ -72,6 +84,7 @@ public class ProgressionService {
   @Cacheable(cacheNames = "progression", key = "#userId")
   @Transactional(readOnly = true)
   public ProgressionResponse getProgression(UUID userId) {
+    setUuidAttribute("user.id", userId);
     return toResponse(findOrCreate(userId));
   }
 
@@ -113,5 +126,9 @@ public class ProgressionService {
         xpIntoCurrentLevel,
         xpNeededForNext,
         progressPercent);
+  }
+
+  private static void setUuidAttribute(String key, UUID value) {
+    if (value != null) Span.current().setAttribute(key, value.toString());
   }
 }

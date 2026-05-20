@@ -2,6 +2,8 @@ package com.axelfrache.questify.auth.service;
 
 import com.axelfrache.questify.auth.config.FerrisKeyConfig;
 import com.axelfrache.questify.auth.dto.RegisterRequest;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
@@ -18,9 +20,12 @@ public class FerrisKeyRegistrationService {
   private final FerrisKeyConfig ferrisKeyConfig;
   private final RestClient restClient = RestClient.create();
 
+  @WithSpan("auth.ferriskey_register")
   public void register(RegisterRequest request) {
+    Span.current().setAttribute("auth.flow", "ferriskey_register");
     var issuer = ferrisKeyConfig.getIssuerUri();
     if (issuer == null || issuer.isBlank()) {
+      Span.current().setAttribute("auth.result", "missing_issuer");
       throw new IllegalStateException("FerrisKey issuer URI is not configured");
     }
 
@@ -33,7 +38,10 @@ public class FerrisKeyRegistrationService {
                   request.email(), request.email(), request.username(), null, request.password()))
           .retrieve()
           .toBodilessEntity();
+      Span.current().setAttribute("auth.result", "success");
     } catch (RestClientResponseException ex) {
+      Span.current().setAttribute("auth.result", "failure");
+      Span.current().setAttribute("http.response.status_code", ex.getStatusCode().value());
       if (ex.getStatusCode() == HttpStatus.BAD_REQUEST
           || ex.getStatusCode() == HttpStatus.CONFLICT
           || ex.getStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR) {
