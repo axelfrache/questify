@@ -618,7 +618,7 @@ public class QuestService {
 
     var occurrenceResponses =
         allOccurrences.stream()
-            .filter(q -> q.getStatus() == QuestStatus.PENDING)
+            .filter(q -> q.getStatus() != QuestStatus.CANCELLED)
             .filter(q -> projectId.equals(q.getQuestTemplate().getProjectId()))
             .filter(q -> q.getQuestTemplate().isActive() && !q.getQuestTemplate().isDeleted())
             .filter(q -> q.getQuestTemplate().getParent() == null)
