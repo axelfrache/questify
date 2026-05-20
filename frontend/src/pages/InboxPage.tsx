@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { InboxControls } from '@/components/inbox/InboxControls';
 import { GroupedQuestList } from '@/components/inbox/GroupedQuestList';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import { QuestViewDialog } from '@/components/QuestViewDialog';
 import { type QuestResponse } from '@/lib/api';
@@ -64,6 +65,7 @@ export function InboxPage() {
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
   const [parentQuest, setParentQuest] = useState<QuestResponse | null>(null);
   const [newQuestOpen, setNewQuestOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const pendingQuests = useMemo(() => {
     let result = quests?.filter((q) => q.status === 'PENDING') || [];
@@ -128,11 +130,7 @@ export function InboxPage() {
     completeQuestMutation.mutate(id);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this quest?')) {
-      deleteQuestMutation.mutate(id);
-    }
-  };
+  const handleDelete = (id: string) => setPendingDeleteId(id);
 
   const handleAddSubquest = (quest: QuestResponse) => {
     setParentQuest(quest);
@@ -271,6 +269,14 @@ export function InboxPage() {
         parentId={parentQuest?.templateId}
         parentTitle={parentQuest?.title}
         parentRecurrence={parentQuest?.recurrenceInterval}
+      />
+
+      <ConfirmDialog
+        open={!!pendingDeleteId}
+        onOpenChange={(open) => !open && setPendingDeleteId(null)}
+        title="Delete quest?"
+        description="This action cannot be undone."
+        onConfirm={() => deleteQuestMutation.mutate(pendingDeleteId!)}
       />
     </div>
   );

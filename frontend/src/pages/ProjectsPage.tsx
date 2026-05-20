@@ -31,6 +31,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import {
   Archive,
@@ -75,6 +76,7 @@ export function ProjectsPage() {
   const [projectToEdit, setProjectToEdit] = useState<ProjectSummaryResponse | null>(null);
   const [quickCreateProject, setQuickCreateProject] = useState<ProjectSummaryResponse | null>(null);
   const [createPrefillName, setCreatePrefillName] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<ProjectSummaryResponse | null>(null);
 
   const { data: projects, isLoading } = useProjectsList(
     search,
@@ -142,15 +144,7 @@ export function ProjectsPage() {
     updateProject.mutate({ id, data: { archived: !archived } });
   };
 
-  const handleDeleteProject = (project: ProjectSummaryResponse) => {
-    if (
-      !confirm(
-        `Delete project "${project.name}"? This will also delete all quests associated with it.`
-      )
-    )
-      return;
-    deleteProject.mutate(project.id);
-  };
+  const handleDeleteProject = (project: ProjectSummaryResponse) => setDeleteTarget(project);
 
   return (
     <div className="space-y-6">
@@ -272,6 +266,14 @@ export function ProjectsPage() {
         open={!!quickCreateProject}
         onOpenChange={(open) => !open && setQuickCreateProject(null)}
         projectId={quickCreateProject?.id}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title={`Delete "${deleteTarget?.name}"?`}
+        description="All quests in this project will also be deleted. This action cannot be undone."
+        onConfirm={() => deleteProject.mutate(deleteTarget!.id)}
       />
     </div>
   );

@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { type QuestResponse } from '@/lib/api';
 import { QuestCard } from '@/components/QuestCard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import { QuestViewDialog } from '@/components/QuestViewDialog';
 import confetti from 'canvas-confetti';
@@ -53,6 +54,7 @@ export function TodayPage() {
 
   const [viewingQuest, setViewingQuest] = useState<QuestResponse | null>(null);
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const greeting = useMemo(() => getGreeting(), []);
   const formattedDate = useMemo(
@@ -66,11 +68,7 @@ export function TodayPage() {
     completeQuestMutation.mutate(id);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this quest?')) {
-      deleteQuestMutation.mutate(id);
-    }
-  };
+  const handleDelete = (id: string) => setPendingDeleteId(id);
 
   const handleSkip = (id: string) => {
     skipQuestMutation.mutate(id);
@@ -242,6 +240,14 @@ export function TodayPage() {
               }
             : undefined
         }
+      />
+
+      <ConfirmDialog
+        open={!!pendingDeleteId}
+        onOpenChange={(open) => !open && setPendingDeleteId(null)}
+        title="Delete quest?"
+        description="This action cannot be undone."
+        onConfirm={() => deleteQuestMutation.mutate(pendingDeleteId!)}
       />
     </div>
   );

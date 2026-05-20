@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuests, useDeleteQuest } from '@/hooks/use-api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { QuestCard } from '@/components/QuestCard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import type { QuestResponse } from '@/lib/api';
 
@@ -9,14 +10,9 @@ export function HabitsPage() {
   const { data: habits, isLoading } = useQuests(undefined, 'recurring');
   const deleteQuest = useDeleteQuest();
   const [editingHabit, setEditingHabit] = useState<QuestResponse | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
-  const handleDelete = (id: string) => {
-    if (
-      confirm('Are you sure you want to delete this habit? Future occurrences will be stopped.')
-    ) {
-      deleteQuest.mutate(id);
-    }
-  };
+  const handleDelete = (id: string) => setPendingDeleteId(id);
 
   if (isLoading) {
     return (
@@ -63,6 +59,14 @@ export function HabitsPage() {
           questToEdit={editingHabit}
         />
       )}
+
+      <ConfirmDialog
+        open={!!pendingDeleteId}
+        onOpenChange={(open) => !open && setPendingDeleteId(null)}
+        title="Delete habit?"
+        description="Future occurrences will be stopped. This action cannot be undone."
+        onConfirm={() => deleteQuest.mutate(pendingDeleteId!)}
+      />
     </div>
   );
 }

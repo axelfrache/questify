@@ -22,6 +22,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Trash2, Settings2, Users } from 'lucide-react';
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -54,6 +55,7 @@ function SettingRow({
 
 export function AdminSettings() {
   const [error, setError] = useState<string | null>(null);
+  const [pendingDeleteUserId, setPendingDeleteUserId] = useState<string | null>(null);
   const { user: currentUser } = useAuth();
 
   const { data: settings, isLoading: isLoadingSettings } = useAdminSettings();
@@ -91,12 +93,13 @@ export function AdminSettings() {
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.'))
-      return;
+  const handleDeleteUser = (userId: string) => setPendingDeleteUserId(userId);
+
+  const confirmDeleteUser = async () => {
+    if (!pendingDeleteUserId) return;
     try {
       setError(null);
-      await adminDeleteUserMutation.mutateAsync(userId);
+      await adminDeleteUserMutation.mutateAsync(pendingDeleteUserId);
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Failed to delete user'));
     }
@@ -274,6 +277,14 @@ export function AdminSettings() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!pendingDeleteUserId}
+        onOpenChange={(open) => !open && setPendingDeleteUserId(null)}
+        title="Delete user?"
+        description="This action cannot be undone."
+        onConfirm={confirmDeleteUser}
+      />
     </div>
   );
 }
