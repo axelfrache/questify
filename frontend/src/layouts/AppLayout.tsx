@@ -1,13 +1,21 @@
 import { useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useMatch } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Plus, Zap } from 'lucide-react';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import { NotificationInbox } from '@/components/NotificationInbox';
 import { useAuth } from '@/contexts/AuthContext';
-import { useUserProgression } from '@/hooks/use-api';
+import { useProjectDetail, useUserProgression } from '@/hooks/use-api';
 import { useNotificationStream } from '@/hooks/useNotificationStream';
 
 const PAGE_TITLES: Record<string, string> = {
@@ -24,16 +32,34 @@ const PAGE_TITLES: Record<string, string> = {
   '/settings': 'Settings',
 };
 
+function ProjectBreadcrumb({ projectId }: { projectId: string }) {
+  const { data: project } = useProjectDetail(projectId);
+  return (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link to="/projects">Projects</Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>{project?.name ?? '…'}</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+}
+
 export function AppLayout() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const { user } = useAuth();
   const { data: progression } = useUserProgression(user?.id);
   const location = useLocation();
+  const projectMatch = useMatch('/projects/:id');
   useNotificationStream();
 
-  const title =
-    PAGE_TITLES[location.pathname] ??
-    (location.pathname.startsWith('/projects/') ? 'Project' : null);
+  const title = PAGE_TITLES[location.pathname] ?? null;
 
   return (
     <SidebarProvider>
@@ -42,10 +68,14 @@ export function AppLayout() {
         <div className="flex flex-1 flex-col min-w-0">
           <header className="flex h-12 items-center gap-3 border-b bg-card px-4 sticky top-0 z-20">
             <SidebarTrigger className="h-8 w-8" />
-            {title && (
-              <span className="text-[13px] font-medium tracking-tight text-foreground">
-                {title}
-              </span>
+            {projectMatch ? (
+              <ProjectBreadcrumb projectId={projectMatch.params.id!} />
+            ) : (
+              title && (
+                <span className="text-[13px] font-medium tracking-tight text-foreground">
+                  {title}
+                </span>
+              )
             )}
             <div className="flex-1" />
             {progression && (

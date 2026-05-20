@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   useCompleteQuest,
   useDeleteQuest,
@@ -14,7 +14,7 @@ import { QuestCard } from '@/components/QuestCard';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import { QuestViewDialog } from '@/components/QuestViewDialog';
 import { type QuestResponse } from '@/lib/api';
-import { ChevronLeft, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 const fireConfettiFromElement = (element: HTMLElement) => {
@@ -103,15 +103,6 @@ export function ProjectDetailPage() {
 
   return (
     <div className="space-y-6 pb-10">
-      {/* Back link */}
-      <Link
-        to="/projects"
-        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ChevronLeft className="h-3.5 w-3.5" />
-        Back to projects
-      </Link>
-
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-4">
