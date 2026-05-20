@@ -184,7 +184,6 @@
   --success: oklch(0.63 0.14 145);
   --success-muted: oklch(0.52 0.1 145);
 
-  /* Sidebar — même surface que le background, séparation via border */
   --sidebar: oklch(0.1 0.002 275);
   --sidebar-foreground: oklch(0.97 0 0);
   --sidebar-primary: oklch(0.62 0.22 275);
