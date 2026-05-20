@@ -78,7 +78,7 @@ public class AuthController {
             .email(email)
             .password(passwordEncoder.encode(UUID.randomUUID().toString()))
             .role(role)
-            .isEnabled(true)
+            .enabled(true)
             .build();
 
     try {
