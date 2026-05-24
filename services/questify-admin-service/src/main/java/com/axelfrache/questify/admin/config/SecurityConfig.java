@@ -32,7 +32,7 @@ public class SecurityConfig {
             new HeaderAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers("/actuator/health", "/actuator/prometheus")
+                auth.requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/prometheus")
                     .permitAll()
                     .anyRequest()
                     .hasRole("ADMIN"))
