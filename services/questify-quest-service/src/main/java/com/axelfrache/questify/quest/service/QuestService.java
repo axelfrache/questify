@@ -294,7 +294,7 @@ public class QuestService {
     occurrence.setXpEarned(xpEarned);
     questOccurrenceRepository.save(occurrence);
     setQuestOccurrenceAttributes(occurrence);
-    Span.current().setAttribute("questify.quest.xp_earned", xpEarned);
+    Span.current().setAttribute("questify.xp.awarded", xpEarned);
 
     log.info(
         "Quest completed quest_id={} title=\"{}\" difficulty={} xp_earned={} user={}",
@@ -733,6 +733,9 @@ public class QuestService {
         .setAttribute("questify.quest.recurrence.enabled", template.getRecurrenceRule() != null);
     if (template.getRecurrenceRule() != null) {
       setEnumAttribute("questify.quest.recurrence.type", template.getRecurrenceRule().getType());
+      setEnumAttribute("questify.quest.frequency", template.getRecurrenceRule().getType());
+    } else {
+      Span.current().setAttribute("questify.quest.frequency", "NONE");
     }
   }
 
