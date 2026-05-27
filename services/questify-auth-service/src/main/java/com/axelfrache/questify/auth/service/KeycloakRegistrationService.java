@@ -73,10 +73,7 @@ public class KeycloakRegistrationService {
   }
 
   private record KeycloakUserRepresentation(
-      String username,
-      String email,
-      boolean enabled,
-      List<CredentialRepresentation> credentials) {}
+      String username, String email, boolean enabled, List<CredentialRepresentation> credentials) {}
 
   private record CredentialRepresentation(String type, String value, boolean temporary) {}
 }
