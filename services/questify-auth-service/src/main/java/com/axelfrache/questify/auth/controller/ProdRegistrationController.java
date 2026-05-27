@@ -2,7 +2,7 @@ package com.axelfrache.questify.auth.controller;
 
 import com.axelfrache.questify.auth.dto.RegisterRequest;
 import com.axelfrache.questify.auth.repository.InstanceSettingsRepository;
-import com.axelfrache.questify.auth.service.FerrisKeyRegistrationService;
+import com.axelfrache.questify.auth.service.KeycloakRegistrationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ProdRegistrationController {
 
-  private final FerrisKeyRegistrationService ferrisKeyRegistrationService;
+  private final KeycloakRegistrationService keycloakRegistrationService;
   private final InstanceSettingsRepository instanceSettingsRepository;
 
   @PostMapping("/register")
@@ -33,7 +33,7 @@ public class ProdRegistrationController {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
-    ferrisKeyRegistrationService.register(request);
+    keycloakRegistrationService.register(request);
     return ResponseEntity.status(HttpStatus.CREATED).build();
   }
 }
