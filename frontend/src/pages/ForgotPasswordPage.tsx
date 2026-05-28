@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { ModeToggle } from '@/components/mode-toggle';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, X, AlertCircle } from 'lucide-react';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -20,6 +20,7 @@ type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 export function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
@@ -31,8 +32,13 @@ export function ForgotPasswordPage() {
   });
 
   const onSubmit = async (data: ForgotPasswordFormValues) => {
-    await api.forgotPassword({ email: data.email });
-    setSubmitted(true);
+    setError(null);
+    try {
+      await api.forgotPassword({ email: data.email });
+      setSubmitted(true);
+    } catch {
+      setError('An error occurred. Please try again later.');
+    }
   };
 
   return (
@@ -54,10 +60,18 @@ export function ForgotPasswordPage() {
           </p>
         </div>
 
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
         {submitted ? (
           <Alert>
             <AlertDescription>
-              If an account exists for this email, a password reset link has been sent.
+              If an account exists for this email, a password reset link has been sent. Check your
+              inbox and spam folder.
             </AlertDescription>
           </Alert>
         ) : (
