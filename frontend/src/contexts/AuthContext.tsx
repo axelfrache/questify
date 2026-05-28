@@ -19,7 +19,13 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (username: string, email: string, password: string, firstName: string, lastName: string) => Promise<void>;
+  register: (
+    username: string,
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string
+  ) => Promise<void>;
   logout: () => Promise<void>;
   updateProfilePicture: (url: string | null) => void;
   updateUser: (data: Partial<User>) => void;
@@ -95,7 +101,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await refreshCurrentUser();
   };
 
-  const register = async (username: string, email: string, password: string, firstName: string, lastName: string) => {
+  const register = async (
+    username: string,
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string
+  ) => {
     if (isOidcEnabled()) {
       queryClient.removeQueries({
         predicate: ({ queryKey }) => queryKey[0] !== 'auth',

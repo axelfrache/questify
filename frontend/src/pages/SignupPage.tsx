@@ -130,7 +130,9 @@ export function SignupPage() {
                 id="firstName"
                 placeholder="John"
                 {...register('firstName')}
-                className={cn(errors.firstName && 'border-destructive focus-visible:ring-destructive')}
+                className={cn(
+                  errors.firstName && 'border-destructive focus-visible:ring-destructive'
+                )}
               />
               {errors.firstName && (
                 <p className="text-xs text-destructive flex items-center gap-1 animate-in slide-in-from-left-1">
@@ -144,7 +146,9 @@ export function SignupPage() {
                 id="lastName"
                 placeholder="Doe"
                 {...register('lastName')}
-                className={cn(errors.lastName && 'border-destructive focus-visible:ring-destructive')}
+                className={cn(
+                  errors.lastName && 'border-destructive focus-visible:ring-destructive'
+                )}
               />
               {errors.lastName && (
                 <p className="text-xs text-destructive flex items-center gap-1 animate-in slide-in-from-left-1">
