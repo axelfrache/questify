@@ -43,6 +43,8 @@ public class KeycloakRegistrationService {
               new KeycloakUserRepresentation(
                   request.username(),
                   request.email(),
+                  request.firstName(),
+                  request.lastName(),
                   true,
                   List.of(new CredentialRepresentation("password", request.password(), false))))
           .retrieve()
@@ -73,7 +75,12 @@ public class KeycloakRegistrationService {
   }
 
   private record KeycloakUserRepresentation(
-      String username, String email, boolean enabled, List<CredentialRepresentation> credentials) {}
+      String username,
+      String email,
+      String firstName,
+      String lastName,
+      boolean enabled,
+      List<CredentialRepresentation> credentials) {}
 
   private record CredentialRepresentation(String type, String value, boolean temporary) {}
 }

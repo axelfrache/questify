@@ -16,6 +16,8 @@ import { OidcAuthenticationError } from '@/lib/oidc';
 
 const signupSchema = z.object({
   username: z.string().min(3, 'Name must be at least 3 characters'),
+  firstName: z.string().min(1, 'First name is required').max(100),
+  lastName: z.string().min(1, 'Last name is required').max(100),
   email: z.string().email('Please enter a valid email address'),
   password: z
     .string()
@@ -61,7 +63,7 @@ export function SignupPage() {
   const onSubmit = async (data: SignupFormValues) => {
     setError(null);
     try {
-      await registerUser(data.username, data.email, data.password);
+      await registerUser(data.username, data.email, data.password, data.firstName, data.lastName);
       navigate('/inbox');
     } catch (err: unknown) {
       if (err instanceof OidcAuthenticationError) {
@@ -119,6 +121,37 @@ export function SignupPage() {
                 <Check className="w-3 h-3" /> Looks good!
               </p>
             )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="firstName">First name</Label>
+              <Input
+                id="firstName"
+                placeholder="John"
+                {...register('firstName')}
+                className={cn(errors.firstName && 'border-destructive focus-visible:ring-destructive')}
+              />
+              {errors.firstName && (
+                <p className="text-xs text-destructive flex items-center gap-1 animate-in slide-in-from-left-1">
+                  <X className="w-3 h-3" /> {errors.firstName.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last name</Label>
+              <Input
+                id="lastName"
+                placeholder="Doe"
+                {...register('lastName')}
+                className={cn(errors.lastName && 'border-destructive focus-visible:ring-destructive')}
+              />
+              {errors.lastName && (
+                <p className="text-xs text-destructive flex items-center gap-1 animate-in slide-in-from-left-1">
+                  <X className="w-3 h-3" /> {errors.lastName.message}
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">
