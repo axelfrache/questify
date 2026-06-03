@@ -25,7 +25,8 @@ public class QuestEventPublisher {
 
   private static String currentTraceparent() {
     Map<String, String> carrier = new HashMap<>();
-    GlobalOpenTelemetry.getPropagators().getTextMapPropagator()
+    GlobalOpenTelemetry.getPropagators()
+        .getTextMapPropagator()
         .inject(Context.current(), carrier, Map::put);
     return carrier.get("traceparent");
   }
