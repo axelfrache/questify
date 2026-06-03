@@ -81,11 +81,14 @@ public class OutboxProcessor {
   @WithSpan("outbox.send")
   private void send(OutboxEvent event) throws Exception {
     setOutboxAttributes(event);
-    Message message =
+    var builder =
         MessageBuilder.withBody(event.getPayload().getBytes(StandardCharsets.UTF_8))
             .setContentType(MessageProperties.CONTENT_TYPE_JSON)
-            .setHeader("__TypeId__", event.getTypeId())
-            .build();
+            .setHeader("__TypeId__", event.getTypeId());
+    if (event.getTraceparent() != null) {
+      builder.setHeader("traceparent", event.getTraceparent());
+    }
+    Message message = builder.build();
     var correlationData = new CorrelationData(event.getId().toString());
     rabbitTemplate.send(QueueConstants.EXCHANGE, event.getRoutingKey(), message, correlationData);
 

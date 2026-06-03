@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS auth.outbox_events (
 ALTER TABLE auth.outbox_events ADD COLUMN IF NOT EXISTS attempts INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE auth.outbox_events ADD COLUMN IF NOT EXISTS next_attempt_at TIMESTAMPTZ;
 ALTER TABLE auth.outbox_events ADD COLUMN IF NOT EXISTS last_error TEXT;
+ALTER TABLE auth.outbox_events ADD COLUMN IF NOT EXISTS traceparent VARCHAR(55);
 
 UPDATE auth.outbox_events
 SET status = 'PENDING',

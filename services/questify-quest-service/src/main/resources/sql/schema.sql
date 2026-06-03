@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS quests.outbox_events (
 ALTER TABLE quests.outbox_events ADD COLUMN IF NOT EXISTS attempts INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE quests.outbox_events ADD COLUMN IF NOT EXISTS next_attempt_at TIMESTAMPTZ;
 ALTER TABLE quests.outbox_events ADD COLUMN IF NOT EXISTS last_error TEXT;
+ALTER TABLE quests.outbox_events ADD COLUMN IF NOT EXISTS traceparent VARCHAR(55);
 
 UPDATE quests.outbox_events
 SET status = 'PENDING',

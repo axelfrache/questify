@@ -58,6 +58,9 @@ public class OutboxEvent {
   @Column(columnDefinition = "text")
   private String lastError;
 
+  @Column(length = 55)
+  private String traceparent;
+
   @PrePersist
   void prePersist() {
     if (createdAt == null) createdAt = Instant.now();
