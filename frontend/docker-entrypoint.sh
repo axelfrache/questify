@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-cat > /usr/share/nginx/html/config.js << JSEOF
+cat > /tmp/config.js << JSEOF
 window.__QUESTIFY_CONFIG__ = {
   oidcIssuerUrl: "${OIDC_ISSUER_URL:-}",
   oidcClientId: "${OIDC_CLIENT_ID:-}",
