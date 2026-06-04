@@ -88,6 +88,7 @@ services:
     ports:
       - "8081:8081"
     environment:
+      SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-questify}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-questify}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-questify}
