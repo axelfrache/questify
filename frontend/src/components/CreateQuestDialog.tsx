@@ -206,7 +206,7 @@ export function CreateQuestDialog({
             </div>
 
             {/* Difficulty + Region */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-sm font-medium">Difficulty</Label>
                 <Select
@@ -258,7 +258,7 @@ export function CreateQuestDialog({
             </div>
 
             {/* Recurrence + Due date */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {showRecurrence ? (
                 <div className="space-y-1.5">
                   <Label className="text-sm font-medium">Recurrence</Label>
@@ -350,12 +350,12 @@ export function CreateQuestDialog({
             </div>
 
             {/* XP reward banner */}
-            <div className="flex items-center justify-between rounded-lg px-4 py-3 bg-xp-bg border border-xp-border">
-              <div className="flex items-center gap-2.5 text-sm text-xp-fg">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg px-4 py-3 bg-xp-bg border border-xp-border">
+              <div className="flex items-center gap-2.5 text-sm text-xp-fg min-w-0 flex-1">
                 <Sparkles className="h-4 w-4 flex-shrink-0" />
                 <span>Reward for completing this quest</span>
               </div>
-              <span className="font-mono font-semibold text-xp-fg">
+              <span className="font-mono font-semibold text-xp-fg flex-shrink-0">
                 +{xpReward} <span className="text-xs opacity-70">XP</span>
               </span>
             </div>
