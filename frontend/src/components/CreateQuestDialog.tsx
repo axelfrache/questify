@@ -178,9 +178,9 @@ export function CreateQuestDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[560px] p-0 gap-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[560px] p-0 gap-0 flex flex-col max-h-[90dvh]">
         {/* Header */}
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border flex-shrink-0">
           <DialogTitle className="text-xl font-semibold tracking-tight">
             {getDialogTitle()}
           </DialogTitle>
@@ -190,8 +190,8 @@ export function CreateQuestDialog({
         </DialogHeader>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="px-6 py-5 space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+          <div className="px-6 py-5 space-y-5 overflow-y-auto flex-1">
             {/* Quest title */}
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">{t('quest_dialog.quest_title')}</Label>
@@ -370,7 +370,7 @@ export function CreateQuestDialog({
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-border bg-muted/30">
+          <div className="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-border bg-muted/30 flex-shrink-0">
             <Button
               type="button"
               variant="ghost"
