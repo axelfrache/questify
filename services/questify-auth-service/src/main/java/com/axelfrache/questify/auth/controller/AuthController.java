@@ -5,6 +5,8 @@ import com.axelfrache.questify.auth.model.Role;
 import com.axelfrache.questify.auth.model.User;
 import com.axelfrache.questify.auth.repository.UserRepository;
 import com.axelfrache.questify.auth.security.TokenClaimsExtractor;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -33,14 +35,20 @@ public class AuthController {
   private boolean allowAdminProvisioning;
 
   @GetMapping("/validate")
+  @WithSpan("auth.validate")
   public ResponseEntity<Void> validate(Authentication authentication) {
     if (authentication == null || !authentication.isAuthenticated()) {
+      Span.current().setAttribute("auth.result", "unauthorized");
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
     var user = findOrProvisionUser(authentication);
     if (user.getId() == null) {
+      Span.current().setAttribute("auth.result", "unauthorized");
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
+    Span.current().setAttribute("auth.result", "ok");
+    Span.current().setAttribute("questify.user.id", user.getId().toString());
+    Span.current().setAttribute("questify.user.role", user.getRole().name());
     return ResponseEntity.ok()
         .header("X-User-Id", user.getId().toString())
         .header("X-User-Role", user.getRole().name())
@@ -48,11 +56,15 @@ public class AuthController {
   }
 
   @GetMapping("/me")
+  @WithSpan("auth.get_current_user")
   public ResponseEntity<UserDto> getCurrentUser(Authentication authentication) {
     if (authentication == null || !authentication.isAuthenticated()) {
+      Span.current().setAttribute("auth.result", "unauthorized");
       return ResponseEntity.status(401).build();
     }
-    return ResponseEntity.ok(toUserDto(findOrProvisionUser(authentication)));
+    var user = findOrProvisionUser(authentication);
+    Span.current().setAttribute("questify.user.id", user.getId().toString());
+    return ResponseEntity.ok(toUserDto(user));
   }
 
   private User findOrProvisionUser(Authentication authentication) {
