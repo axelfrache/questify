@@ -728,7 +728,7 @@ volumes:
   redis-data:
 EOF
 
-echo "Starting Docker containers..."
+echo "Pulling latest images..."
 COMPOSE=()
 if docker compose version >/dev/null 2>&1; then
     COMPOSE=(docker compose)
@@ -739,6 +739,9 @@ else
     exit 1
 fi
 
+sudo -E "${COMPOSE[@]}" pull
+
+echo "Starting Docker containers..."
 sudo -E "${COMPOSE[@]}" up -d
 
 echo "=========================================================="
