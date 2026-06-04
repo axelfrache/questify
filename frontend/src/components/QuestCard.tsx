@@ -1,4 +1,5 @@
 import { useState, memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import {
@@ -47,6 +48,7 @@ function QuestCardInner({
   density = 'comfort',
   showRegionMarker = true,
 }: QuestCardProps) {
+  const { t } = useTranslation();
   const [completing, setCompleting] = useState(false);
   const isCompact = density === 'compact';
   const isCompleted = quest.status === 'COMPLETED';
@@ -161,24 +163,24 @@ function QuestCardInner({
                 disabled={disabled}
               >
                 <MoreVertical className="h-3.5 w-3.5" />
-                <span className="sr-only">Quest actions</span>
+                <span className="sr-only">{t('quest_card.actions')}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onEdit?.(quest)}>
                 <Edit className="mr-2 h-4 w-4" />
-                Edit
+                {t('quest_card.edit')}
               </DropdownMenuItem>
               {hasRecurrence && quest.status === 'PENDING' && onSkip && (
                 <DropdownMenuItem onClick={() => onSkip(quest.id)}>
                   <SkipForward className="mr-2 h-4 w-4" />
-                  Skip today
+                  {t('quest_card.skip')}
                 </DropdownMenuItem>
               )}
               {!quest.parentId && onAddSubquest && (
                 <DropdownMenuItem onClick={() => onAddSubquest(quest)}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Add subquest
+                  {t('quest_card.add_subquest')}
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem
@@ -186,7 +188,7 @@ function QuestCardInner({
                 className="text-destructive focus:text-destructive"
               >
                 <Trash className="mr-2 h-4 w-4" />
-                Delete
+                {t('quest_card.delete')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

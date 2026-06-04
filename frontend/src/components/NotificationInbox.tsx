@@ -1,4 +1,5 @@
 import { Bell, CheckCheck, Trash2, Zap, Flame, AlertTriangle, Trophy, Clock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow, parseISO } from 'date-fns';
@@ -82,6 +83,7 @@ function NotificationItem({
 }
 
 export function NotificationInbox() {
+  const { t } = useTranslation();
   const { data: notifications = [] } = useNotifications();
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
@@ -107,7 +109,7 @@ export function NotificationInbox() {
 
       <PopoverContent align="end" sideOffset={8} className="w-80 p-0 overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h3 className="text-sm font-semibold">Notifications</h3>
+          <h3 className="text-sm font-semibold">{t('notifications.title')}</h3>
           {unreadCount > 0 && (
             <button
               onClick={() => markAllRead.mutate()}
@@ -115,7 +117,7 @@ export function NotificationInbox() {
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
             >
               <CheckCheck className="h-3.5 w-3.5" />
-              Mark all read
+              {t('notifications.mark_all_read')}
             </button>
           )}
         </div>
@@ -123,8 +125,8 @@ export function NotificationInbox() {
         {notifications.length === 0 ? (
           <div className="flex flex-col items-center py-10 px-4 text-center">
             <Bell className="h-8 w-8 text-muted-foreground/30 mb-3" />
-            <p className="text-sm font-medium text-muted-foreground">No notifications</p>
-            <p className="mt-0.5 text-xs text-muted-foreground/60">You're all caught up!</p>
+            <p className="text-sm font-medium text-muted-foreground">{t('notifications.empty')}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground/60">{t('notifications.up_to_date')}</p>
           </div>
         ) : (
           <div className="divide-y divide-border overflow-y-auto max-h-[420px]">

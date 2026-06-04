@@ -38,22 +38,24 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjectsSidebar, useUserProgression } from '@/hooks/use-api';
+import { useTranslation } from 'react-i18next';
 
 const navItems = [
-  { title: 'Inbox', url: '/inbox', icon: Inbox },
-  { title: 'Today', url: '/today', icon: Sun },
-  { title: 'Upcoming', url: '/upcoming', icon: Calendar },
-  { title: 'Habits', url: '/habits', icon: Repeat },
-  { title: 'Regions', url: '/regions', icon: Map },
+  { key: 'nav.inbox', url: '/inbox', icon: Inbox },
+  { key: 'nav.today', url: '/today', icon: Sun },
+  { key: 'nav.upcoming', url: '/upcoming', icon: Calendar },
+  { key: 'nav.habits', url: '/habits', icon: Repeat },
+  { key: 'nav.regions', url: '/regions', icon: Map },
 ];
 
 const insightItems = [
-  { title: 'Progress', url: '/progress', icon: TrendingUp },
-  { title: 'Stats', url: '/stats', icon: BarChart3 },
-  { title: 'History', url: '/history', icon: History },
+  { key: 'nav.progress', url: '/progress', icon: TrendingUp },
+  { key: 'nav.stats', url: '/stats', icon: BarChart3 },
+  { key: 'nav.history', url: '/history', icon: History },
 ];
 
 export function AppSidebar() {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -97,7 +99,7 @@ export function AppSidebar() {
                 </div>
                 {progression && (
                   <div className="font-mono text-[10px] text-sidebar-foreground/50 leading-tight">
-                    Lvl {progression.level} · {progression.gradeLabel}
+                    {t('nav.level', { level: progression.level, grade: progression.gradeLabel })}
                   </div>
                 )}
               </div>
@@ -107,13 +109,13 @@ export function AppSidebar() {
               <DropdownMenuItem asChild>
                 <Link to="/profile" className="cursor-pointer w-full flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  <span>Profile</span>
+                  <span>{t('nav.profile')}</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/settings" className="cursor-pointer w-full flex items-center gap-2">
                   <Settings className="h-4 w-4" />
-                  <span>Settings</span>
+                  <span>{t('nav.settings')}</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -121,7 +123,7 @@ export function AppSidebar() {
                 className="cursor-pointer text-destructive focus:text-destructive"
               >
                 <LogOut className="h-4 w-4 mr-2" />
-                <span>Log out</span>
+                <span>{t('nav.logout')}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -132,11 +134,11 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
                     <Link to={item.url} className="flex items-center gap-2">
                       <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <span>{t(item.key)}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -147,12 +149,12 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <div className="flex items-center justify-between px-2">
-            <SidebarGroupLabel className="p-0">Projects</SidebarGroupLabel>
+            <SidebarGroupLabel className="p-0">{t('nav.projects')}</SidebarGroupLabel>
             <button
               type="button"
               onClick={() => setIsProjectsOpen((open) => !open)}
               className="rounded p-1 text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              aria-label={isProjectsOpen ? 'Collapse projects' : 'Expand projects'}
+              aria-label={isProjectsOpen ? t('nav.collapse_projects') : t('nav.expand_projects')}
             >
               {isProjectsOpen ? (
                 <ChevronDown className="h-4 w-4" />
@@ -168,14 +170,14 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild isActive={location.pathname === '/projects'} size="sm">
                     <Link to="/projects" className="flex items-center gap-2">
                       <FolderKanban className="h-4 w-4" />
-                      <span>View all</span>
+                      <span>{t('nav.view_all')}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 {sidebarProjects.length === 0 ? (
                   <SidebarMenuItem>
                     <div className="px-2 py-1 text-xs text-sidebar-foreground/60">
-                      Pin projects to access them here
+                      {t('nav.pin_projects')}
                     </div>
                   </SidebarMenuItem>
                 ) : (
@@ -200,15 +202,15 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Insights</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('nav.insights')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {insightItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
                     <Link to={item.url} className="flex items-center gap-2">
                       <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <span>{t(item.key)}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -226,7 +228,7 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild isActive={isActive('/admin')}>
                   <Link to="/admin" className="flex items-center gap-2">
                     <Shield className="h-4 w-4" />
-                    <span>Admin</span>
+                    <span>{t('admin.title')}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

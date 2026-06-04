@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,7 @@ export function DeleteRegionDialog({
   onConfirm,
   isPending = false,
 }: DeleteRegionDialogProps) {
+  const { t } = useTranslation();
   const [questAction, setQuestAction] = useState<'MOVE_TO_INBOX' | 'DELETE_ALL'>('MOVE_TO_INBOX');
 
   const handleConfirm = () => {
@@ -40,15 +42,12 @@ export function DeleteRegionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Delete region "{regionName}"?</DialogTitle>
+          <DialogTitle>{t('delete_region.title', { name: regionName })}</DialogTitle>
           <DialogDescription>
             {questCount === 0 ? (
-              'This region has no active quests. Completed quests will remain in your history.'
+              t('delete_region.empty_hint')
             ) : (
-              <>
-                This region has <strong>{questCount}</strong> active{' '}
-                {questCount === 1 ? 'quest' : 'quests'}. What would you like to do with them?
-              </>
+              t('delete_region.has_quests', { count: questCount })
             )}
           </DialogDescription>
         </DialogHeader>
@@ -70,10 +69,10 @@ export function DeleteRegionDialog({
               <div className="flex-1">
                 <Label htmlFor="move" className="flex items-center gap-2 cursor-pointer">
                   <Inbox className="h-4 w-4" />
-                  Move active quests to Inbox
+                  {t('delete_region.move_to_inbox')}
                 </Label>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Active quests move to Inbox. Completed history is preserved.
+                  {t('delete_region.move_hint')}
                 </p>
               </div>
             </div>
@@ -89,10 +88,10 @@ export function DeleteRegionDialog({
               <div className="flex-1">
                 <Label htmlFor="delete" className="flex items-center gap-2 cursor-pointer">
                   <Trash2 className="h-4 w-4" />
-                  Delete active quests
+                  {t('delete_region.delete_quests')}
                 </Label>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Only active quests are deleted. Completed history is preserved.
+                  {t('delete_region.delete_hint')}
                 </p>
               </div>
             </div>
@@ -101,7 +100,7 @@ export function DeleteRegionDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant={questAction === 'DELETE_ALL' ? 'destructive' : 'default'}
@@ -109,7 +108,7 @@ export function DeleteRegionDialog({
             disabled={isPending}
           >
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Delete region
+            {t('delete_region.submit')}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -27,13 +28,14 @@ export function DeleteAccountDialog({
   userId,
   onSuccess,
 }: DeleteAccountDialogProps) {
+  const { t } = useTranslation();
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const deleteAccountMutation = useDeleteAccount();
 
   const handleDelete = async () => {
     if (!password.trim()) {
-      setError('Password is required');
+      setError(t('delete_account.password') + ' is required');
       return;
     }
 
@@ -46,7 +48,7 @@ export function DeleteAccountDialog({
       if (err instanceof ApiError || err instanceof Error) {
         setError(err.message);
       } else {
-        setError('Failed to delete account');
+        setError(t('delete_account.title') + ' failed');
       }
     }
   };
@@ -65,29 +67,28 @@ export function DeleteAccountDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-destructive">
             <AlertTriangle className="h-5 w-5" />
-            Delete Account
+            {t('delete_account.title')}
           </DialogTitle>
           <DialogDescription>
-            This action is <strong>permanent and irreversible</strong>. All your quests, progress,
-            achievements, and data will be permanently deleted.
+            {t('delete_account.description')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
             <p className="text-sm text-destructive">
-              To confirm deletion, please enter your password below.
+              {t('delete_account.confirm_hint')}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="delete-password">Password</Label>
+            <Label htmlFor="delete-password">{t('delete_account.password')}</Label>
             <Input
               id="delete-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder={t('delete_account.password_placeholder')}
               disabled={deleteAccountMutation.isPending}
             />
           </div>
@@ -101,7 +102,7 @@ export function DeleteAccountDialog({
             onClick={() => handleClose(false)}
             disabled={deleteAccountMutation.isPending}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="destructive"
@@ -111,10 +112,10 @@ export function DeleteAccountDialog({
             {deleteAccountMutation.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Deleting...
+                {t('delete_account.deleting')}
               </>
             ) : (
-              'Delete My Account'
+              t('delete_account.submit')
             )}
           </Button>
         </DialogFooter>

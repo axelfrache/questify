@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { type UserSummaryResponse, ApiError } from '@/lib/api';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   useAdminDeleteUser,
@@ -54,6 +55,7 @@ function SettingRow({
 }
 
 export function AdminSettings() {
+  const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const [pendingDeleteUserId, setPendingDeleteUserId] = useState<string | null>(null);
   const { user: currentUser } = useAuth();
@@ -109,7 +111,7 @@ export function AdminSettings() {
     return (
       <Alert variant="destructive">
         <AlertDescription>
-          Access Denied: You do not have permission to view this page.
+          {t('admin.access_denied')}
         </AlertDescription>
       </Alert>
     );
@@ -119,8 +121,8 @@ export function AdminSettings() {
     <div className="space-y-8 pb-10">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Admin</h1>
-        <p className="text-sm text-muted-foreground">Manage instance settings and users</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t('admin.title')}</h1>
+        <p className="text-sm text-muted-foreground">{t('admin.description')}</p>
       </div>
 
       {error && (
@@ -134,17 +136,17 @@ export function AdminSettings() {
         <SectionLabel>
           <span className="inline-flex items-center gap-1.5">
             <Settings2 className="h-3 w-3" />
-            Instance settings
+            {t('admin.instance_settings')}
           </span>
         </SectionLabel>
         <div className="rounded-lg border bg-card px-5 py-4">
           {isLoadingSettings ? (
             <Skeleton className="h-10 w-full" />
           ) : (
-            <SettingRow label="User registration" description="Allow new users to create accounts">
+            <SettingRow label={t('admin.user_registration')} description={t('admin.registration_description')}>
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-xs text-muted-foreground">
-                  {settings?.registrationEnabled ? 'Enabled' : 'Disabled'}
+                  {settings?.registrationEnabled ? t('admin.enabled') : t('admin.disabled')}
                 </span>
                 <Switch
                   checked={settings?.registrationEnabled}
@@ -162,7 +164,7 @@ export function AdminSettings() {
         <SectionLabel>
           <span className="inline-flex items-center gap-1.5">
             <Users className="h-3 w-3" />
-            Users management
+            {t('admin.users')}
           </span>
         </SectionLabel>
         <div className="rounded-lg border bg-card">
@@ -178,22 +180,22 @@ export function AdminSettings() {
                 <TableHeader>
                   <TableRow className="border-b border-border/60">
                     <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground pl-5">
-                      User
+                      {t('admin.user')}
                     </TableHead>
                     <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
                       Email
                     </TableHead>
                     <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-                      Role
+                      {t('admin.role')}
                     </TableHead>
                     <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-                      Status
+                      {t('admin.status')}
                     </TableHead>
                     <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-                      Created
+                      {t('admin.created')}
                     </TableHead>
                     <TableHead className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground text-right pr-5">
-                      Actions
+                      {t('admin.actions')}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -232,7 +234,7 @@ export function AdminSettings() {
                               : 'text-destructive border-destructive/50 bg-destructive/8'
                           }
                         >
-                          {u.enabled ? 'Active' : 'Disabled'}
+                          {u.enabled ? t('admin.active') : t('admin.disabled')}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground py-3 font-mono text-xs">
@@ -267,7 +269,7 @@ export function AdminSettings() {
                         colSpan={6}
                         className="text-center py-8 text-sm text-muted-foreground"
                       >
-                        No users found.
+                        {t('admin.no_users')}
                       </TableCell>
                     </TableRow>
                   )}
@@ -281,8 +283,8 @@ export function AdminSettings() {
       <ConfirmDialog
         open={!!pendingDeleteUserId}
         onOpenChange={(open) => !open && setPendingDeleteUserId(null)}
-        title="Delete user?"
-        description="This action cannot be undone."
+        title={t('admin.delete_user')}
+        description={t('admin.delete_cannot_undo')}
         onConfirm={confirmDeleteUser}
       />
     </div>

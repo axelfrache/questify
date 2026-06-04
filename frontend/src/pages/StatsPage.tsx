@@ -4,6 +4,7 @@ import {
   useStatsByDay,
   useCategories,
 } from '@/hooks/use-api';
+import { useTranslation } from 'react-i18next';
 import { useDailyCompletion } from '@/hooks/use-daily-completion';
 import { getUtcDateKey } from '@/lib/activity-completion';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 
 export function StatsPage() {
+  const { t, i18n } = useTranslation();
   const { isLoading: isLoadingOverview } = useStatsOverview();
   const { data: categoryStats, isLoading: isLoadingCategories } = useStatsByCategory();
   const { data: categories } = useCategories();
@@ -44,12 +46,13 @@ export function StatsPage() {
     };
   });
 
-  const weekStart = weeklyDays[0].date.toLocaleDateString('en-US', {
+  const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
+  const weekStart = weeklyDays[0].date.toLocaleDateString(locale, {
     timeZone: 'UTC',
     month: 'short',
     day: 'numeric',
   });
-  const weekEnd = weeklyDays[6].date.toLocaleDateString('en-US', {
+  const weekEnd = weeklyDays[6].date.toLocaleDateString(locale, {
     timeZone: 'UTC',
     month: 'short',
     day: 'numeric',
@@ -96,8 +99,8 @@ export function StatsPage() {
     <div className="space-y-4 pb-10">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Stats</h1>
-        <p className="text-sm text-muted-foreground">Your activity and consistency over time</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t('stats.title')}</h1>
+        <p className="text-sm text-muted-foreground">{t('stats.description')}</p>
       </div>
 
       {/* Weekly Consistency */}
@@ -106,7 +109,7 @@ export function StatsPage() {
           <div>
             <div className="flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-sm font-medium">Weekly consistency</span>
+              <span className="text-sm font-medium">{t('stats.weekly_consistency')}</span>
             </div>
             <p className="mt-1 text-[11px] text-muted-foreground">
               {weekStart} – {weekEnd}
@@ -115,7 +118,7 @@ export function StatsPage() {
           <div className="flex items-start gap-5">
             <div className="text-right">
               <p className="font-mono text-lg font-medium leading-none">{weeklyActiveDays}</p>
-              <p className="mt-0.5 text-[10px] text-muted-foreground">active days</p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">{t('stats.active_days')}</p>
             </div>
             <div className="text-right">
               <p className="font-mono text-lg font-medium leading-none">+{weeklyXp}</p>
@@ -150,7 +153,7 @@ export function StatsPage() {
                           className={cn('h-1 w-full rounded-full transition-colors', barClass)}
                         />
                         <span className="font-mono text-[10px] text-muted-foreground">
-                          {day.date.toLocaleDateString('en-US', {
+                          {day.date.toLocaleDateString(locale, {
                             timeZone: 'UTC',
                             weekday: 'narrow',
                           })}
@@ -159,16 +162,16 @@ export function StatsPage() {
                     </TooltipTrigger>
                     <TooltipContent>
                       {isFuture ? (
-                        <p className="text-xs">Upcoming</p>
+                        <p className="text-xs">{t('stats.upcoming')}</p>
                       ) : planned === 0 ? (
-                        <p className="text-xs">No quests planned</p>
+                        <p className="text-xs">{t('stats.no_quests_planned')}</p>
                       ) : (
                         <>
                           <p className="text-xs">
-                            {day.completion?.completedQuests ?? 0} of {planned} completed
+                            {t('stats.completed_of', { completed: day.completion?.completedQuests ?? 0, planned })}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {rate}% · +{day.stats?.xpEarned ?? 0} XP
+                            {t('stats.rate_xp', { rate, xp: day.stats?.xpEarned ?? 0 })}
                           </p>
                         </>
                       )}
@@ -183,9 +186,9 @@ export function StatsPage() {
         {/* Legend */}
         <div className="mt-3 flex items-center justify-end gap-3 text-[10px] text-muted-foreground">
           {[
-            { label: '100%', cls: 'bg-primary' },
-            { label: 'Partial', cls: 'bg-primary/60' },
-            { label: 'None', cls: 'bg-muted/50' },
+            { label: t('stats.full'), cls: 'bg-primary' },
+            { label: t('stats.partial'), cls: 'bg-primary/60' },
+            { label: t('stats.none'), cls: 'bg-muted/50' },
           ].map(({ label, cls }) => (
             <span key={label} className="flex items-center gap-1">
               <span className={cn('h-2 w-2 rounded-[2px]', cls)} />
@@ -201,7 +204,7 @@ export function StatsPage() {
         <div className="rounded-lg border bg-card overflow-hidden">
           <div className="flex items-center gap-1.5 px-5 pt-4 pb-0">
             <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-sm font-medium">Monthly activity</span>
+            <span className="text-sm font-medium">{t('stats.monthly_activity')}</span>
           </div>
           <MonthlyActivityGraph
             dailyData={monthlyActivityStats}
@@ -215,11 +218,11 @@ export function StatsPage() {
         <div className="rounded-lg border bg-card p-5">
           <div className="mb-4 flex items-center gap-1.5">
             <Map className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-sm font-medium">By region</span>
+            <span className="text-sm font-medium">{t('stats.by_region')}</span>
           </div>
 
           {regionData.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No region activity yet.</p>
+            <p className="text-sm text-muted-foreground">{t('stats.no_region_activity')}</p>
           ) : (
             <div className="space-y-3">
               {regionData.map((r) => (

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   useQuests,
   useCategories,
@@ -43,6 +44,7 @@ const fireConfettiFromElement = (element: HTMLElement) => {
 export function InboxPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const categoryFilter = searchParams.get('category');
 
   const clearCategoryFilter = () => {
@@ -150,12 +152,12 @@ export function InboxPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Inbox</h1>
-          <p className="text-sm text-muted-foreground">All quests, unassigned &amp; pending</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('inbox.title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('inbox.description')}</p>
         </div>
         <Button onClick={() => setNewQuestOpen(true)} size="sm" className="gap-1.5 shrink-0">
           <Plus className="h-3.5 w-3.5" />
-          New quest
+          {t('inbox.new_quest')}
         </Button>
       </div>
 
@@ -179,7 +181,7 @@ export function InboxPage() {
 
       {filteredCategoryName && (
         <div className="flex items-center gap-1.5 text-xs">
-          <span className="text-muted-foreground">Region:</span>
+          <span className="text-muted-foreground">{t('inbox.region')}</span>
           <button
             onClick={clearCategoryFilter}
             className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-primary hover:bg-primary/20 transition-colors"
@@ -192,15 +194,15 @@ export function InboxPage() {
 
       {errorQuests && (
         <Alert variant="destructive">
-          <AlertDescription>Failed to load quests</AlertDescription>
+          <AlertDescription>{t('inbox.load_failed')}</AlertDescription>
         </Alert>
       )}
 
       {totalCount === 0 ? (
         <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
           {search || quickFilters.overdue || quickFilters.today
-            ? 'No quests match your search or filters.'
-            : 'No quests found. Start your journey by adding a new quest!'}
+            ? t('inbox.no_results')
+            : t('inbox.empty')}
         </div>
       ) : (
         <>
@@ -223,7 +225,7 @@ export function InboxPage() {
             <div className="flex justify-center pt-4">
               <Button variant="outline" onClick={loadMore} className="gap-2">
                 <ChevronDown className="h-4 w-4" />
-                Load More
+                {t('inbox.load_more')}
               </Button>
             </div>
           )}

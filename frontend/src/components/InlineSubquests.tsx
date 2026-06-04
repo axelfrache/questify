@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ChevronDown,
   ChevronRight,
@@ -35,6 +36,7 @@ export function InlineSubquests({
   onEdit,
   onDelete,
 }: InlineSubquestsProps) {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const { data: subquests, isLoading } = useSubquests(parentQuest.templateId, isExpanded);
 
@@ -54,7 +56,7 @@ export function InlineSubquests({
           <ChevronRight className="h-3.5 w-3.5" />
         )}
         <span className="font-medium">
-          {parentQuest.completedSubquestCount}/{parentQuest.subquestCount} subquests
+          {t('subquests.count', { completed: parentQuest.completedSubquestCount, total: parentQuest.subquestCount })}
         </span>
       </button>
 
@@ -63,7 +65,7 @@ export function InlineSubquests({
           {isLoading ? (
             <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
               <Loader2 className="h-3 w-3 animate-spin" />
-              Loading...
+              {t('subquests.loading')}
             </div>
           ) : (
             subquests?.map((subquest) => (
@@ -90,6 +92,7 @@ interface SubquestRowProps {
 }
 
 function SubquestRow({ subquest, onComplete, onEdit, onDelete }: SubquestRowProps) {
+  const { t } = useTranslation();
   const isCompleted = subquest.status === 'COMPLETED';
 
   const handleComplete = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -173,14 +176,14 @@ function SubquestRow({ subquest, onComplete, onEdit, onDelete }: SubquestRowProp
           <DropdownMenuContent align="end" className="w-36">
             <DropdownMenuItem onClick={() => onEdit?.(subquest)}>
               <Edit className="mr-2 h-3 w-3" />
-              Edit
+              {t('common.edit')}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onDelete?.(subquest.id)}
               className="text-destructive focus:text-destructive"
             >
               <Trash className="mr-2 h-3 w-3" />
-              Delete
+              {t('common.delete')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

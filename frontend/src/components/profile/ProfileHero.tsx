@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ArrowUpRight, Pencil, Sparkles, Target, Zap } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,7 @@ export function ProfileHero({
   nextLevelXp,
   progressPercent,
 }: ProfileHeroProps) {
+  const { t } = useTranslation();
   const initials = username.charAt(0).toUpperCase() || '?';
   const trimmedBio = bio?.trim();
   const xpToNextLevel = Math.max(nextLevelXp - currentLevelXp, 0);
@@ -71,7 +73,7 @@ export function ProfileHero({
           <Button asChild variant="ghost" size="sm" className="shrink-0">
             <Link to="/settings">
               <Pencil className="h-3.5 w-3.5" />
-              Edit
+              {t('profile_hero.edit')}
             </Link>
           </Button>
         </div>
@@ -87,20 +89,20 @@ export function ProfileHero({
           <div className="flex items-center gap-2">
             <Sparkles className="h-3.5 w-3.5 text-primary" />
             <span className="font-mono font-medium">{currentStreak}</span>
-            <span className="text-muted-foreground">day streak</span>
+            <span className="text-muted-foreground">{t('profile_hero.day_streak')}</span>
           </div>
           <span className="h-3 w-px bg-border" />
           <div className="flex items-center gap-2">
             <Target className="h-3.5 w-3.5 text-primary" />
             <span className="font-mono font-medium">{totalCompleted}</span>
-            <span className="text-muted-foreground">quests done</span>
+            <span className="text-muted-foreground">{t('profile_hero.quests_done')}</span>
           </div>
         </div>
 
         {/* XP progress */}
         <div className="space-y-2 border-t border-border/50 pt-4">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>XP to next level</span>
+            <span>{t('profile_hero.xp_to_next')}</span>
             <span className="font-mono font-medium text-foreground">
               {currentLevelXp.toLocaleString()} / {nextLevelXp.toLocaleString()}
             </span>
@@ -110,7 +112,7 @@ export function ProfileHero({
             <span>{Math.round(progressPercent)}%</span>
             <span className="inline-flex items-center gap-1">
               <ArrowUpRight className="h-3 w-3 text-primary" />
-              {xpToNextLevel.toLocaleString()} XP remaining
+              {t('profile_hero.remaining', { xp: xpToNextLevel.toLocaleString() })}
             </span>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +28,7 @@ function getRegionIcon(stats: CategoryResponse): string {
 }
 
 export function RegionCard({ stats, questCount = 0, onClick, onEdit, onDelete }: RegionCardProps) {
+  const { t } = useTranslation();
   const canManage = stats.source !== 'GLOBAL';
 
   return (
@@ -64,7 +66,7 @@ export function RegionCard({ stats, questCount = 0, onClick, onEdit, onDelete }:
         {/* Text */}
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-medium text-foreground">{stats.name}</div>
-          <div className="font-mono text-[11px] text-muted-foreground">{questCount} quests</div>
+          <div className="font-mono text-[11px] text-muted-foreground">{t('region_card.quest_count', { count: questCount })}</div>
         </div>
 
         {/* Actions */}
@@ -78,7 +80,7 @@ export function RegionCard({ stats, questCount = 0, onClick, onEdit, onDelete }:
                 onClick={(e) => e.stopPropagation()}
               >
                 <MoreVertical className="h-3.5 w-3.5" />
-                <span className="sr-only">Region actions</span>
+                <span className="sr-only">{t('region_card.actions')}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -89,7 +91,7 @@ export function RegionCard({ stats, questCount = 0, onClick, onEdit, onDelete }:
                 }}
               >
                 <Edit className="mr-2 h-4 w-4" />
-                Edit
+                {t('region_card.edit')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={(e) => {
@@ -99,7 +101,7 @@ export function RegionCard({ stats, questCount = 0, onClick, onEdit, onDelete }:
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Delete
+                {t('region_card.delete')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

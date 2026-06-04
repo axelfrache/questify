@@ -1,4 +1,5 @@
 import { Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -23,9 +24,11 @@ export function ConfirmDialog({
   onOpenChange,
   title,
   description,
-  confirmLabel = 'Delete',
+  confirmLabel,
   onConfirm,
 }: ConfirmDialogProps) {
+  const { t } = useTranslation();
+  const resolvedConfirmLabel = confirmLabel ?? t('confirm_dialog.delete');
   const handleConfirm = () => {
     onConfirm();
     onOpenChange(false);
@@ -45,10 +48,10 @@ export function ConfirmDialog({
         </div>
         <DialogFooter className="sm:justify-center gap-2">
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('confirm_dialog.cancel')}
           </Button>
           <Button variant="destructive" size="sm" onClick={handleConfirm}>
-            {confirmLabel}
+            {resolvedConfirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

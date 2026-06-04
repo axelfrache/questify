@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useQuests, useDeleteQuest } from '@/hooks/use-api';
+import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { QuestCard } from '@/components/QuestCard';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import type { QuestResponse } from '@/lib/api';
 
 export function HabitsPage() {
+  const { t } = useTranslation();
   const { data: habits, isLoading } = useQuests(undefined, 'recurring');
-  const deleteQuest = useDeleteQuest('Habit deleted');
+  const deleteQuest = useDeleteQuest(t('habits.deleted'));
   const [editingHabit, setEditingHabit] = useState<QuestResponse | null>(null);
 
   if (isLoading) {
@@ -26,13 +28,13 @@ export function HabitsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Habits</h1>
-        <p className="text-muted-foreground">Manage your recurring quests.</p>
+        <h1 className="text-2xl font-bold">{t('habits.title')}</h1>
+        <p className="text-muted-foreground">{t('habits.description')}</p>
       </div>
 
       {!habits || habits.length === 0 ? (
         <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
-          No habits set up yet. Create a recurring quest to see it here!
+          {t('habits.empty')}
         </div>
       ) : (
         <div className="space-y-3">

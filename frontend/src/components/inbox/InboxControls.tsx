@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search, Filter, ArrowUpDown, LayoutGrid } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { GroupBy, SortBy, Density, QuickFilters } from '@/types/inboxTypes';
@@ -27,22 +28,6 @@ interface InboxControlsProps {
   onToggleQuickFilter: (filter: keyof QuickFilters) => void;
 }
 
-const GROUP_BY_OPTIONS: { value: GroupBy; label: string }[] = [
-  { value: 'none', label: 'None' },
-  { value: 'region', label: 'Region' },
-  { value: 'project', label: 'Project' },
-];
-
-const SORT_BY_OPTIONS: { value: SortBy; label: string }[] = [
-  { value: 'dueDate', label: 'Due date' },
-  { value: 'priority', label: 'Priority' },
-];
-
-const DENSITY_LABELS: Record<Density, string> = {
-  comfort: 'Comfort',
-  compact: 'Compact',
-};
-
 export function InboxControls({
   search,
   groupBy,
@@ -60,6 +45,24 @@ export function InboxControls({
   onToggleDensity,
   onToggleQuickFilter,
 }: InboxControlsProps) {
+  const { t } = useTranslation();
+
+  const GROUP_BY_OPTIONS: { value: GroupBy; label: string }[] = [
+    { value: 'none', label: t('common.all') },
+    { value: 'region', label: t('inbox_controls.region') },
+    { value: 'project', label: t('inbox_controls.project') },
+  ];
+
+  const SORT_BY_OPTIONS: { value: SortBy; label: string }[] = [
+    { value: 'dueDate', label: t('inbox_controls.due_date') },
+    { value: 'priority', label: t('inbox_controls.priority') },
+  ];
+
+  const DENSITY_LABELS: Record<Density, string> = {
+    comfort: t('inbox_controls.comfort'),
+    compact: t('inbox_controls.compact'),
+  };
+
   const [searchInput, setSearchInput] = useState(search);
 
   useEffect(() => {
@@ -74,9 +77,9 @@ export function InboxControls({
   const activeFilter = quickFilters.overdue ? 'overdue' : quickFilters.today ? 'today' : 'all';
 
   const chips = [
-    { id: 'all' as const, label: 'All', count: allCount },
-    { id: 'today' as const, label: 'Today', count: todayCount },
-    { id: 'overdue' as const, label: 'Overdue', count: overdueCount },
+    { id: 'all' as const, label: t('inbox_controls.all'), count: allCount },
+    { id: 'today' as const, label: t('inbox_controls.today'), count: todayCount },
+    { id: 'overdue' as const, label: t('inbox_controls.overdue'), count: overdueCount },
   ];
 
   return (
@@ -88,7 +91,7 @@ export function InboxControls({
           <Search className="h-[14px] w-[14px] shrink-0 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search quests..."
+            placeholder={t('inbox_controls.search_placeholder')}
             value={searchInput}
             onChange={handleSearchChange}
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none min-w-0"
@@ -106,7 +109,7 @@ export function InboxControls({
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap h-full">
               <Filter className="h-3.5 w-3.5" />
-              <span>{GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label ?? 'None'}</span>
+              <span>{GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label ?? t('common.all')}</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-36">
@@ -127,7 +130,7 @@ export function InboxControls({
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap h-full">
               <ArrowUpDown className="h-3.5 w-3.5" />
-              <span>{SORT_BY_OPTIONS.find((o) => o.value === sortBy)?.label ?? 'Due date'}</span>
+              <span>{SORT_BY_OPTIONS.find((o) => o.value === sortBy)?.label ?? t('inbox_controls.due_date')}</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-36">
@@ -146,7 +149,7 @@ export function InboxControls({
         {/* Density */}
         <button
           onClick={onToggleDensity}
-          title={density === 'compact' ? 'Switch to Comfort' : 'Switch to Compact'}
+          title={density === 'compact' ? t('inbox_controls.comfort') : t('inbox_controls.compact')}
           className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap h-full"
         >
           <LayoutGrid className="h-3.5 w-3.5" />
@@ -186,7 +189,7 @@ export function InboxControls({
 
         <div className="flex-1" />
         <span className="font-mono text-xs text-muted-foreground">
-          {displayedCount} of {totalCount}
+          {t('inbox_controls.count', { displayed: displayedCount, total: totalCount })}
         </span>
       </div>
     </div>

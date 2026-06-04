@@ -11,6 +11,7 @@ import { ModeToggle } from '@/components/mode-toggle';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { Loader2, X, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -21,6 +22,7 @@ type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 export function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const {
     register,
@@ -37,7 +39,7 @@ export function ForgotPasswordPage() {
       await api.forgotPassword({ email: data.email });
       setSubmitted(true);
     } catch {
-      setError('An error occurred. Please try again later.');
+      setError(t('forgot_password.error'));
     }
   };
 
@@ -54,9 +56,9 @@ export function ForgotPasswordPage() {
             className="w-14 h-14 mx-auto"
             draggable={false}
           />
-          <h1 className="text-2xl font-semibold tracking-tight">Reset password</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t('forgot_password.title')}</h1>
           <p className="text-sm text-muted-foreground">
-            Enter your email and we will send you a reset link if an account exists.
+            {t('forgot_password.description')}
           </p>
         </div>
 
@@ -70,8 +72,7 @@ export function ForgotPasswordPage() {
         {submitted ? (
           <Alert>
             <AlertDescription>
-              If an account exists for this email, a password reset link has been sent. Check your
-              inbox and spam folder.
+              {t('forgot_password.success')}
             </AlertDescription>
           </Alert>
         ) : (
@@ -96,19 +97,19 @@ export function ForgotPasswordPage() {
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('forgot_password.sending')}
                 </>
               ) : (
-                'Send reset link'
+                t('forgot_password.submit')
               )}
             </Button>
           </form>
         )}
 
         <p className="text-center text-sm text-muted-foreground">
-          Remembered it?{' '}
+          {t('forgot_password.remembered')}{' '}
           <Link to="/login" className="font-medium text-primary hover:underline underline-offset-4">
-            Back to login
+            {t('forgot_password.back_to_login')}
           </Link>
         </p>
       </div>

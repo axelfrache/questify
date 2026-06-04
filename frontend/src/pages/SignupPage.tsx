@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { ModeToggle } from '@/components/mode-toggle';
 import { OidcAuthenticationError } from '@/lib/oidc';
+import { useTranslation } from 'react-i18next';
 
 const signupSchema = z.object({
   username: z.string().min(3, 'Name must be at least 3 characters'),
@@ -34,6 +35,7 @@ export function SignupPage() {
   const { register: registerUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const {
     register,
@@ -49,14 +51,14 @@ export function SignupPage() {
   const username = watch('username', '');
 
   const strengthChecks = [
-    { label: 'At least 8 characters', valid: password.length >= 8 },
-    { label: 'One uppercase letter', valid: /[A-Z]/.test(password) },
-    { label: 'One lowercase letter', valid: /[a-z]/.test(password) },
-    { label: 'One number', valid: /[0-9]/.test(password) },
+    { label: t('signup.req_length'), valid: password.length >= 8 },
+    { label: t('signup.req_upper'), valid: /[A-Z]/.test(password) },
+    { label: t('signup.req_lower'), valid: /[a-z]/.test(password) },
+    { label: t('signup.req_number'), valid: /[0-9]/.test(password) },
   ];
 
   const strengthScore = strengthChecks.filter((c) => c.valid).length;
-  const strengthLabel = ['Weak', 'Weak', 'Medium', 'Strong', 'Very Strong'][strengthScore];
+  const strengthLabel = [t('signup.weak'), t('signup.weak'), t('signup.medium'), t('signup.strong'), t('signup.very_strong')][strengthScore];
   const strengthColor =
     strengthScore <= 2 ? 'bg-destructive' : strengthScore === 3 ? 'bg-yellow-500' : 'bg-green-500';
 
@@ -67,11 +69,11 @@ export function SignupPage() {
       navigate('/inbox');
     } catch (err: unknown) {
       if (err instanceof OidcAuthenticationError) {
-        setError('Account created, but automatic sign-in failed. Please try signing in.');
+        setError(t('signup.signin_failed'));
       } else if (err && typeof err === 'object' && 'message' in err) {
         setError((err as { message: string }).message);
       } else {
-        setError('Registration failed. Please try again.');
+        setError(t('signup.register_failed'));
       }
     }
   };
@@ -91,8 +93,8 @@ export function SignupPage() {
             className="w-14 h-14 mx-auto"
             draggable={false}
           />
-          <h1 className="text-2xl font-semibold tracking-tight">Create your account</h1>
-          <p className="text-sm text-muted-foreground">Start your journey with Questify today.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{t('signup.title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('signup.description')}</p>
         </div>
 
         {error && (
@@ -103,10 +105,10 @@ export function SignupPage() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="username">Explorer Name</Label>
+            <Label htmlFor="username">{t('signup.explorer_name')}</Label>
             <Input
               id="username"
-              placeholder="e.g. Maverick"
+              placeholder={t('signup.explorer_name_placeholder')}
               {...register('username')}
               autoFocus
               className={cn(errors.username && 'border-destructive focus-visible:ring-destructive')}
@@ -118,17 +120,17 @@ export function SignupPage() {
             )}
             {!errors.username && username.length >= 2 && (
               <p className="text-xs text-green-500 flex items-center gap-1 animate-in fade-in">
-                <Check className="w-3 h-3" /> Looks good!
+                <Check className="w-3 h-3" /> {t('signup.explorer_name_valid')}
               </p>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="firstName">First name</Label>
+              <Label htmlFor="firstName">{t('signup.first_name')}</Label>
               <Input
                 id="firstName"
-                placeholder="John"
+                placeholder={t('signup.first_name_placeholder')}
                 {...register('firstName')}
                 className={cn(
                   errors.firstName && 'border-destructive focus-visible:ring-destructive'
@@ -141,10 +143,10 @@ export function SignupPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName">Last name</Label>
+              <Label htmlFor="lastName">{t('signup.last_name')}</Label>
               <Input
                 id="lastName"
-                placeholder="Doe"
+                placeholder={t('signup.last_name_placeholder')}
                 {...register('lastName')}
                 className={cn(
                   errors.lastName && 'border-destructive focus-visible:ring-destructive'
@@ -163,7 +165,7 @@ export function SignupPage() {
             <Input
               id="email"
               type="email"
-              placeholder="name@example.com"
+              placeholder={t('signup.email_placeholder')}
               {...register('email')}
               className={cn(errors.email && 'border-destructive focus-visible:ring-destructive')}
             />
@@ -180,7 +182,7 @@ export function SignupPage() {
               <Input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Create a strong password"
+                placeholder={t('signup.password_placeholder')}
                 {...register('password')}
                 className={cn(
                   'pr-10',
@@ -206,7 +208,7 @@ export function SignupPage() {
                   className="space-y-3 pt-1 overflow-hidden"
                 >
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">Strength</span>
+                    <span className="text-muted-foreground">{t('signup.strength')}</span>
                     <span
                       className={cn(
                         'font-medium',
@@ -253,18 +255,18 @@ export function SignupPage() {
           <Button type="submit" className="w-full" disabled={!isValid || isSubmitting}>
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating account...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('signup.creating')}
               </>
             ) : (
-              'Start My Journey'
+              t('signup.submit')
             )}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
-          Already have an account?{' '}
+          {t('signup.existing_account')}{' '}
           <Link to="/login" className="font-medium text-primary hover:underline underline-offset-4">
-            Log in
+            {t('signup.login_link')}
           </Link>
         </p>
       </div>

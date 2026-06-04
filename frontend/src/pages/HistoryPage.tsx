@@ -6,11 +6,13 @@ import { XpBadge } from '@/components/ui/xp-badge';
 import { cn } from '@/lib/utils';
 import { useMemo, useState } from 'react';
 import type { QuestHistoryResponse } from '@/lib/api';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
-function dateLabel(dateKey: string) {
+function dateLabel(dateKey: string, t: TFunction) {
   const date = new Date(dateKey + 'T12:00:00');
-  if (isToday(date)) return 'Today';
-  if (isYesterday(date)) return 'Yesterday';
+  if (isToday(date)) return t('history.today');
+  if (isYesterday(date)) return t('history.yesterday');
   if (!isSameYear(date, new Date())) return format(date, 'EEEE, MMM d, yyyy');
   return format(date, 'EEEE, MMM d');
 }
@@ -21,6 +23,7 @@ function timeLabel(completedAt: string) {
 }
 
 export function HistoryPage() {
+  const { t } = useTranslation();
   const { data: history, isLoading } = useHistory();
   const { data: categories } = useCategories();
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
@@ -64,8 +67,8 @@ export function HistoryPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">History</h1>
-          <p className="text-sm text-muted-foreground">Your completed quests over time</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('history.title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('history.description')}</p>
         </div>
 
         {/* Category filter */}
@@ -79,7 +82,7 @@ export function HistoryPage() {
               'hover:bg-muted/50 transition-colors'
             )}
           >
-            <option value="ALL">All regions</option>
+            <option value="ALL">{t('history.all_regions')}</option>
             {uniqueCategories.map((cat) => (
               <option key={cat} value={cat!}>
                 {cat}
@@ -94,8 +97,8 @@ export function HistoryPage() {
       {sortedDates.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
           <LayoutList className="mb-3 h-10 w-10 opacity-20" />
-          <p className="text-sm font-medium">No history yet</p>
-          <p className="text-xs opacity-70">Complete quests to see them here.</p>
+          <p className="text-sm font-medium">{t('history.empty')}</p>
+          <p className="text-xs opacity-70">{t('history.empty_hint')}</p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -109,10 +112,10 @@ export function HistoryPage() {
                 <div className="mb-3 flex items-center justify-between border-b border-border pb-2">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-sm font-semibold">{dateLabel(dateKey)}</span>
+                    <span className="text-sm font-semibold">{dateLabel(dateKey, t)}</span>
                   </div>
                   <div className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
-                    <span>{dayItems.length} quests</span>
+                    <span>{t('history.quests_count', { count: dayItems.length })}</span>
                     <span className="text-primary">+{totalXp} XP</span>
                   </div>
                 </div>

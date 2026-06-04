@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Map } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   useCategories,
@@ -14,6 +15,7 @@ import { MonthlyActivityGraph } from '@/components/ui/monthly-activity-graph';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function ProfilePage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { data: progression, isLoading: isLoadingProgression } = useUserProgression(user?.id);
   const { data: overview, isLoading: isLoadingOverview } = useStatsOverview();
@@ -100,14 +102,14 @@ export function ProfilePage() {
         <div className="rounded-lg border bg-card p-5">
           <div className="mb-4 flex items-center gap-1.5">
             <Map className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-sm font-medium">By region</span>
+            <span className="text-sm font-medium">{t('profile.by_region')}</span>
           </div>
 
           {regionData.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <p className="text-sm font-medium text-foreground">No activity yet</p>
+              <p className="text-sm font-medium text-foreground">{t('profile.no_activity')}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Complete quests to see your region breakdown.
+                {t('profile.no_activity_hint')}
               </p>
             </div>
           ) : (

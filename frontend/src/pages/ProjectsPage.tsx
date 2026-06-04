@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
   useCreateProject,
@@ -49,12 +50,6 @@ import { DropdownMenuContent as SortMenuContent } from '@/components/ui/dropdown
 
 type SortMode = 'updated' | 'name' | 'quests';
 
-const SORT_LABELS: Record<SortMode, string> = {
-  updated: 'Recently updated',
-  name: 'Name',
-  quests: 'Most quests',
-};
-
 interface ProjectCardStats {
   questCount: number;
   completedCount: number;
@@ -70,8 +65,15 @@ interface CreateProjectDialogProps {
 
 export function ProjectsPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortMode>('updated');
+
+  const SORT_LABELS: Record<SortMode, string> = {
+    updated: t('projects.sort_recent'),
+    name: t('projects.sort_name'),
+    quests: t('projects.sort_quests'),
+  };
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [projectToEdit, setProjectToEdit] = useState<ProjectSummaryResponse | null>(null);
   const [quickCreateProject, setQuickCreateProject] = useState<ProjectSummaryResponse | null>(null);
@@ -151,12 +153,12 @@ export function ProjectsPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
-          <p className="text-sm text-muted-foreground">Long-running initiatives</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('projects.title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('projects.description')}</p>
         </div>
         <Button onClick={() => setIsCreateOpen(true)} size="sm" className="gap-1.5 shrink-0">
           <Plus className="h-3.5 w-3.5" />
-          New project
+          {t('projects.new_project')}
         </Button>
       </div>
 
@@ -166,7 +168,7 @@ export function ProjectsPage() {
           <Search className="h-[14px] w-[14px] shrink-0 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search projects..."
+            placeholder={t('projects.search_placeholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none min-w-0"
@@ -210,8 +212,8 @@ export function ProjectsPage() {
         <div className="rounded-lg border border-dashed p-10 text-center">
           <p className="text-sm text-muted-foreground">
             {search
-              ? `No project matches "${search.trim()}".`
-              : 'No projects yet. Create your first one!'}
+              ? t('projects.no_match', { search: search.trim() })
+              : t('projects.empty')}
           </p>
           {canCreateFromSearch && (
             <Button
@@ -224,7 +226,7 @@ export function ProjectsPage() {
               }}
             >
               <Plus className="h-3.5 w-3.5" />
-              Create "{search.trim()}"
+              {t('projects.create_named', { search: search.trim() })}
             </Button>
           )}
         </div>
@@ -272,7 +274,7 @@ export function ProjectsPage() {
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         title={`Delete "${deleteTarget?.name}"?`}
-        description="All quests in this project will also be deleted. This action cannot be undone."
+        description={t('settings.security.danger_description')}
         onConfirm={() => deleteProject.mutate(deleteTarget!.id)}
       />
     </div>
@@ -300,6 +302,7 @@ function ProjectCard({
   onToggleArchive,
   onDelete,
 }: ProjectCardProps) {
+  const { t } = useTranslation();
   const updatedLabel = formatRelativeProjectUpdate(project.updatedAt);
   const trimmedDescription = project.description?.trim();
 
@@ -344,33 +347,33 @@ function ProjectCard({
               {project.pinned ? (
                 <>
                   <StarOff className="mr-2 h-4 w-4" />
-                  Unpin
+                  {t('projects.unpin')}
                 </>
               ) : (
                 <>
                   <Star className="mr-2 h-4 w-4" />
-                  Pin
+                  {t('projects.pin')}
                 </>
               )}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onEdit}>
               <Pencil className="mr-2 h-4 w-4" />
-              Edit
+              {t('common.edit')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onAddQuest}>
               <Plus className="mr-2 h-4 w-4" />
-              Add quest
+              {t('projects.add_quest')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onToggleArchive}>
               {project.archived ? (
                 <>
                   <ArchiveRestore className="mr-2 h-4 w-4" />
-                  Restore
+                  {t('projects.restore')}
                 </>
               ) : (
                 <>
                   <Archive className="mr-2 h-4 w-4" />
-                  Archive
+                  {t('projects.archive')}
                 </>
               )}
             </DropdownMenuItem>
@@ -378,7 +381,7 @@ function ProjectCard({
               onClick={onDelete}
               className="text-destructive focus:text-destructive"
             >
-              Delete
+              {t('common.delete')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -394,7 +397,7 @@ function ProjectCard({
       {/* Footer */}
       <div className="mt-auto flex items-center justify-between border-t border-border px-4 py-2.5">
         <span className="font-mono text-[11px] text-muted-foreground">
-          {stats != null ? `${stats.questCount} quests` : '—'}
+          {stats != null ? t('projects.quest_count', { count: stats.questCount }) : '—'}
         </span>
         <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
       </div>
@@ -408,6 +411,7 @@ function CreateProjectDialog({
   projectToEdit,
   initialName,
 }: CreateProjectDialogProps) {
+  const { t } = useTranslation();
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const [name, setName] = useState('');
@@ -456,44 +460,44 @@ function CreateProjectDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[420px] max-h-[min(90dvh,44rem)] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditMode ? 'Edit project' : 'New project'}</DialogTitle>
+          <DialogTitle>{isEditMode ? t('projects.edit_project') : t('projects.new_project')}</DialogTitle>
           <DialogDescription>
             {isEditMode
-              ? 'Update project details.'
-              : 'Group related quests into a longer initiative.'}
+              ? t('projects.edit_description')
+              : t('projects.group_description')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="project-name">Name</Label>
+            <Label htmlFor="project-name">{t('projects.sort_name')}</Label>
             <Input
               id="project-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Launch new portfolio"
+              placeholder={t('projects.name_placeholder')}
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Icon</Label>
+            <Label>{t('projects.icon')}</Label>
             <EmojiPicker value={icon} onChange={setIcon} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="project-description">Description</Label>
+            <Label htmlFor="project-description">{t('projects.description_label')}</Label>
             <Input
               id="project-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               maxLength={2000}
-              placeholder="Short summary or focus area"
+              placeholder={t('projects.description_placeholder')}
             />
           </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => handleOpenChange(false)} disabled={isPending}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSubmit} disabled={isDisabled}>
-            {isEditMode ? 'Save changes' : 'Create'}
+            {isEditMode ? t('common.save') : t('common.create')}
           </Button>
         </DialogFooter>
       </DialogContent>

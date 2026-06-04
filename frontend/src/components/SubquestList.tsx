@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -12,6 +13,7 @@ interface SubquestListProps {
 }
 
 export function SubquestList({ parentQuest, onComplete }: SubquestListProps) {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const { data: subquests, isLoading } = useSubquests(parentQuest.templateId, isExpanded);
 
@@ -32,7 +34,7 @@ export function SubquestList({ parentQuest, onComplete }: SubquestListProps) {
         ) : (
           <ChevronRight className="h-3.5 w-3.5 mr-1" />
         )}
-        {parentQuest.completedSubquestCount}/{parentQuest.subquestCount} subquests
+        {t('subquests.count', { completed: parentQuest.completedSubquestCount, total: parentQuest.subquestCount })}
       </Button>
 
       {isExpanded && (
@@ -40,7 +42,7 @@ export function SubquestList({ parentQuest, onComplete }: SubquestListProps) {
           {isLoading ? (
             <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
               <Loader2 className="h-3 w-3 animate-spin" />
-              Loading...
+              {t('subquests.loading')}
             </div>
           ) : (
             subquests?.map((subquest) => (

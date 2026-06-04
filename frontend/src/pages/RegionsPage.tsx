@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useCategories, useDeleteCategory, useQuests } from '@/hooks/use-api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import type { CategoryResponse } from '@/lib/api';
 
 export function RegionsPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { data: categories, isLoading } = useCategories();
   const { data: quests } = useQuests(undefined, 'inbox');
   const deleteCategory = useDeleteCategory();
@@ -58,20 +60,20 @@ export function RegionsPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Regions</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('regions.title')}</h1>
           <p className="text-sm text-muted-foreground">
-            Your quest categories and their current activity
+            {t('regions.description')}
           </p>
         </div>
         <Button onClick={() => setIsCreateDialogOpen(true)} size="sm" className="gap-1.5 shrink-0">
           <Plus className="h-3.5 w-3.5" />
-          Add region
+          {t('regions.add_region')}
         </Button>
       </div>
 
       {!categories || categories.length === 0 ? (
         <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
-          No regions yet. Create a category to start exploring!
+          {t('regions.empty')}
         </div>
       ) : (
         <div

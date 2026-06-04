@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,6 +22,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
@@ -69,9 +71,9 @@ export function LoginPage() {
           />
           <h1 className="text-2xl font-semibold tracking-tight">Questify</h1>
           <p className="text-sm text-muted-foreground">
-            Welcome back.
+            {t('login.tagline_line1')}
             <br />
-            Your path awaits.
+            {t('login.tagline_line2')}
           </p>
         </div>
 
@@ -83,11 +85,11 @@ export function LoginPage() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('login.email')}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="you@example.com"
+              placeholder={t('login.email_placeholder')}
               {...register('email')}
               autoFocus
               className={cn(errors.email && 'border-destructive focus-visible:ring-destructive')}
@@ -101,19 +103,19 @@ export function LoginPage() {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('login.password')}</Label>
               <Link
                 to="/forgot-password"
                 className="text-xs font-medium text-primary hover:underline underline-offset-4"
               >
-                Forgot password?
+                {t('login.forgot_password')}
               </Link>
             </div>
             <div className="relative">
               <Input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Your password"
+                placeholder={t('login.password_placeholder')}
                 {...register('password')}
                 className={cn(
                   'pr-10',
@@ -138,21 +140,21 @@ export function LoginPage() {
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Logging in...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('login.logging_in')}
               </>
             ) : (
-              'Continue Journey'
+              t('login.submit')
             )}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
-          New explorer?{' '}
+          {t('login.new_user')}{' '}
           <Link
             to="/signup"
             className="font-medium text-primary hover:underline underline-offset-4"
           >
-            Start your journey
+            {t('login.signup_link')}
           </Link>
         </p>
       </div>

@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import { Calendar, Check, Edit, GitBranch, ListChecks, Repeat2, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,6 +30,7 @@ export function QuestViewDialog({
   onEdit,
   onComplete,
 }: QuestViewDialogProps) {
+  const { t } = useTranslation();
   if (!quest) return null;
 
   const isCompleted = quest.status === 'COMPLETED';
@@ -54,7 +56,7 @@ export function QuestViewDialog({
           {isCompleted && (
             <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
               <Check className="h-2.5 w-2.5" />
-              Completed
+              {t('quest_view.completed')}
             </span>
           )}
         </div>
@@ -111,7 +113,7 @@ export function QuestViewDialog({
 
           {quest.subquestCount > 0 && (
             <MetaRow icon={<ListChecks className="h-3.5 w-3.5" />}>
-              {quest.completedSubquestCount}/{quest.subquestCount} subquests completed
+              {t('subquests.count', { completed: quest.completedSubquestCount, total: quest.subquestCount })}
             </MetaRow>
           )}
         </div>
@@ -120,13 +122,13 @@ export function QuestViewDialog({
           {!isCompleted && onComplete && (
             <Button size="sm" onClick={handleComplete} className="gap-1.5">
               <Check className="h-3.5 w-3.5" />
-              Complete
+              {t('quest_view.complete')}
             </Button>
           )}
           {onEdit && (
             <Button variant="outline" size="sm" onClick={handleEdit} className="gap-1.5">
               <Edit className="h-3.5 w-3.5" />
-              Edit
+              {t('common.edit')}
             </Button>
           )}
         </DialogFooter>

@@ -33,9 +33,12 @@ import {
   SlidersHorizontal,
   Shield,
   Camera,
+  Languages,
 } from 'lucide-react';
 import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 
 function SettingRow({
   label,
@@ -66,6 +69,7 @@ function GroupLabel({ children }: { children: React.ReactNode }) {
 }
 
 function PasswordChangeForm({ userId }: { userId?: string }) {
+  const { t } = useTranslation();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -78,11 +82,11 @@ function PasswordChangeForm({ userId }: { userId?: string }) {
     setError(null);
     setSuccess(false);
     if (newPassword.length < 8) {
-      setError('New password must be at least 8 characters');
+      setError(t('settings.security.password_min_length'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('settings.security.passwords_mismatch'));
       return;
     }
     try {
@@ -104,7 +108,7 @@ function PasswordChangeForm({ userId }: { userId?: string }) {
     <div className="space-y-3">
       <div className="space-y-1.5">
         <Label htmlFor="current-password" className="text-xs">
-          Current password
+          {t('settings.security.current_password')}
         </Label>
         <Input
           id="current-password"
@@ -116,19 +120,19 @@ function PasswordChangeForm({ userId }: { userId?: string }) {
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="new-password" className="text-xs">
-          New password
+          {t('settings.security.new_password')}
         </Label>
         <Input
           id="new-password"
           type="password"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
-          placeholder="Min. 8 characters"
+          placeholder={t('settings.security.new_password_placeholder')}
         />
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="confirm-password" className="text-xs">
-          Confirm new password
+          {t('settings.security.confirm_password')}
         </Label>
         <Input
           id="confirm-password"
@@ -139,7 +143,7 @@ function PasswordChangeForm({ userId }: { userId?: string }) {
         />
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
-      {success && <p className="text-xs text-primary">Password changed successfully.</p>}
+      {success && <p className="text-xs text-primary">{t('settings.security.password_changed')}</p>}
       <div className="flex justify-end pt-1">
         <Button
           variant="outline"
@@ -152,12 +156,12 @@ function PasswordChangeForm({ userId }: { userId?: string }) {
           {changePasswordMutation.isPending ? (
             <>
               <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-              Changing…
+              {t('settings.security.changing')}
             </>
           ) : (
             <>
               <Lock className="mr-2 h-3.5 w-3.5" />
-              Update password
+              {t('settings.security.update_password')}
             </>
           )}
         </Button>
@@ -179,7 +183,13 @@ const COMMON_TIMEZONES = [
   { value: 'Australia/Sydney', label: 'Sydney (AEST/AEDT)' },
 ];
 
+const LANGUAGES = [
+  { value: 'en', labelKey: 'settings.preferences.language_en' },
+  { value: 'fr', labelKey: 'settings.preferences.language_fr' },
+];
+
 export function SettingsPage() {
+  const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
   const { user, updateUser, logout } = useAuth();
   const { data: profile } = useUserProfile(user?.id);
@@ -189,6 +199,7 @@ export function SettingsPage() {
   const [username, setUsername] = useState(user?.username || '');
   const [bio, setBio] = useState('');
   const [timezone, setTimezone] = useState('UTC');
+  const [language, setLanguage] = useState(i18n.language);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [profileSuccess, setProfileSuccess] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -266,6 +277,12 @@ export function SettingsPage() {
     );
   };
 
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value);
+    i18n.changeLanguage(value);
+    localStorage.setItem('questify-language', value);
+  };
+
   const isUploading = uploadProfilePictureMutation.isPending;
   const isDeleting = deleteProfilePictureMutation.isPending;
   const isSavingProfile = updateUserProfileMutation.isPending;
@@ -284,8 +301,8 @@ export function SettingsPage() {
     <div className="pb-10 max-w-2xl mx-auto">
       {/* Header */}
       <div className="mb-7">
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Manage your account and preferences</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t('settings.title')}</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">{t('settings.description')}</p>
       </div>
 
       <TabsPrimitive.Root defaultValue="profile">
@@ -293,15 +310,15 @@ export function SettingsPage() {
         <TabsPrimitive.List className="flex gap-6 border-b border-border w-full">
           <TabsPrimitive.Trigger value="profile" className={tabTrigger}>
             <User className="h-3.5 w-3.5 shrink-0" />
-            Profile
+            {t('settings.tabs.profile')}
           </TabsPrimitive.Trigger>
           <TabsPrimitive.Trigger value="preferences" className={tabTrigger}>
             <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" />
-            Preferences
+            {t('settings.tabs.preferences')}
           </TabsPrimitive.Trigger>
           <TabsPrimitive.Trigger value="security" className={tabTrigger}>
             <Shield className="h-3.5 w-3.5 shrink-0" />
-            Security
+            {t('settings.tabs.security')}
           </TabsPrimitive.Trigger>
         </TabsPrimitive.List>
 
@@ -351,7 +368,7 @@ export function SettingsPage() {
                   disabled={isUploading}
                 >
                   <Upload className="mr-1.5 h-3.5 w-3.5" />
-                  {isUploading ? 'Uploading…' : 'Change photo'}
+                  {isUploading ? t('settings.profile.uploading') : t('settings.profile.change_photo')}
                 </Button>
                 {user?.profilePictureUrl && (
                   <Button
@@ -377,27 +394,27 @@ export function SettingsPage() {
             <div className="px-5 py-5 space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="username" className="text-xs font-medium">
-                  Username
+                  {t('settings.profile.username')}
                 </Label>
                 <Input
                   id="username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Your username"
+                  placeholder={t('settings.profile.username_placeholder')}
                 />
               </div>
 
               <div className="space-y-1.5">
                 <Label htmlFor="email" className="text-xs font-medium">
-                  Email
+                  {t('settings.profile.email')}
                 </Label>
                 <Input id="email" value={user?.email || ''} disabled className="bg-muted/60" />
-                <p className="text-[11px] text-muted-foreground">Email cannot be changed.</p>
+                <p className="text-[11px] text-muted-foreground">{t('settings.profile.email_hint')}</p>
               </div>
 
               <div className="space-y-1.5">
                 <Label htmlFor="bio" className="text-xs font-medium">
-                  Bio
+                  {t('settings.profile.bio')}
                 </Label>
                 <Textarea
                   id="bio"
@@ -405,16 +422,16 @@ export function SettingsPage() {
                   onChange={(e) => setBio(e.target.value)}
                   rows={3}
                   maxLength={280}
-                  placeholder="A short line about your focus or current quest."
+                  placeholder={t('settings.profile.bio_placeholder')}
                 />
                 <div className="flex justify-between text-[11px] text-muted-foreground">
-                  <span>Displayed on your profile page.</span>
+                  <span>{t('settings.profile.bio_hint')}</span>
                   <span>{bio.length}/280</span>
                 </div>
               </div>
 
               {profileError && <p className="text-xs text-destructive">{profileError}</p>}
-              {profileSuccess && <p className="text-xs text-primary">Profile updated.</p>}
+              {profileSuccess && <p className="text-xs text-primary">{t('settings.profile.profile_updated')}</p>}
 
               <div className="flex justify-end pt-1">
                 <Button
@@ -426,12 +443,12 @@ export function SettingsPage() {
                   {isSavingProfile ? (
                     <>
                       <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                      Saving…
+                      {t('settings.profile.saving')}
                     </>
                   ) : (
                     <>
                       <Save className="mr-2 h-3.5 w-3.5" />
-                      Save changes
+                      {t('settings.profile.save')}
                     </>
                   )}
                 </Button>
@@ -443,29 +460,32 @@ export function SettingsPage() {
         {/* ── Preferences ── */}
         <TabsPrimitive.Content value="preferences" className="mt-6 outline-none space-y-4">
           <div className="rounded-lg border bg-card px-5 py-4">
-            <GroupLabel>Appearance</GroupLabel>
-            <SettingRow label="Theme" description="Select the interface color scheme">
+            <GroupLabel>{t('settings.preferences.appearance')}</GroupLabel>
+            <SettingRow
+              label={t('settings.preferences.theme')}
+              description={t('settings.preferences.theme_description')}
+            >
               <Select value={theme} onValueChange={(v: 'light' | 'dark' | 'system') => setTheme(v)}>
                 <SelectTrigger className="w-36">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="system">System</SelectItem>
+                  <SelectItem value="light">{t('settings.preferences.theme_light')}</SelectItem>
+                  <SelectItem value="dark">{t('settings.preferences.theme_dark')}</SelectItem>
+                  <SelectItem value="system">{t('settings.preferences.theme_system')}</SelectItem>
                 </SelectContent>
               </Select>
             </SettingRow>
           </div>
 
           <div className="rounded-lg border bg-card px-5 py-4">
-            <GroupLabel>Localisation</GroupLabel>
+            <GroupLabel>{t('settings.preferences.localisation')}</GroupLabel>
             <SettingRow
-              label="Timezone"
+              label={t('settings.preferences.timezone')}
               description={
                 <>
                   <Globe className="inline h-3 w-3 mr-1" />
-                  Used for daily resets and scheduling
+                  {t('settings.preferences.timezone_description')}
                 </>
               }
             >
@@ -482,28 +502,50 @@ export function SettingsPage() {
                 </SelectContent>
               </Select>
             </SettingRow>
+            <div className="h-px bg-border my-1" />
+            <SettingRow
+              label={t('settings.preferences.language')}
+              description={
+                <>
+                  <Languages className="inline h-3 w-3 mr-1" />
+                  {t('settings.preferences.language_description')}
+                </>
+              }
+            >
+              <Select value={language} onValueChange={handleLanguageChange}>
+                <SelectTrigger className="w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {LANGUAGES.map((lang) => (
+                    <SelectItem key={lang.value} value={lang.value}>
+                      {t(lang.labelKey)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </SettingRow>
           </div>
         </TabsPrimitive.Content>
 
         {/* ── Security ── */}
         <TabsPrimitive.Content value="security" className="mt-6 outline-none space-y-4">
           <div className="rounded-lg border bg-card px-5 py-5">
-            <GroupLabel>Password</GroupLabel>
+            <GroupLabel>{t('settings.security.password')}</GroupLabel>
             <PasswordChangeForm userId={user?.id} />
           </div>
 
           <div className="rounded-lg border border-destructive/25 bg-card px-5 py-5">
             <div className="flex items-center gap-2 mb-1.5">
               <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
-              <p className="text-sm font-semibold text-destructive">Danger zone</p>
+              <p className="text-sm font-semibold text-destructive">{t('settings.security.danger_zone')}</p>
             </div>
             <p className="text-xs text-muted-foreground mb-4">
-              Permanently removes your account, quests, progress, and all associated data. This
-              action cannot be undone.
+              {t('settings.security.danger_description')}
             </p>
             <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
               <Trash2 className="mr-2 h-3.5 w-3.5" />
-              Delete my account
+              {t('settings.security.delete_account')}
             </Button>
           </div>
         </TabsPrimitive.Content>

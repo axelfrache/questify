@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   useCompleteQuest,
   useDeleteQuest,
@@ -36,6 +37,7 @@ const fireConfettiFromElement = (element: HTMLElement) => {
 
 export function ProjectDetailPage() {
   const { id = '' } = useParams();
+  const { t } = useTranslation();
   const { data: project, isLoading: isLoadingProject } = useProjectDetail(id);
   const { data: quests, isLoading: isLoadingQuests, error: questsError } = useProjectQuests(id);
   const completeQuestMutation = useCompleteQuest();
@@ -92,7 +94,7 @@ export function ProjectDetailPage() {
   if (!project) {
     return (
       <Alert variant="destructive">
-        <AlertDescription>Project not found.</AlertDescription>
+        <AlertDescription>{t('project_detail.not_found')}</AlertDescription>
       </Alert>
     );
   }
@@ -114,7 +116,7 @@ export function ProjectDetailPage() {
         </div>
         <Button onClick={() => setIsCreateDialogOpen(true)} size="sm" className="gap-1.5 shrink-0">
           <Plus className="h-3.5 w-3.5" />
-          Add quest
+          {t('project_detail.add_quest')}
         </Button>
       </div>
 
@@ -122,9 +124,9 @@ export function ProjectDetailPage() {
       {stats && (
         <div className="grid grid-cols-3 gap-2.5">
           {[
-            { label: 'Total quests', value: stats.total },
-            { label: 'Completed', value: stats.completed },
-            { label: 'XP earned', value: `+${stats.xpEarned}`, mono: true },
+            { label: t('project_detail.total_quests'), value: stats.total },
+            { label: t('project_detail.completed'), value: stats.completed },
+            { label: t('project_detail.xp_earned'), value: `+${stats.xpEarned}`, mono: true },
           ].map(({ label, value, mono }) => (
             <div key={label} className="rounded-lg border bg-card px-4 py-3">
               <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
@@ -142,7 +144,7 @@ export function ProjectDetailPage() {
 
       {questsError && (
         <Alert variant="destructive">
-          <AlertDescription>Failed to load project quests.</AlertDescription>
+          <AlertDescription>{t('inbox.load_failed')}</AlertDescription>
         </Alert>
       )}
 
@@ -154,16 +156,16 @@ export function ProjectDetailPage() {
         </div>
       ) : !quests || quests.length === 0 ? (
         <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
-          No quests in this project yet.
+          {t('project_detail.empty')}
         </div>
       ) : (
         <div className="space-y-6">
           {pendingQuests.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold">Quests</h2>
+                <h2 className="text-sm font-semibold">{t('project_detail.quests')}</h2>
                 <span className="font-mono text-xs text-muted-foreground">
-                  {pendingQuests.length} items
+                  {t('project_detail.items', { count: pendingQuests.length })}
                 </span>
               </div>
               <div className="space-y-1.5">
@@ -188,7 +190,7 @@ export function ProjectDetailPage() {
 
           {completedQuests.length > 0 && (
             <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-muted-foreground">Completed</h2>
+              <h2 className="text-sm font-semibold text-muted-foreground">{t('project_detail.completed')}</h2>
               <div className="space-y-1.5">
                 {completedQuests.map((quest) => (
                   <QuestCard

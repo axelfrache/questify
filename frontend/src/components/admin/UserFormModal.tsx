@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -49,8 +50,8 @@ interface AdminUpdateUserRequest {
 }
 
 const userSchema = z.object({
-  username: z.string().min(3, 'Username must be at least 3 characters'),
-  email: z.string().email('Invalid email address'),
+  username: z.string().min(3),
+  email: z.string().email(),
   role: z.enum(['USER', 'ADMIN']),
   isEnabled: z.boolean().optional(),
   password: z.string().optional(),
@@ -66,6 +67,7 @@ interface UserFormModalProps {
 }
 
 export function UserFormModal({ open, onOpenChange, user, onSubmit }: UserFormModalProps) {
+  const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
   const [changePassword, setChangePassword] = useState(false);
 
@@ -104,13 +106,13 @@ export function UserFormModal({ open, onOpenChange, user, onSubmit }: UserFormMo
 
   const handleSubmit = async (data: UserFormValues) => {
     if (!user && !data.password) {
-      form.setError('password', { message: 'Password is required for new users' });
+      form.setError('password', { message: t('user_form.password_required') });
       return;
     }
     if (user && changePassword && (!data.password || data.password.length < 8)) {
       if (!(changePassword && !data.password)) {
         if (data.password && data.password.length < 8) {
-          form.setError('password', { message: 'Password must be at least 8 characters' });
+          form.setError('password', { message: t('user_form.password_min_error') });
           return;
         }
       }
@@ -139,11 +141,9 @@ export function UserFormModal({ open, onOpenChange, user, onSubmit }: UserFormMo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{user ? 'Edit User' : 'Create New User'}</DialogTitle>
+          <DialogTitle>{user ? t('user_form.edit_title') : t('user_form.create_title')}</DialogTitle>
           <DialogDescription>
-            {user
-              ? "Make changes to the user profile here. Click save when you're done."
-              : 'Add a new user to the system. They will receive an email with their credentials.'}
+            {user ? t('user_form.edit_description') : t('user_form.create_description')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -153,7 +153,7 @@ export function UserFormModal({ open, onOpenChange, user, onSubmit }: UserFormMo
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel>{t('user_form.username')}</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -166,7 +166,7 @@ export function UserFormModal({ open, onOpenChange, user, onSubmit }: UserFormMo
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t('user_form.email')}</FormLabel>
                   <FormControl>
                     <Input {...field} type="email" />
                   </FormControl>
@@ -180,16 +180,16 @@ export function UserFormModal({ open, onOpenChange, user, onSubmit }: UserFormMo
                 name="role"
                 render={({ field }) => (
                   <FormItem className="flex-1">
-                    <FormLabel>Role</FormLabel>
+                    <FormLabel>{t('user_form.role')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a role" />
+                          <SelectValue placeholder={t('user_form.role_placeholder')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="USER">User</SelectItem>
-                        <SelectItem value="ADMIN">Admin</SelectItem>
+                        <SelectItem value="USER">{t('user_form.role_user')}</SelectItem>
+                        <SelectItem value="ADMIN">{t('user_form.role_admin')}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -201,13 +201,13 @@ export function UserFormModal({ open, onOpenChange, user, onSubmit }: UserFormMo
                 name="isEnabled"
                 render={({ field }) => (
                   <FormItem className="flex flex-col justify-end pb-2">
-                    <FormLabel className="mb-2">Account Status</FormLabel>
+                    <FormLabel className="mb-2">{t('user_form.account_status')}</FormLabel>
                     <div className="flex items-center gap-2">
                       <FormControl>
                         <Switch checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
                       <span className="text-sm text-muted-foreground">
-                        {field.value ? 'Active' : 'Disabled'}
+                        {field.value ? t('user_form.active') : t('user_form.disabled')}
                       </span>
                     </div>
                   </FormItem>
@@ -226,7 +226,7 @@ export function UserFormModal({ open, onOpenChange, user, onSubmit }: UserFormMo
                   htmlFor="change-password"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  Change Password
+                  {t('user_form.change_password')}
                 </label>
               </div>
             )}
@@ -237,13 +237,13 @@ export function UserFormModal({ open, onOpenChange, user, onSubmit }: UserFormMo
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{user ? 'New Password' : 'Password'}</FormLabel>
+                    <FormLabel>{user ? t('user_form.new_password') : t('user_form.password')}</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
                           {...field}
                           type={showPassword ? 'text' : 'password'}
-                          placeholder={user ? 'Leave empty to keep current' : ''}
+                          placeholder={user ? t('user_form.password_hint') : ''}
                         />
                         <Button
                           type="button"
@@ -261,8 +261,7 @@ export function UserFormModal({ open, onOpenChange, user, onSubmit }: UserFormMo
                       </div>
                     </FormControl>
                     <FormDescription>
-                      {user ? 'Only if you want to change it. ' : ''}
-                      Must be at least 8 characters.
+                      {t('user_form.password_min')}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -273,7 +272,7 @@ export function UserFormModal({ open, onOpenChange, user, onSubmit }: UserFormMo
             <DialogFooter>
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {user ? 'Save Changes' : 'Create User'}
+                {user ? t('user_form.save') : t('user_form.create')}
               </Button>
             </DialogFooter>
           </form>

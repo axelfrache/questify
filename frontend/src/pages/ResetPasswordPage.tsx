@@ -11,6 +11,7 @@ import { ModeToggle } from '@/components/mode-toggle';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { Loader2, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const resetPasswordSchema = z
   .object({
@@ -31,6 +32,7 @@ export function ResetPasswordPage() {
   const tokenId = useMemo(() => searchParams.get('token_id') ?? '', [searchParams]);
   const [error, setError] = useState<string | null>(null);
   const [completed, setCompleted] = useState(false);
+  const { t } = useTranslation();
 
   const {
     register,
@@ -48,7 +50,7 @@ export function ResetPasswordPage() {
       setCompleted(true);
       window.setTimeout(() => navigate('/login'), 1200);
     } catch {
-      setError('This reset link is invalid or expired.');
+      setError(t('reset_password.invalid_token'));
     }
   };
 
@@ -65,15 +67,15 @@ export function ResetPasswordPage() {
             className="w-14 h-14 mx-auto"
             draggable={false}
           />
-          <h1 className="text-2xl font-semibold tracking-tight">Choose a new password</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t('reset_password.title')}</h1>
           <p className="text-sm text-muted-foreground">
-            Set a new password for your Questify account.
+            {t('reset_password.description')}
           </p>
         </div>
 
         {!token && (
           <Alert variant="destructive">
-            <AlertDescription>This reset link is missing a token.</AlertDescription>
+            <AlertDescription>{t('reset_password.missing_token')}</AlertDescription>
           </Alert>
         )}
 
@@ -85,12 +87,12 @@ export function ResetPasswordPage() {
 
         {completed ? (
           <Alert>
-            <AlertDescription>Password updated. Redirecting to login...</AlertDescription>
+            <AlertDescription>{t('reset_password.success')}</AlertDescription>
           </Alert>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password">New password</Label>
+              <Label htmlFor="password">{t('reset_password.new_password')}</Label>
               <Input
                 id="password"
                 type="password"
@@ -108,7 +110,7 @@ export function ResetPasswordPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm password</Label>
+              <Label htmlFor="confirmPassword">{t('reset_password.confirm_password')}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -128,10 +130,10 @@ export function ResetPasswordPage() {
             <Button type="submit" className="w-full" disabled={isSubmitting || !token}>
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating...
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('reset_password.updating')}
                 </>
               ) : (
-                'Update password'
+                t('reset_password.submit')
               )}
             </Button>
           </form>
@@ -139,7 +141,7 @@ export function ResetPasswordPage() {
 
         <p className="text-center text-sm text-muted-foreground">
           <Link to="/login" className="font-medium text-primary hover:underline underline-offset-4">
-            Back to login
+            {t('forgot_password.back_to_login')}
           </Link>
         </p>
       </div>

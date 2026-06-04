@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useQuests,
   useCompleteQuest,
@@ -36,14 +37,8 @@ const fireConfettiFromElement = (element: HTMLElement) => {
   });
 };
 
-function getGreeting() {
-  const h = new Date().getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 18) return 'Good afternoon';
-  return 'Good evening';
-}
-
 export function TodayPage() {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { data: quests, isLoading: isLoadingQuests } = useQuests(undefined, 'today');
   const { data: stats } = useStatsOverview();
@@ -54,11 +49,21 @@ export function TodayPage() {
   const [viewingQuest, setViewingQuest] = useState<QuestResponse | null>(null);
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
 
-  const greeting = useMemo(() => getGreeting(), []);
+  const greeting = useMemo(() => {
+    const h = new Date().getHours();
+    if (h < 12) return t('today.good_morning');
+    if (h < 18) return t('today.good_afternoon');
+    return t('today.good_evening');
+  }, [t]);
+
   const formattedDate = useMemo(
     () =>
-      new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
-    []
+      new Date().toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+      }),
+    [i18n.language]
   );
 
   const handleComplete = (id: string, checkboxElement?: HTMLElement) => {
@@ -102,7 +107,7 @@ export function TodayPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Today</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t('today.title')}</h1>
         <p className="text-sm text-muted-foreground">
           {greeting}
           {firstName ? `, ${firstName}` : ''} — {formattedDate}
@@ -124,16 +129,18 @@ export function TodayPage() {
           <div className="relative flex items-start justify-between">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-                Daily Progress
+                {t('today.daily_progress')}
               </p>
               <div className="mt-1.5 flex items-baseline gap-2">
                 <span className="font-mono text-4xl font-medium tracking-tight text-foreground">
                   {completed}
                 </span>
-                <span className="text-base text-muted-foreground">/ {total} quests</span>
+                <span className="text-base text-muted-foreground">
+                  {t('today.quests_count', { total })}
+                </span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                {completionPercent}% complete · +{xpEarned} XP earned
+                {t('today.completion_line', { percent: completionPercent, xp: xpEarned })}
               </p>
             </div>
 
@@ -147,7 +154,7 @@ export function TodayPage() {
                 }}
               >
                 <Flame className="h-3 w-3" />
-                <span className="font-mono">{streak} day streak</span>
+                <span className="font-mono">{t('today.streak', { count: streak })}</span>
               </div>
             )}
           </div>
@@ -158,9 +165,9 @@ export function TodayPage() {
         </div>
       ) : (
         <div className="rounded-lg border border-dashed p-6 text-center">
-          <p className="text-base font-medium text-muted-foreground">Nothing required today</p>
+          <p className="text-base font-medium text-muted-foreground">{t('today.nothing_today')}</p>
           <p className="mt-1 text-sm text-muted-foreground/70">
-            Enjoy your day, or check the inbox for optional tasks.
+            {t('today.nothing_today_hint')}
           </p>
         </div>
       )}
@@ -169,9 +176,9 @@ export function TodayPage() {
       {plannedQuests.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold">Today's quests</h2>
+            <h2 className="text-sm font-semibold">{t('today.todays_quests')}</h2>
             <span className="font-mono text-xs text-muted-foreground">
-              {plannedQuests.length} items
+              {t('today.items', { count: plannedQuests.length })}
             </span>
           </div>
           <div className="space-y-1.5">
@@ -194,7 +201,7 @@ export function TodayPage() {
       {/* Completed quests */}
       {completedQuests.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-muted-foreground">Completed</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground">{t('today.completed')}</h2>
           <div className="space-y-1.5">
             {completedQuests.map((quest) => (
               <QuestCard

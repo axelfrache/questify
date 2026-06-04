@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   addDays,
   addMonths,
@@ -59,13 +60,6 @@ const PROJECT_PALETTE = [
 ];
 
 type Section = 'tomorrow' | 'thisWeek' | 'nextWeek' | 'later';
-
-const SECTION_LABELS: Record<Section, string> = {
-  tomorrow: 'Tomorrow',
-  thisWeek: 'Rest of this week',
-  nextWeek: 'Next week',
-  later: 'Later',
-};
 
 const SECTION_ORDER: Section[] = ['tomorrow', 'thisWeek', 'nextWeek', 'later'];
 
@@ -170,6 +164,7 @@ function StatRow({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 export function UpcomingPage() {
+  const { t } = useTranslation();
   const { data: quests, isLoading } = useQuests(undefined, 'upcoming');
   const { data: projects } = useProjectsList('', 'name', false);
   const completeQuestMutation = useCompleteQuest();
@@ -276,12 +271,15 @@ export function UpcomingPage() {
 
   const subtitle = useMemo(() => {
     const total = quests?.length ?? 0;
-    if (total === 0) return 'Nothing scheduled ahead';
+    if (total === 0) return t('upcoming.subtitle_empty');
     const hasNextWeek = Object.keys(sections.nextWeek).length > 0;
     const hasLater = Object.keys(sections.later).length > 0;
     const weeks = hasLater ? '2+' : hasNextWeek ? '2' : '1';
-    return `${total} quest${total !== 1 ? 's' : ''} across the next ${weeks} week${weeks !== '1' ? 's' : ''}`;
-  }, [quests, sections]);
+    const weeksNum = parseInt(weeks) || 1;
+    return weeksNum > 1
+      ? t('upcoming.subtitle_plural', { total, weeks })
+      : t('upcoming.subtitle', { total, weeks });
+  }, [quests, sections, t]);
 
   if (isLoading) {
     return (
@@ -313,12 +311,12 @@ export function UpcomingPage() {
 
         <div className="space-y-2.5">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-            Next 7 days
+            {t('upcoming.next_7')}
           </p>
           <div className="space-y-2">
-            <StatRow label="Quests" value={stats.total} />
+            <StatRow label={t('upcoming.quests')} value={stats.total} />
             <StatRow
-              label="XP planned"
+              label={t('upcoming.xp_planned')}
               value={
                 <span>
                   <span className="text-primary">{stats.totalXp.toLocaleString()}</span>
@@ -327,17 +325,17 @@ export function UpcomingPage() {
               }
             />
             <StatRow
-              label="Busiest day"
+              label={t('upcoming.busiest_day')}
               value={stats.busiestDay ? format(stats.busiestDay, 'EEE MMM d') : '—'}
             />
-            <StatRow label="Free days" value={stats.freeDays} />
+            <StatRow label={t('upcoming.free_days')} value={stats.freeDays} />
           </div>
         </div>
 
         {projectBreakdown.length > 0 && (
           <div className="space-y-2.5">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              By project
+              {t('upcoming.by_project')}
             </p>
             <div className="space-y-2.5">
               {projectBreakdown.map(({ id, name, count, color, barWidth }) => (
@@ -369,7 +367,7 @@ export function UpcomingPage() {
 
       <div className="flex-1 min-w-0 space-y-8">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Upcoming</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('upcoming.title')}</h1>
           <p className="text-sm text-muted-foreground">{subtitle}</p>
         </div>
 
@@ -377,25 +375,25 @@ export function UpcomingPage() {
         {(quests?.length ?? 0) > 0 && (
           <div className="flex flex-wrap gap-x-6 gap-y-1.5 text-xs lg:hidden">
             <span>
-              <span className="text-muted-foreground">Quests </span>
+              <span className="text-muted-foreground">{t('upcoming.quests')} </span>
               <span className="font-medium tabular-nums">{stats.total}</span>
             </span>
             <span>
-              <span className="text-muted-foreground">XP planned </span>
+              <span className="text-muted-foreground">{t('upcoming.xp_planned')} </span>
               <span className="font-medium tabular-nums text-primary">
                 {stats.totalXp.toLocaleString()}
               </span>
             </span>
             {stats.busiestDay && (
               <span>
-                <span className="text-muted-foreground">Busiest </span>
+                <span className="text-muted-foreground">{t('upcoming.busiest_day')} </span>
                 <span className="font-medium tabular-nums">
                   {format(stats.busiestDay, 'EEE MMM d')}
                 </span>
               </span>
             )}
             <span>
-              <span className="text-muted-foreground">Free days </span>
+              <span className="text-muted-foreground">{t('upcoming.free_days')} </span>
               <span className="font-medium tabular-nums">{stats.freeDays}</span>
             </span>
           </div>
@@ -403,7 +401,7 @@ export function UpcomingPage() {
 
         {(quests?.length ?? 0) === 0 ? (
           <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
-            Nothing on the horizon — add a quest with a due date to see it here.
+            {t('upcoming.empty')}
           </div>
         ) : (
           <div className="space-y-8">
@@ -415,7 +413,7 @@ export function UpcomingPage() {
               return (
                 <div key={section}>
                   <p className="mb-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    {SECTION_LABELS[section]}
+                    {t('upcoming.sections.' + section)}
                   </p>
                   <div className="space-y-5">
                     {sortedDates.map((dateStr) => {

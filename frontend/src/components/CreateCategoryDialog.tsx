@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { type CreateCategoryRequest, type CategoryResponse } from '@/lib/api';
 import { useCreateCategory, useUpdateCategory } from '@/hooks/use-api';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ export function CreateCategoryDialog({
   onOpenChange,
   categoryToEdit,
 }: CreateCategoryDialogProps) {
+  const { t } = useTranslation();
   const createCategoryMutation = useCreateCategory();
   const updateCategoryMutation = useUpdateCategory();
   const [selectedIcon, setSelectedIcon] = useState('');
@@ -108,45 +110,45 @@ export function CreateCategoryDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px] max-h-[min(90dvh,44rem)] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditMode ? 'Edit Region' : 'Create New Region'}</DialogTitle>
+          <DialogTitle>{isEditMode ? t('category_dialog.edit_title') : t('category_dialog.create_title')}</DialogTitle>
           <DialogDescription>
             {isEditMode
-              ? 'Update your region details.'
-              : 'Add a new region to organize your quests.'}
+              ? t('category_dialog.edit_description')
+              : t('category_dialog.create_description')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 py-2">
           <div className="grid gap-1.5">
             <Label htmlFor="name" className="text-xs font-medium text-muted-foreground ml-1">
-              Name
+              {t('category_dialog.name')}
             </Label>
             <Input
               id="name"
-              placeholder="e.g., Work, Health"
+              placeholder={t('category_dialog.name_placeholder')}
               {...register('name', { required: true })}
               autoFocus
               className="h-9"
             />
-            {errors.name && <span className="text-xs text-destructive">Name is required</span>}
+            {errors.name && <span className="text-xs text-destructive">{t('category_dialog.name')} is required</span>}
           </div>
 
           {/* Informational Preview */}
           {/* Informational Preview */}
           <div className="flex items-center gap-3">
-            <span className="text-xs font-medium text-muted-foreground ml-1">Preview</span>
+            <span className="text-xs font-medium text-muted-foreground ml-1">{t('category_dialog.preview')}</span>
             <div className="flex items-center gap-2">
               <span className="text-2xl leading-none">{selectedIcon || '✨'}</span>
               <span
                 className="text-xl font-bold transition-colors duration-200"
                 style={{ color: isColorValid ? selectedColor : undefined }}
               >
-                {regionName || 'New Region'}
+                {regionName || t('category_dialog.new_region')}
               </span>
             </div>
           </div>
 
           <div className="grid gap-1.5">
-            <Label className="text-xs font-medium text-muted-foreground ml-1">Color</Label>
+            <Label className="text-xs font-medium text-muted-foreground ml-1">{t('category_dialog.color')}</Label>
             <ColorPicker
               value={selectedColor}
               onChange={setSelectedColor}
@@ -155,10 +157,10 @@ export function CreateCategoryDialog({
           </div>
 
           <div className="grid gap-1.5 min-w-0">
-            <Label className="text-xs font-medium text-muted-foreground ml-1">Icon</Label>
+            <Label className="text-xs font-medium text-muted-foreground ml-1">{t('category_dialog.icon')}</Label>
             <EmojiPicker value={selectedIcon} onChange={setSelectedIcon} />
             <input type="hidden" {...register('icon', { required: true })} />
-            {errors.icon && <span className="text-xs text-destructive">Icon is required</span>}
+            {errors.icon && <span className="text-xs text-destructive">{t('category_dialog.icon')} is required</span>}
           </div>
 
           <DialogFooter className="pt-2">
@@ -168,7 +170,7 @@ export function CreateCategoryDialog({
               className="w-full sm:w-auto"
             >
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isEditMode ? 'Save Changes' : 'Create Region'}
+              {isEditMode ? t('category_dialog.save') : t('category_dialog.create')}
             </Button>
           </DialogFooter>
         </form>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { type CreateQuestRequest } from '@/lib/api';
 import { useCategories, useCreateQuest, useUpdateQuest } from '@/hooks/use-api';
 import { Button } from '@/components/ui/button';
@@ -49,6 +50,7 @@ export function CreateQuestDialog({
   parentRecurrence,
   projectId,
 }: CreateQuestDialogProps) {
+  const { t } = useTranslation();
   const { data: categories } = useCategories();
   const createQuestMutation = useCreateQuest();
   const updateQuestMutation = useUpdateQuest();
@@ -147,24 +149,24 @@ export function CreateQuestDialog({
   };
 
   const getSubmitLabel = () => {
-    if (questToEdit) return 'Update quest';
-    if (parentId) return 'Create subquest';
-    if (recurrence === 'DAILY') return 'Create daily quest';
-    if (recurrence === 'WEEKLY') return 'Create weekly quest';
-    if (recurrence === 'MONTHLY') return 'Create monthly quest';
-    return 'Create quest';
+    if (questToEdit) return t('quest_dialog.submit_update');
+    if (parentId) return t('quest_dialog.submit_create_subquest');
+    if (recurrence === 'DAILY') return t('quest_dialog.submit_create_daily');
+    if (recurrence === 'WEEKLY') return t('quest_dialog.submit_create_weekly');
+    if (recurrence === 'MONTHLY') return t('quest_dialog.submit_create_monthly');
+    return t('quest_dialog.submit_create');
   };
 
   const getDialogTitle = () => {
-    if (questToEdit) return 'Edit quest';
-    if (parentId) return `Add subquest`;
-    return 'New quest';
+    if (questToEdit) return t('quest_dialog.edit_title');
+    if (parentId) return t('quest_dialog.add_subquest_title');
+    return t('quest_dialog.new_title');
   };
 
   const getDialogDescription = () => {
-    if (questToEdit) return 'Update your quest details';
-    if (parentId) return `Subquest of "${parentTitle}"`;
-    return 'Add a new quest to your board';
+    if (questToEdit) return t('quest_dialog.edit_description');
+    if (parentId) return t('quest_dialog.subquest_description', { parent: parentTitle });
+    return t('quest_dialog.new_description');
   };
 
   const xpReward = DIFFICULTY_CONFIG[difficulty as keyof typeof DIFFICULTY_CONFIG]?.xp ?? 50;
@@ -192,23 +194,23 @@ export function CreateQuestDialog({
           <div className="px-6 py-5 space-y-5">
             {/* Quest title */}
             <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Quest title</Label>
+              <Label className="text-sm font-medium">{t('quest_dialog.quest_title')}</Label>
               <Input
                 autoFocus
-                placeholder="e.g., Finish React hooks tutorial"
+                placeholder={t('quest_dialog.quest_title_placeholder')}
                 className={cn(
                   'h-11 text-sm',
                   errors.title && 'border-destructive focus-visible:ring-destructive'
                 )}
                 {...register('title', { required: true })}
               />
-              {errors.title && <span className="text-xs text-destructive">Title is required</span>}
+              {errors.title && <span className="text-xs text-destructive">{t('quest_dialog.title_required')}</span>}
             </div>
 
             {/* Difficulty + Region */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Difficulty</Label>
+                <Label className="text-sm font-medium">{t('quest_dialog.difficulty')}</Label>
                 <Select
                   onValueChange={(v) =>
                     setValue('difficulty', v as CreateQuestRequest['difficulty'])
@@ -238,10 +240,10 @@ export function CreateQuestDialog({
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Region</Label>
+                <Label className="text-sm font-medium">{t('quest_dialog.region')}</Label>
                 <Select onValueChange={(v) => setValue('categoryId', v)} value={categoryId}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select region..." />
+                    <SelectValue placeholder={t('quest_dialog.region_placeholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories?.map((cat) => (
@@ -261,7 +263,7 @@ export function CreateQuestDialog({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {showRecurrence ? (
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Recurrence</Label>
+                  <Label className="text-sm font-medium">{t('quest_dialog.recurrence')}</Label>
                   <Select
                     onValueChange={(v) =>
                       setValue('recurrenceInterval', v as CreateQuestRequest['recurrenceInterval'])
@@ -272,25 +274,25 @@ export function CreateQuestDialog({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="NONE">One-time</SelectItem>
-                      <SelectItem value="DAILY">Daily</SelectItem>
-                      <SelectItem value="WEEKLY">Weekly</SelectItem>
-                      <SelectItem value="MONTHLY">Monthly</SelectItem>
+                      <SelectItem value="NONE">{t('quest_dialog.one_time')}</SelectItem>
+                      <SelectItem value="DAILY">{t('quest_dialog.daily')}</SelectItem>
+                      <SelectItem value="WEEKLY">{t('quest_dialog.weekly')}</SelectItem>
+                      <SelectItem value="MONTHLY">{t('quest_dialog.monthly')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               ) : (
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-muted-foreground">Recurrence</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t('quest_dialog.recurrence')}</Label>
                   <div className="h-10 flex items-center px-3 rounded-md border border-border bg-muted/50">
-                    <span className="text-sm text-muted-foreground">Inherited from parent</span>
+                    <span className="text-sm text-muted-foreground">{t('quest_dialog.inherited')}</span>
                   </div>
                 </div>
               )}
 
               {showDueDate && (
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Due date</Label>
+                  <Label className="text-sm font-medium">{t('quest_dialog.due_date')}</Label>
                   <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                     <PopoverTrigger asChild>
                       <button
@@ -303,7 +305,7 @@ export function CreateQuestDialog({
                         )}
                       >
                         <CalendarIcon className="h-4 w-4 shrink-0 opacity-50" />
-                        {date ? format(date, 'dd/MM/yyyy') : 'Pick a date'}
+                        {date ? format(date, 'dd/MM/yyyy') : t('quest_dialog.pick_date')}
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -325,17 +327,17 @@ export function CreateQuestDialog({
             {/* Weekly day picker */}
             {recurrence === 'WEEKLY' && showRecurrence && (
               <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Repeat on</Label>
+                <Label className="text-sm font-medium">{t('quest_dialog.repeat_on')}</Label>
                 <WeekdayPicker selectedDays={selectedDays} onDaysChange={setSelectedDays} />
                 {selectedDays.length === 0 && (
-                  <p className="text-xs text-muted-foreground">Select at least one day</p>
+                  <p className="text-xs text-muted-foreground">{t('quest_dialog.select_days')}</p>
                 )}
               </div>
             )}
 
             {/* Description */}
             <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Description</Label>
+              <Label className="text-sm font-medium">{t('quest_dialog.description')}</Label>
               <Controller
                 name="description"
                 control={control}
@@ -343,7 +345,7 @@ export function CreateQuestDialog({
                   <RichTextEditor
                     value={field.value ?? ''}
                     onChange={field.onChange}
-                    placeholder="Add notes or details..."
+                    placeholder={t('quest_dialog.description_placeholder')}
                   />
                 )}
               />
@@ -353,7 +355,7 @@ export function CreateQuestDialog({
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg px-4 py-3 bg-xp-bg border border-xp-border">
               <div className="flex items-center gap-2.5 text-sm text-xp-fg min-w-0 flex-1">
                 <Sparkles className="h-4 w-4 flex-shrink-0" />
-                <span>Reward for completing this quest</span>
+                <span>{t('quest_dialog.reward')}</span>
               </div>
               <span className="font-mono font-semibold text-xp-fg flex-shrink-0">
                 +{xpReward} <span className="text-xs opacity-70">XP</span>
@@ -369,7 +371,7 @@ export function CreateQuestDialog({
               onClick={() => onOpenChange(false)}
               disabled={isPending}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isDisabled} className="min-w-[120px]">
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

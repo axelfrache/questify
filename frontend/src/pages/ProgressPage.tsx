@@ -1,4 +1,5 @@
 import { useUserProgression, useStatsOverview } from '@/hooks/use-api';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -65,6 +66,7 @@ function getGradeProgress(level: number, currentGrade: string) {
 }
 
 export function ProgressPage() {
+  const { t } = useTranslation();
   const { user: currentUser } = useAuth();
   const { data: progression, isLoading: isLoadingProgression } = useUserProgression(
     currentUser?.id
@@ -103,15 +105,15 @@ export function ProgressPage() {
     <div className="space-y-4 pb-10">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Progress</h1>
-        <p className="text-sm text-muted-foreground">Your long-term journey, one step at a time</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t('progress.title')}</h1>
+        <p className="text-sm text-muted-foreground">{t('progress.description')}</p>
       </div>
 
       {/* Grade journey card */}
       <div className="rounded-lg border bg-card p-5">
         <div className="mb-5 flex items-center gap-1.5">
           <Star className="h-3.5 w-3.5 text-primary" />
-          <span className="text-sm font-medium">Grade journey</span>
+          <span className="text-sm font-medium">{t('progress.grade_journey')}</span>
         </div>
 
         <TooltipProvider delayDuration={150}>
@@ -154,7 +156,7 @@ export function ProgressPage() {
                         side="top"
                         className="max-w-[180px] text-center text-xs italic"
                       >
-                        {grade.tooltip}
+                        {t('progress.grades.' + grade.name + '_tooltip')}
                       </TooltipContent>
                     </Tooltip>
                     <span
@@ -164,7 +166,7 @@ export function ProgressPage() {
                         !isCurrent && 'text-muted-foreground'
                       )}
                     >
-                      {grade.name}
+                      {t('progress.grades.' + grade.name)}
                     </span>
                   </div>
 
@@ -187,15 +189,15 @@ export function ProgressPage() {
         <div className="rounded-lg border bg-card p-4">
           <div className="mb-3 flex items-center gap-1.5">
             <Star className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Current grade</span>
+            <span className="text-xs text-muted-foreground">{t('progress.current_grade')}</span>
           </div>
           <div className="flex items-baseline justify-between gap-2">
-            <span className="font-mono text-3xl font-medium tracking-tight">{currentGrade}</span>
-            <span className="text-sm text-muted-foreground">Level {currentLevel}</span>
+            <span className="font-mono text-3xl font-medium tracking-tight">{t('progress.grades.' + currentGrade)}</span>
+            <span className="text-sm text-muted-foreground">{t('progress.level', { level: currentLevel })}</span>
           </div>
           <div className="mt-3 space-y-1.5">
             <Progress value={gradeProgress} className="h-1.5" />
-            <p className="text-[11px] text-muted-foreground">{gradeProgress}% to next level</p>
+            <p className="text-[11px] text-muted-foreground">{t('progress.grade_percent', { percent: gradeProgress })}</p>
           </div>
         </div>
 
@@ -203,18 +205,18 @@ export function ProgressPage() {
         <div className="rounded-lg border bg-card p-4">
           <div className="mb-3 flex items-center gap-1.5">
             <Zap className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Total experience</span>
+            <span className="text-xs text-muted-foreground">{t('progress.total_experience')}</span>
           </div>
           <div className="flex items-baseline justify-between gap-2">
             <span className="font-mono text-3xl font-medium tracking-tight">
               {totalXp.toLocaleString()}
             </span>
-            <span className="text-sm text-muted-foreground">XP</span>
+            <span className="text-sm text-muted-foreground">{t('common.xp')}</span>
           </div>
           <div className="mt-3 space-y-1.5">
             <Progress value={xpProgressPct} className="h-1.5" />
             <p className="text-[11px] text-muted-foreground">
-              {levelToNextLevel} / {xpNeededNextLevel} to next level
+              {t('progress.level_progress', { current: levelToNextLevel, needed: xpNeededNextLevel })}
             </p>
           </div>
         </div>
@@ -225,17 +227,16 @@ export function ProgressPage() {
         <div className="rounded-lg border bg-card p-5">
           <div className="mb-4 flex items-start justify-between">
             <div>
-              <p className="text-sm font-medium">Requirements for {nextGrade.name}</p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">Complete both to advance</p>
+              <p className="text-sm font-medium">{t('progress.requirements', { grade: t('progress.grades.' + nextGrade.name) })}</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">{t('progress.complete_both')}</p>
             </div>
             <span className="rounded-full bg-muted px-2.5 py-1 font-mono text-[11px] text-muted-foreground">
-              {
-                [
+              {t('progress.remaining', {
+                count: [
                   currentLevel < nextGrade.minLevel,
                   nextGrade.questsRequired > 0 && totalCompleted < nextGrade.questsRequired,
                 ].filter(Boolean).length
-              }{' '}
-              remaining
+              })}
             </span>
           </div>
 
@@ -243,9 +244,9 @@ export function ProgressPage() {
             {/* Level requirement */}
             <div>
               <div className="mb-1.5 flex items-center justify-between">
-                <span className="text-sm">Reach Level {nextGrade.minLevel}</span>
+                <span className="text-sm">{t('progress.reach_level', { level: nextGrade.minLevel })}</span>
                 <span className="font-mono text-xs text-muted-foreground">
-                  {currentLevel} / {nextGrade.minLevel} levels
+                  {t('progress.levels_progress', { current: currentLevel, max: nextGrade.minLevel })}
                 </span>
               </div>
               <Progress
@@ -258,9 +259,9 @@ export function ProgressPage() {
             {nextGrade.questsRequired > 0 && (
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
-                  <span className="text-sm">Complete {nextGrade.questsRequired} quests</span>
+                  <span className="text-sm">{t('progress.complete_quests', { count: nextGrade.questsRequired })}</span>
                   <span className="font-mono text-xs text-muted-foreground">
-                    {totalCompleted} / {nextGrade.questsRequired} quests
+                    {t('progress.quests_progress', { completed: totalCompleted, required: nextGrade.questsRequired })}
                   </span>
                 </div>
                 <Progress
