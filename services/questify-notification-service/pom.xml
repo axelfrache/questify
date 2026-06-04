@@ -12,7 +12,7 @@
 
     <groupId>com.axelfrache.questify</groupId>
     <artifactId>questify-notification-service</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>Questify Notification Service</name>
     <description>In-app notifications and push reminders for quests</description>
 

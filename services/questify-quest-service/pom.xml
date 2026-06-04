@@ -12,7 +12,7 @@
 
     <groupId>com.axelfrache.questify</groupId>
     <artifactId>questify-quest-service</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>Questify Quest Service</name>
     <description>Quest lifecycle, recurrence and occurrence management</description>
 

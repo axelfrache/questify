@@ -12,7 +12,7 @@
 
     <groupId>com.axelfrache.questify</groupId>
     <artifactId>questify-admin-service</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>Questify Admin Service</name>
     <description>Administration, user management and instance settings</description>
 
