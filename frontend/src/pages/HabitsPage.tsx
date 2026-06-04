@@ -28,8 +28,8 @@ export function HabitsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">{t('habits.title')}</h1>
-        <p className="text-muted-foreground">{t('habits.description')}</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t('habits.title')}</h1>
+        <p className="text-sm text-muted-foreground">{t('habits.description')}</p>
       </div>
 
       {!habits || habits.length === 0 ? (
