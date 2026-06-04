@@ -211,9 +211,7 @@ export function ProjectsPage() {
       ) : sortedProjects.length === 0 ? (
         <div className="rounded-lg border border-dashed p-10 text-center">
           <p className="text-sm text-muted-foreground">
-            {search
-              ? t('projects.no_match', { search: search.trim() })
-              : t('projects.empty')}
+            {search ? t('projects.no_match', { search: search.trim() }) : t('projects.empty')}
           </p>
           {canCreateFromSearch && (
             <Button
@@ -460,11 +458,11 @@ function CreateProjectDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[420px] max-h-[min(90dvh,44rem)] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditMode ? t('projects.edit_project') : t('projects.new_project')}</DialogTitle>
+          <DialogTitle>
+            {isEditMode ? t('projects.edit_project') : t('projects.new_project')}
+          </DialogTitle>
           <DialogDescription>
-            {isEditMode
-              ? t('projects.edit_description')
-              : t('projects.group_description')}
+            {isEditMode ? t('projects.edit_description') : t('projects.group_description')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">

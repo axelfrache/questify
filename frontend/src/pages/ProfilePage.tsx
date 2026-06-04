@@ -108,9 +108,7 @@ export function ProfilePage() {
           {regionData.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <p className="text-sm font-medium text-foreground">{t('profile.no_activity')}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {t('profile.no_activity_hint')}
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">{t('profile.no_activity_hint')}</p>
             </div>
           ) : (
             <div className="space-y-3">

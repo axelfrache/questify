@@ -34,7 +34,10 @@ export function SubquestList({ parentQuest, onComplete }: SubquestListProps) {
         ) : (
           <ChevronRight className="h-3.5 w-3.5 mr-1" />
         )}
-        {t('subquests.count', { completed: parentQuest.completedSubquestCount, total: parentQuest.subquestCount })}
+        {t('subquests.count', {
+          completed: parentQuest.completedSubquestCount,
+          total: parentQuest.subquestCount,
+        })}
       </Button>
 
       {isExpanded && (

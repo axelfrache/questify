@@ -109,7 +109,9 @@ export function InboxControls({
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap h-full">
               <Filter className="h-3.5 w-3.5" />
-              <span>{GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label ?? t('common.all')}</span>
+              <span>
+                {GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label ?? t('common.all')}
+              </span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-36">
@@ -130,7 +132,10 @@ export function InboxControls({
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap h-full">
               <ArrowUpDown className="h-3.5 w-3.5" />
-              <span>{SORT_BY_OPTIONS.find((o) => o.value === sortBy)?.label ?? t('inbox_controls.due_date')}</span>
+              <span>
+                {SORT_BY_OPTIONS.find((o) => o.value === sortBy)?.label ??
+                  t('inbox_controls.due_date')}
+              </span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-36">

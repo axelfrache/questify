@@ -110,7 +110,9 @@ export function CreateCategoryDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px] max-h-[min(90dvh,44rem)] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditMode ? t('category_dialog.edit_title') : t('category_dialog.create_title')}</DialogTitle>
+          <DialogTitle>
+            {isEditMode ? t('category_dialog.edit_title') : t('category_dialog.create_title')}
+          </DialogTitle>
           <DialogDescription>
             {isEditMode
               ? t('category_dialog.edit_description')
@@ -129,13 +131,19 @@ export function CreateCategoryDialog({
               autoFocus
               className="h-9"
             />
-            {errors.name && <span className="text-xs text-destructive">{t('category_dialog.name')} is required</span>}
+            {errors.name && (
+              <span className="text-xs text-destructive">
+                {t('category_dialog.name')} is required
+              </span>
+            )}
           </div>
 
           {/* Informational Preview */}
           {/* Informational Preview */}
           <div className="flex items-center gap-3">
-            <span className="text-xs font-medium text-muted-foreground ml-1">{t('category_dialog.preview')}</span>
+            <span className="text-xs font-medium text-muted-foreground ml-1">
+              {t('category_dialog.preview')}
+            </span>
             <div className="flex items-center gap-2">
               <span className="text-2xl leading-none">{selectedIcon || '✨'}</span>
               <span
@@ -148,7 +156,9 @@ export function CreateCategoryDialog({
           </div>
 
           <div className="grid gap-1.5">
-            <Label className="text-xs font-medium text-muted-foreground ml-1">{t('category_dialog.color')}</Label>
+            <Label className="text-xs font-medium text-muted-foreground ml-1">
+              {t('category_dialog.color')}
+            </Label>
             <ColorPicker
               value={selectedColor}
               onChange={setSelectedColor}
@@ -157,10 +167,16 @@ export function CreateCategoryDialog({
           </div>
 
           <div className="grid gap-1.5 min-w-0">
-            <Label className="text-xs font-medium text-muted-foreground ml-1">{t('category_dialog.icon')}</Label>
+            <Label className="text-xs font-medium text-muted-foreground ml-1">
+              {t('category_dialog.icon')}
+            </Label>
             <EmojiPicker value={selectedIcon} onChange={setSelectedIcon} />
             <input type="hidden" {...register('icon', { required: true })} />
-            {errors.icon && <span className="text-xs text-destructive">{t('category_dialog.icon')} is required</span>}
+            {errors.icon && (
+              <span className="text-xs text-destructive">
+                {t('category_dialog.icon')} is required
+              </span>
+            )}
           </div>
 
           <DialogFooter className="pt-2">

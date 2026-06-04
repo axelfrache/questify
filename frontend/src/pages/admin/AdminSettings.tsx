@@ -110,9 +110,7 @@ export function AdminSettings() {
   if (!currentUser || currentUser.role !== 'ADMIN') {
     return (
       <Alert variant="destructive">
-        <AlertDescription>
-          {t('admin.access_denied')}
-        </AlertDescription>
+        <AlertDescription>{t('admin.access_denied')}</AlertDescription>
       </Alert>
     );
   }
@@ -143,7 +141,10 @@ export function AdminSettings() {
           {isLoadingSettings ? (
             <Skeleton className="h-10 w-full" />
           ) : (
-            <SettingRow label={t('admin.user_registration')} description={t('admin.registration_description')}>
+            <SettingRow
+              label={t('admin.user_registration')}
+              description={t('admin.registration_description')}
+            >
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-xs text-muted-foreground">
                   {settings?.registrationEnabled ? t('admin.enabled') : t('admin.disabled')}

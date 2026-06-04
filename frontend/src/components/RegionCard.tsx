@@ -66,7 +66,9 @@ export function RegionCard({ stats, questCount = 0, onClick, onEdit, onDelete }:
         {/* Text */}
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-medium text-foreground">{stats.name}</div>
-          <div className="font-mono text-[11px] text-muted-foreground">{t('region_card.quest_count', { count: questCount })}</div>
+          <div className="font-mono text-[11px] text-muted-foreground">
+            {t('region_card.quest_count', { count: questCount })}
+          </div>
         </div>
 
         {/* Actions */}

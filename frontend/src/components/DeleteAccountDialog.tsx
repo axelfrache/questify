@@ -69,16 +69,12 @@ export function DeleteAccountDialog({
             <AlertTriangle className="h-5 w-5" />
             {t('delete_account.title')}
           </DialogTitle>
-          <DialogDescription>
-            {t('delete_account.description')}
-          </DialogDescription>
+          <DialogDescription>{t('delete_account.description')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
-            <p className="text-sm text-destructive">
-              {t('delete_account.confirm_hint')}
-            </p>
+            <p className="text-sm text-destructive">{t('delete_account.confirm_hint')}</p>
           </div>
 
           <div className="space-y-2">

@@ -126,7 +126,9 @@ export function NotificationInbox() {
           <div className="flex flex-col items-center py-10 px-4 text-center">
             <Bell className="h-8 w-8 text-muted-foreground/30 mb-3" />
             <p className="text-sm font-medium text-muted-foreground">{t('notifications.empty')}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground/60">{t('notifications.up_to_date')}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground/60">
+              {t('notifications.up_to_date')}
+            </p>
           </div>
         ) : (
           <div className="divide-y divide-border overflow-y-auto max-h-[420px]">

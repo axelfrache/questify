@@ -204,7 +204,9 @@ export function CreateQuestDialog({
                 )}
                 {...register('title', { required: true })}
               />
-              {errors.title && <span className="text-xs text-destructive">{t('quest_dialog.title_required')}</span>}
+              {errors.title && (
+                <span className="text-xs text-destructive">{t('quest_dialog.title_required')}</span>
+              )}
             </div>
 
             {/* Difficulty + Region */}
@@ -283,9 +285,13 @@ export function CreateQuestDialog({
                 </div>
               ) : (
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-muted-foreground">{t('quest_dialog.recurrence')}</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {t('quest_dialog.recurrence')}
+                  </Label>
                   <div className="h-10 flex items-center px-3 rounded-md border border-border bg-muted/50">
-                    <span className="text-sm text-muted-foreground">{t('quest_dialog.inherited')}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {t('quest_dialog.inherited')}
+                    </span>
                   </div>
                 </div>
               )}

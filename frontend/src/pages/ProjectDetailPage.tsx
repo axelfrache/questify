@@ -190,7 +190,9 @@ export function ProjectDetailPage() {
 
           {completedQuests.length > 0 && (
             <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-muted-foreground">{t('project_detail.completed')}</h2>
+              <h2 className="text-sm font-semibold text-muted-foreground">
+                {t('project_detail.completed')}
+              </h2>
               <div className="space-y-1.5">
                 {completedQuests.map((quest) => (
                   <QuestCard

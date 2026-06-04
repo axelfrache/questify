@@ -58,7 +58,13 @@ export function SignupPage() {
   ];
 
   const strengthScore = strengthChecks.filter((c) => c.valid).length;
-  const strengthLabel = [t('signup.weak'), t('signup.weak'), t('signup.medium'), t('signup.strong'), t('signup.very_strong')][strengthScore];
+  const strengthLabel = [
+    t('signup.weak'),
+    t('signup.weak'),
+    t('signup.medium'),
+    t('signup.strong'),
+    t('signup.very_strong'),
+  ][strengthScore];
   const strengthColor =
     strengthScore <= 2 ? 'bg-destructive' : strengthScore === 3 ? 'bg-yellow-500' : 'bg-green-500';
 

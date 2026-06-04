@@ -44,11 +44,9 @@ export function DeleteRegionDialog({
         <DialogHeader>
           <DialogTitle>{t('delete_region.title', { name: regionName })}</DialogTitle>
           <DialogDescription>
-            {questCount === 0 ? (
-              t('delete_region.empty_hint')
-            ) : (
-              t('delete_region.has_quests', { count: questCount })
-            )}
+            {questCount === 0
+              ? t('delete_region.empty_hint')
+              : t('delete_region.has_quests', { count: questCount })}
           </DialogDescription>
         </DialogHeader>
 
@@ -71,9 +69,7 @@ export function DeleteRegionDialog({
                   <Inbox className="h-4 w-4" />
                   {t('delete_region.move_to_inbox')}
                 </Label>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t('delete_region.move_hint')}
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">{t('delete_region.move_hint')}</p>
               </div>
             </div>
 

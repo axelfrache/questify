@@ -68,9 +68,7 @@ export function ResetPasswordPage() {
             draggable={false}
           />
           <h1 className="text-2xl font-semibold tracking-tight">{t('reset_password.title')}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t('reset_password.description')}
-          </p>
+          <p className="text-sm text-muted-foreground">{t('reset_password.description')}</p>
         </div>
 
         {!token && (

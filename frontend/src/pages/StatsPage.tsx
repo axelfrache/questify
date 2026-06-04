@@ -168,7 +168,10 @@ export function StatsPage() {
                       ) : (
                         <>
                           <p className="text-xs">
-                            {t('stats.completed_of', { completed: day.completion?.completedQuests ?? 0, planned })}
+                            {t('stats.completed_of', {
+                              completed: day.completion?.completedQuests ?? 0,
+                              planned,
+                            })}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {t('stats.rate_xp', { rate, xp: day.stats?.xpEarned ?? 0 })}

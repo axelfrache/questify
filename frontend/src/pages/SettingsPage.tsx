@@ -368,7 +368,9 @@ export function SettingsPage() {
                   disabled={isUploading}
                 >
                   <Upload className="mr-1.5 h-3.5 w-3.5" />
-                  {isUploading ? t('settings.profile.uploading') : t('settings.profile.change_photo')}
+                  {isUploading
+                    ? t('settings.profile.uploading')
+                    : t('settings.profile.change_photo')}
                 </Button>
                 {user?.profilePictureUrl && (
                   <Button
@@ -409,7 +411,9 @@ export function SettingsPage() {
                   {t('settings.profile.email')}
                 </Label>
                 <Input id="email" value={user?.email || ''} disabled className="bg-muted/60" />
-                <p className="text-[11px] text-muted-foreground">{t('settings.profile.email_hint')}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {t('settings.profile.email_hint')}
+                </p>
               </div>
 
               <div className="space-y-1.5">
@@ -431,7 +435,9 @@ export function SettingsPage() {
               </div>
 
               {profileError && <p className="text-xs text-destructive">{profileError}</p>}
-              {profileSuccess && <p className="text-xs text-primary">{t('settings.profile.profile_updated')}</p>}
+              {profileSuccess && (
+                <p className="text-xs text-primary">{t('settings.profile.profile_updated')}</p>
+              )}
 
               <div className="flex justify-end pt-1">
                 <Button
@@ -538,7 +544,9 @@ export function SettingsPage() {
           <div className="rounded-lg border border-destructive/25 bg-card px-5 py-5">
             <div className="flex items-center gap-2 mb-1.5">
               <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
-              <p className="text-sm font-semibold text-destructive">{t('settings.security.danger_zone')}</p>
+              <p className="text-sm font-semibold text-destructive">
+                {t('settings.security.danger_zone')}
+              </p>
             </div>
             <p className="text-xs text-muted-foreground mb-4">
               {t('settings.security.danger_description')}

@@ -166,9 +166,7 @@ export function TodayPage() {
       ) : (
         <div className="rounded-lg border border-dashed p-6 text-center">
           <p className="text-base font-medium text-muted-foreground">{t('today.nothing_today')}</p>
-          <p className="mt-1 text-sm text-muted-foreground/70">
-            {t('today.nothing_today_hint')}
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground/70">{t('today.nothing_today_hint')}</p>
         </div>
       )}
 

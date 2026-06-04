@@ -56,7 +56,10 @@ export function InlineSubquests({
           <ChevronRight className="h-3.5 w-3.5" />
         )}
         <span className="font-medium">
-          {t('subquests.count', { completed: parentQuest.completedSubquestCount, total: parentQuest.subquestCount })}
+          {t('subquests.count', {
+            completed: parentQuest.completedSubquestCount,
+            total: parentQuest.subquestCount,
+          })}
         </span>
       </button>
 

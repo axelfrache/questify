@@ -57,9 +57,7 @@ export function ForgotPasswordPage() {
             draggable={false}
           />
           <h1 className="text-2xl font-semibold tracking-tight">{t('forgot_password.title')}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t('forgot_password.description')}
-          </p>
+          <p className="text-sm text-muted-foreground">{t('forgot_password.description')}</p>
         </div>
 
         {error && (
@@ -71,9 +69,7 @@ export function ForgotPasswordPage() {
 
         {submitted ? (
           <Alert>
-            <AlertDescription>
-              {t('forgot_password.success')}
-            </AlertDescription>
+            <AlertDescription>{t('forgot_password.success')}</AlertDescription>
           </Alert>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

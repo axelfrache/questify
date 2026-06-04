@@ -141,7 +141,9 @@ export function UserFormModal({ open, onOpenChange, user, onSubmit }: UserFormMo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{user ? t('user_form.edit_title') : t('user_form.create_title')}</DialogTitle>
+          <DialogTitle>
+            {user ? t('user_form.edit_title') : t('user_form.create_title')}
+          </DialogTitle>
           <DialogDescription>
             {user ? t('user_form.edit_description') : t('user_form.create_description')}
           </DialogDescription>
@@ -237,7 +239,9 @@ export function UserFormModal({ open, onOpenChange, user, onSubmit }: UserFormMo
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{user ? t('user_form.new_password') : t('user_form.password')}</FormLabel>
+                    <FormLabel>
+                      {user ? t('user_form.new_password') : t('user_form.password')}
+                    </FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
@@ -260,9 +264,7 @@ export function UserFormModal({ open, onOpenChange, user, onSubmit }: UserFormMo
                         </Button>
                       </div>
                     </FormControl>
-                    <FormDescription>
-                      {t('user_form.password_min')}
-                    </FormDescription>
+                    <FormDescription>{t('user_form.password_min')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

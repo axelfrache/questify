@@ -113,7 +113,10 @@ export function QuestViewDialog({
 
           {quest.subquestCount > 0 && (
             <MetaRow icon={<ListChecks className="h-3.5 w-3.5" />}>
-              {t('subquests.count', { completed: quest.completedSubquestCount, total: quest.subquestCount })}
+              {t('subquests.count', {
+                completed: quest.completedSubquestCount,
+                total: quest.subquestCount,
+              })}
             </MetaRow>
           )}
         </div>

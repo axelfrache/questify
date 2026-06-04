@@ -61,9 +61,7 @@ export function RegionsPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('regions.title')}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t('regions.description')}
-          </p>
+          <p className="text-sm text-muted-foreground">{t('regions.description')}</p>
         </div>
         <Button onClick={() => setIsCreateDialogOpen(true)} size="sm" className="gap-1.5 shrink-0">
           <Plus className="h-3.5 w-3.5" />
