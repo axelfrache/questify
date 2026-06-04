@@ -8,7 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("dev")
+@Profile({"dev", "default"})
 @RequiredArgsConstructor
 public class DevTokenClaimsExtractor implements TokenClaimsExtractor {
 
