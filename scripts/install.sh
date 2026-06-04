@@ -79,6 +79,10 @@ if [ -f .env ]; then
     PROGRESSION_DB_PASS=${PROGRESSION_DB_PASSWORD:-$(openssl rand -hex 16)}
     STATS_DB_PASS=${STATS_DB_PASSWORD:-$(openssl rand -hex 16)}
     ADMIN_DB_PASS=${ADMIN_DB_PASSWORD:-$(openssl rand -hex 16)}
+    NOTIFICATION_DB_PASS=${NOTIFICATION_DB_PASSWORD:-$(openssl rand -hex 16)}
+    VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}
+    VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY:-}
+    VAPID_SUBJECT=${VAPID_SUBJECT:-"mailto:$ADMIN_EMAIL"}
 else
     echo "Generating secure secrets..."
     DB_PASS=$(openssl rand -hex 24)
@@ -94,6 +98,10 @@ else
     PROGRESSION_DB_PASS=$(openssl rand -hex 16)
     STATS_DB_PASS=$(openssl rand -hex 16)
     ADMIN_DB_PASS=$(openssl rand -hex 16)
+    NOTIFICATION_DB_PASS=$(openssl rand -hex 16)
+    VAPID_PUBLIC_KEY=""
+    VAPID_PRIVATE_KEY=""
+    VAPID_SUBJECT="mailto:$ADMIN_EMAIL"
 fi
 
 echo "Creating .env configuration..."
@@ -130,6 +138,12 @@ STATS_DB_USER=stats_svc
 STATS_DB_PASSWORD=$STATS_DB_PASS
 ADMIN_DB_USER=admin_svc
 ADMIN_DB_PASSWORD=$ADMIN_DB_PASS
+NOTIFICATION_DB_USER=notification_svc
+NOTIFICATION_DB_PASSWORD=$NOTIFICATION_DB_PASS
+
+VAPID_PUBLIC_KEY=$VAPID_PUBLIC_KEY
+VAPID_PRIVATE_KEY=$VAPID_PRIVATE_KEY
+VAPID_SUBJECT=$VAPID_SUBJECT
 
 # CORS
 CORS_ALLOWED_ORIGINS=http://localhost,http://127.0.0.1,http://$LOCAL_IP
@@ -165,6 +179,10 @@ psql -v ON_ERROR_STOP=1 --username "\$POSTGRES_USER" --dbname "\$POSTGRES_DB" -c
 psql -v ON_ERROR_STOP=1 --username "\$POSTGRES_USER" --dbname "\$POSTGRES_DB" -c "GRANT CREATE ON DATABASE questify TO admin_svc;"
 psql -v ON_ERROR_STOP=1 --username "\$POSTGRES_USER" --dbname "\$POSTGRES_DB" -c "CREATE SCHEMA IF NOT EXISTS admin;"
 psql -v ON_ERROR_STOP=1 --username "\$POSTGRES_USER" --dbname "\$POSTGRES_DB" -c "GRANT ALL PRIVILEGES ON SCHEMA admin TO admin_svc;"
+psql -v ON_ERROR_STOP=1 --username "\$POSTGRES_USER" --dbname "\$POSTGRES_DB" -c "CREATE USER notification_svc WITH PASSWORD '$NOTIFICATION_DB_PASS';"
+psql -v ON_ERROR_STOP=1 --username "\$POSTGRES_USER" --dbname "\$POSTGRES_DB" -c "GRANT CREATE ON DATABASE questify TO notification_svc;"
+psql -v ON_ERROR_STOP=1 --username "\$POSTGRES_USER" --dbname "\$POSTGRES_DB" -c "CREATE SCHEMA IF NOT EXISTS notifications;"
+psql -v ON_ERROR_STOP=1 --username "\$POSTGRES_USER" --dbname "\$POSTGRES_DB" -c "GRANT ALL PRIVILEGES ON SCHEMA notifications TO notification_svc;"
 EOF
 chmod +x db/init.sh
 
@@ -235,12 +253,13 @@ http {
     resolver 127.0.0.11 valid=10s;
     keepalive_timeout 65;
 
-    upstream auth_svc        { server auth-service:8081; }
-    upstream quest_svc       { server quest-service:8082; }
-    upstream project_svc     { server project-service:8083; }
-    upstream progression_svc { server progression-service:8084; }
-    upstream stats_svc       { server stats-service:8085; }
-    upstream admin_svc       { server admin-service:8086; }
+    upstream auth_svc          { server auth-service:8081; }
+    upstream quest_svc         { server quest-service:8082; }
+    upstream project_svc       { server project-service:8083; }
+    upstream progression_svc   { server progression-service:8084; }
+    upstream stats_svc         { server stats-service:8085; }
+    upstream admin_svc         { server admin-service:8086; }
+    upstream notification_svc  { server notification-service:8087; }
 
     server {
         listen 8080;
@@ -323,6 +342,16 @@ http {
             proxy_set_header X-User-Role $x_user_role;
             proxy_set_header Host        $host;
         }
+
+        location /api/notifications {
+            auth_request     /_auth/validate;
+            auth_request_set $x_user_id   $upstream_http_x_user_id;
+            auth_request_set $x_user_role $upstream_http_x_user_role;
+            proxy_pass       http://notification_svc;
+            proxy_set_header X-User-Id   $x_user_id;
+            proxy_set_header X-User-Role $x_user_role;
+            proxy_set_header Host        $host;
+        }
     }
 }
 NGINX
@@ -369,6 +398,20 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+    networks:
+      - questify-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: questify-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - questify-network
 
@@ -505,11 +548,14 @@ services:
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_USERNAME: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      REDIS_HOST: redis
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
     depends_on:
       postgres:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8084/actuator/health"]
@@ -533,11 +579,14 @@ services:
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_USERNAME: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      REDIS_HOST: redis
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
     depends_on:
       postgres:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8085/actuator/health"]
@@ -582,6 +631,37 @@ services:
     networks:
       - questify-network
 
+  notification-service:
+    image: ghcr.io/axelfrache/questify-notification-service:latest
+    container_name: questify-notification-service
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${NOTIFICATION_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
+      SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
+      SPRING_JPA_DDL_AUTO: update
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USERNAME: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
+      VAPID_SUBJECT: ${VAPID_SUBJECT}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8087/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - questify-network
+
   gateway:
     image: nginx:alpine
     container_name: questify-gateway
@@ -600,6 +680,8 @@ services:
       stats-service:
         condition: service_healthy
       admin-service:
+        condition: service_healthy
+      notification-service:
         condition: service_healthy
     networks:
       - questify-network
@@ -628,6 +710,7 @@ networks:
 volumes:
   postgres-data:
   rabbitmq-data:
+  redis-data:
 EOF
 
 echo "Starting Docker containers..."
