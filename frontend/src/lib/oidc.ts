@@ -1,8 +1,19 @@
-const OIDC_ISSUER_URL = import.meta.env.VITE_OIDC_ISSUER_URL || '';
-const OIDC_CLIENT_ID = import.meta.env.VITE_OIDC_CLIENT_ID || '';
-const OIDC_REDIRECT_URI =
-  import.meta.env.VITE_OIDC_REDIRECT_URI || `${window.location.origin}/auth/callback`;
-const OIDC_SCOPES = import.meta.env.VITE_OIDC_SCOPES || 'openid profile email roles';
+declare global {
+  interface Window {
+    __QUESTIFY_CONFIG__?: {
+      oidcIssuerUrl?: string;
+      oidcClientId?: string;
+      oidcRedirectUri?: string;
+      oidcScopes?: string;
+    };
+  }
+}
+
+const _cfg = window.__QUESTIFY_CONFIG__ ?? {};
+const OIDC_ISSUER_URL = _cfg.oidcIssuerUrl || '';
+const OIDC_CLIENT_ID = _cfg.oidcClientId || '';
+const OIDC_REDIRECT_URI = _cfg.oidcRedirectUri || `${window.location.origin}/auth/callback`;
+const OIDC_SCOPES = _cfg.oidcScopes || 'openid profile email roles';
 
 const ACCESS_TOKEN_KEY = 'questify.oidc.access_token';
 const ID_TOKEN_KEY = 'questify.oidc.id_token';

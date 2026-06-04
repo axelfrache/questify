@@ -702,6 +702,11 @@ services:
     restart: unless-stopped
     ports:
       - "80:8080"
+    environment:
+      OIDC_ISSUER_URL: ${OIDC_ISSUER_URL:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI:-}
+      OIDC_SCOPES: ${OIDC_SCOPES:-openid profile email roles}
     depends_on:
       - gateway
     healthcheck:

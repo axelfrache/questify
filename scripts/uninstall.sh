@@ -63,8 +63,13 @@ if [ -d "$INSTALL_DIR" ]; then
     # Prevent "device or resource busy" error by leaving directory
     cd /
 
-    echo "Removing installation directory ($INSTALL_DIR)..."
-    sudo rm -rf "$INSTALL_DIR"
+    if [ "$REMOVE_DATA" -eq 1 ]; then
+        echo "Removing installation directory ($INSTALL_DIR)..."
+        sudo rm -rf "$INSTALL_DIR"
+    else
+        echo "Note: $INSTALL_DIR preserved (contains .env with credentials)."
+        echo "      Credentials will be reused on next install."
+    fi
 else
     echo "Installation directory $INSTALL_DIR not found."
     echo "No files were removed."
