@@ -55,12 +55,6 @@ public class PushNotificationService {
   }
 
   public void send(PushSubscription subscription, String title, String body) {
-    // DEMO: simulate slow VAPID endpoint (~3s network latency)
-    try {
-      Thread.sleep(3000);
-    } catch (InterruptedException ie) {
-      Thread.currentThread().interrupt();
-    }
     if (!pushEnabled) return;
     try {
       var payload =
