@@ -10,12 +10,17 @@ export function useNotificationStream() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    if (isOidcEnabled()) return;
 
     const apiBase = import.meta.env.VITE_API_URL || '';
-    const source = new EventSource(`${apiBase}/api/notifications/stream`, {
-      withCredentials: true,
-    });
+    let streamUrl = `${apiBase}/api/notifications/stream`;
+
+    if (isOidcEnabled()) {
+      const token = sessionStorage.getItem('questify.oidc.access_token');
+      if (!token) return;
+      streamUrl = `${streamUrl}?token=${encodeURIComponent(token)}`;
+    }
+
+    const source = new EventSource(streamUrl, { withCredentials: true });
 
     source.addEventListener('notification', () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
