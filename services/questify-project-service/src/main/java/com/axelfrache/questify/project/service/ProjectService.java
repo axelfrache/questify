@@ -1,20 +1,25 @@
 package com.axelfrache.questify.project.service;
 
 import com.axelfrache.questify.project.dto.CreateProjectRequest;
+import com.axelfrache.questify.project.dto.InviteResponse;
 import com.axelfrache.questify.project.dto.ProjectDetailResponse;
+import com.axelfrache.questify.project.dto.ProjectMemberResponse;
 import com.axelfrache.questify.project.dto.ProjectSidebarResponse;
 import com.axelfrache.questify.project.dto.ProjectSummaryResponse;
 import com.axelfrache.questify.project.dto.UpdateProjectRequest;
 import com.axelfrache.questify.project.messaging.ProjectEventPublisher;
 import com.axelfrache.questify.project.model.Project;
+import com.axelfrache.questify.project.model.ProjectInvitation;
 import com.axelfrache.questify.project.model.ProjectMember;
 import com.axelfrache.questify.project.model.ProjectRole;
 import com.axelfrache.questify.project.model.UserProjectPin;
+import com.axelfrache.questify.project.repository.ProjectInvitationRepository;
 import com.axelfrache.questify.project.repository.ProjectMemberRepository;
 import com.axelfrache.questify.project.repository.ProjectRepository;
 import com.axelfrache.questify.project.repository.UserProjectPinRepository;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -38,8 +43,11 @@ public class ProjectService {
   private static final int SIDEBAR_RECENT_LIMIT = 4;
   private static final String DEFAULT_PROJECT_ICON = "📁";
 
+  private static final Duration INVITE_TTL = Duration.ofDays(7);
+
   private final ProjectRepository projectRepository;
   private final ProjectMemberRepository projectMemberRepository;
+  private final ProjectInvitationRepository projectInvitationRepository;
   private final UserProjectPinRepository userProjectPinRepository;
   private final ProjectEventPublisher projectEventPublisher;
 
@@ -191,10 +199,94 @@ public class ProjectService {
       throw new AccessDeniedException("Only the project owner can delete this project");
 
     userProjectPinRepository.deleteByProject(project);
+    projectInvitationRepository.deleteByProject(project);
     projectMemberRepository.deleteByProject(project);
     projectRepository.delete(project);
 
     projectEventPublisher.publishProjectDeleted(projectId);
+  }
+
+  @WithSpan("project.invite")
+  @Transactional
+  public InviteResponse invite(UUID projectId, UUID requesterId) {
+    setUuidAttribute("questify.project.id", projectId);
+    setUuidAttribute("questify.user.id", requesterId);
+    var project =
+        projectRepository
+            .findById(projectId)
+            .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
+    var membership =
+        projectMemberRepository
+            .findByProjectAndUserId(project, requesterId)
+            .orElseThrow(() -> new AccessDeniedException("Access denied to this project"));
+    if (membership.getRole() != ProjectRole.OWNER)
+      throw new AccessDeniedException("Only the project owner can invite members");
+
+    var token = UUID.randomUUID().toString();
+    var expiresAt = Instant.now().plus(INVITE_TTL);
+    projectInvitationRepository.save(
+        ProjectInvitation.builder().project(project).token(token).expiresAt(expiresAt).build());
+    log.info("Invite created project_id={} expires={}", projectId, expiresAt);
+    return new InviteResponse(token, expiresAt);
+  }
+
+  @WithSpan("project.join")
+  @Transactional
+  public ProjectDetailResponse joinProject(String token, UUID userId) {
+    setUuidAttribute("questify.user.id", userId);
+    var invitation =
+        projectInvitationRepository
+            .findByToken(token)
+            .orElseThrow(() -> new IllegalArgumentException("Invalid invite token"));
+    if (invitation.isExpired()) throw new IllegalStateException("This invite link has expired");
+    if (invitation.isAccepted())
+      throw new IllegalStateException("This invite link has already been used");
+
+    var project = invitation.getProject();
+    if (!projectMemberRepository.existsByProjectAndUserId(project, userId)) {
+      projectMemberRepository.save(
+          ProjectMember.builder().project(project).userId(userId).role(ProjectRole.MEMBER).build());
+      log.info("User {} joined project {}", userId, project.getId());
+    }
+
+    invitation.setAcceptedByUserId(userId);
+    invitation.setAcceptedAt(Instant.now());
+    projectInvitationRepository.save(invitation);
+
+    var pinned = userProjectPinRepository.existsByUserIdAndProject(userId, project);
+    return toDetail(project, pinned);
+  }
+
+  @WithSpan("project.list_members")
+  @Transactional(readOnly = true)
+  public List<ProjectMemberResponse> listMembers(UUID projectId, UUID requesterId) {
+    setUuidAttribute("questify.project.id", projectId);
+    setUuidAttribute("questify.user.id", requesterId);
+    var project = requireMember(projectId, requesterId);
+    return projectMemberRepository.findAllByProject(project).stream()
+        .map(m -> new ProjectMemberResponse(m.getUserId(), m.getRole(), m.getCreatedAt()))
+        .toList();
+  }
+
+  @WithSpan("project.remove_member")
+  @Transactional
+  public void removeMember(UUID projectId, UUID targetUserId, UUID requesterId) {
+    setUuidAttribute("questify.project.id", projectId);
+    setUuidAttribute("questify.user.id", requesterId);
+    var project =
+        projectRepository
+            .findById(projectId)
+            .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
+    var membership =
+        projectMemberRepository
+            .findByProjectAndUserId(project, requesterId)
+            .orElseThrow(() -> new AccessDeniedException("Access denied to this project"));
+    if (membership.getRole() != ProjectRole.OWNER)
+      throw new AccessDeniedException("Only the project owner can remove members");
+    if (targetUserId.equals(requesterId))
+      throw new IllegalArgumentException("Owner cannot remove themselves");
+    projectMemberRepository.deleteByProjectAndUserId(project, targetUserId);
+    log.info("Member {} removed from project {} by {}", targetUserId, projectId, requesterId);
   }
 
   private Project requireMember(UUID projectId, UUID userId) {
@@ -219,6 +311,10 @@ public class ProjectService {
   }
 
   private ProjectDetailResponse toDetail(Project p, boolean pinned) {
+    var members =
+        projectMemberRepository.findAllByProject(p).stream()
+            .map(m -> new ProjectMemberResponse(m.getUserId(), m.getRole(), m.getCreatedAt()))
+            .toList();
     return new ProjectDetailResponse(
         p.getId(),
         p.getName(),
@@ -227,7 +323,9 @@ public class ProjectService {
         pinned,
         p.getArchivedAt(),
         p.getCreatedAt(),
-        p.getUpdatedAt());
+        p.getUpdatedAt(),
+        p.getOwnerUserId(),
+        members);
   }
 
   private String resolveIcon(String icon) {

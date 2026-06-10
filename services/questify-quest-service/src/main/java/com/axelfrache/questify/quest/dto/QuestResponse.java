@@ -27,4 +27,5 @@ public record QuestResponse(
     UUID parentId,
     String parentTitle,
     int subquestCount,
-    int completedSubquestCount) {}
+    int completedSubquestCount,
+    UUID assigneeId) {}

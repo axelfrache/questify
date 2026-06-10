@@ -1,6 +1,7 @@
 package com.axelfrache.questify.project.dto;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record ProjectDetailResponse(
@@ -11,4 +12,6 @@ public record ProjectDetailResponse(
     boolean pinned,
     Instant archivedAt,
     Instant createdAt,
-    Instant updatedAt) {}
+    Instant updatedAt,
+    UUID ownerUserId,
+    List<ProjectMemberResponse> members) {}

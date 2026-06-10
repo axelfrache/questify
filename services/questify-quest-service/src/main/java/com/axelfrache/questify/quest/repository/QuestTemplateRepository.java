@@ -26,6 +26,14 @@ public interface QuestTemplateRepository extends JpaRepository<QuestTemplate, UU
   Optional<QuestTemplate> findByIdAndUserId(@Param("id") UUID id, @Param("userId") UUID userId);
 
   @Query(
+      "SELECT q FROM QuestTemplate q WHERE q.id = :id"
+          + " AND (q.userId = :userId OR q.assigneeId = :userId)")
+  Optional<QuestTemplate> findByIdAndOwnerOrAssignee(
+      @Param("id") UUID id, @Param("userId") UUID userId);
+
+  List<QuestTemplate> findByProjectIdAndActiveTrueAndDeletedFalse(UUID projectId);
+
+  @Query(
       """
       SELECT DISTINCT sq FROM QuestTemplate sq
       LEFT JOIN FETCH sq.occurrences

@@ -76,6 +76,9 @@ public class QuestTemplate {
   @Column(name = "user_id", nullable = false)
   private UUID userId;
 
+  @Column(name = "assignee_id")
+  private UUID assigneeId;
+
   @Column(name = "project_id")
   private UUID projectId;
 

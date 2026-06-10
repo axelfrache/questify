@@ -1,5 +1,6 @@
 package com.axelfrache.questify.quest.controller;
 
+import com.axelfrache.questify.quest.dto.AssignQuestRequest;
 import com.axelfrache.questify.quest.dto.CreateQuestRequest;
 import com.axelfrache.questify.quest.dto.QuestResponse;
 import com.axelfrache.questify.quest.dto.UpdateQuestRequest;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -94,6 +96,15 @@ public class QuestController {
       @AuthenticationPrincipal String userId, @PathVariable UUID id) {
     questService.delete(id, UUID.fromString(userId));
     return ResponseEntity.noContent().build();
+  }
+
+  @PatchMapping("/{id}/assign")
+  public ResponseEntity<QuestResponse> assign(
+      @AuthenticationPrincipal String userId,
+      @PathVariable UUID id,
+      @RequestBody AssignQuestRequest request) {
+    return ResponseEntity.ok(
+        questService.assign(id, UUID.fromString(userId), request.assigneeId()));
   }
 
   @GetMapping("/{id}/subquests")

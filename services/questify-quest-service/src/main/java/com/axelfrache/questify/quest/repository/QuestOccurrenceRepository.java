@@ -40,6 +40,19 @@ public interface QuestOccurrenceRepository extends JpaRepository<QuestOccurrence
   Optional<QuestOccurrence> findByIdAndUserId(@Param("id") UUID id, @Param("userId") UUID userId);
 
   @Query(
+      "SELECT qo FROM QuestOccurrence qo WHERE qo.id = :id"
+          + " AND (qo.questTemplate.userId = :userId OR qo.questTemplate.assigneeId = :userId)")
+  Optional<QuestOccurrence> findByIdAndOwnerOrAssignee(
+      @Param("id") UUID id, @Param("userId") UUID userId);
+
+  @Query(
+      "SELECT DISTINCT qo FROM QuestOccurrence qo "
+          + "LEFT JOIN FETCH qo.questTemplate qt "
+          + "LEFT JOIN FETCH qt.subquests "
+          + "WHERE qt.projectId = :projectId AND qt.active = true AND qt.deleted = false")
+  List<QuestOccurrence> findAllByProjectIdWithSubquests(@Param("projectId") UUID projectId);
+
+  @Query(
       "SELECT qo FROM QuestOccurrence qo WHERE qo.questTemplate.userId = :userId"
           + " AND qo.hasDueDate = true"
           + " AND qo.status = 'PENDING'"

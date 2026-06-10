@@ -53,19 +53,20 @@ public class QuestCompletedListener {
 
   @WithSpan("messaging.quest_completed_notification")
   private void processQuestCompleted(QuestCompletedEvent event) {
-    setEventAttributes("quest.completed", event.userId());
+    UUID recipientId = event.assigneeId() != null ? event.assigneeId() : event.userId();
+    setEventAttributes("quest.completed", recipientId);
     setUuidAttribute("questify.quest.id", event.questId());
     Span.current().setAttribute("questify.quest.xp_earned", event.xpEarned());
     log.debug(
-        "Received quest.completed: userId={} quest={} xp={}",
-        event.userId(),
+        "Received quest.completed: recipient={} quest={} xp={}",
+        recipientId,
         event.questTitle(),
         event.xpEarned());
 
     notificationService.markReminderCompleted(event.userId(), event.questId());
 
     notificationService.createAndSendNotification(
-        event.userId(),
+        recipientId,
         NotificationType.QUEST_COMPLETED,
         "Quest completed! 🎉",
         "+" + event.xpEarned() + " XP — \"" + event.questTitle() + "\"",

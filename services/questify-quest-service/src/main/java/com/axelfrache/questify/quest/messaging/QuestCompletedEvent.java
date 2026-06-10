@@ -9,4 +9,5 @@ public record QuestCompletedEvent(
     String questTitle,
     int xpEarned,
     String categoryName,
-    Instant completedAt) {}
+    Instant completedAt,
+    UUID assigneeId) {}

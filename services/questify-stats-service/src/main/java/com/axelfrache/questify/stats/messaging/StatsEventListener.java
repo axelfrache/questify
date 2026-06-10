@@ -55,22 +55,23 @@ public class StatsEventListener {
 
   @WithSpan("messaging.quest_completed_stats")
   private void processQuestCompleted(QuestCompletedEvent event) {
-    setUuidAttribute("questify.user.id", event.userId());
+    UUID recipientId = event.assigneeId() != null ? event.assigneeId() : event.userId();
+    setUuidAttribute("questify.user.id", recipientId);
     setUuidAttribute("questify.quest.id", event.questId());
     Span.current().setAttribute("questify.event.type", "quest.completed");
     Span.current().setAttribute("questify.quest.xp_earned", event.xpEarned());
     Span.current().setAttribute("questify.quest.has_category", event.categoryName() != null);
-    log.debug("Recording completion: questId={} userId={}", event.questId(), event.userId());
+    log.debug("Recording completion: questId={} recipient={}", event.questId(), recipientId);
     repository.save(
         QuestCompletionEntry.builder()
-            .userId(event.userId())
+            .userId(recipientId)
             .questId(event.questId())
             .questTitle(event.questTitle())
             .xpEarned(event.xpEarned())
             .categoryName(event.categoryName())
             .completedAt(event.completedAt())
             .build());
-    statsService.invalidateUserStatsCache(event.userId());
+    statsService.invalidateUserStatsCache(recipientId);
   }
 
   @RabbitListener(queues = QueueConstants.USER_DELETED_QUEUE)

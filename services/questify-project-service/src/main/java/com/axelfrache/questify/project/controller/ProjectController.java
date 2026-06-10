@@ -1,7 +1,9 @@
 package com.axelfrache.questify.project.controller;
 
 import com.axelfrache.questify.project.dto.CreateProjectRequest;
+import com.axelfrache.questify.project.dto.InviteResponse;
 import com.axelfrache.questify.project.dto.ProjectDetailResponse;
+import com.axelfrache.questify.project.dto.ProjectMemberResponse;
 import com.axelfrache.questify.project.dto.ProjectSidebarResponse;
 import com.axelfrache.questify.project.dto.ProjectSummaryResponse;
 import com.axelfrache.questify.project.dto.UpdateProjectRequest;
@@ -82,6 +84,31 @@ public class ProjectController {
   public ResponseEntity<Void> delete(
       @AuthenticationPrincipal String userId, @PathVariable UUID id) {
     projectService.delete(id, UUID.fromString(userId));
+    return ResponseEntity.noContent().build();
+  }
+
+  @PostMapping("/{id}/invite")
+  public ResponseEntity<InviteResponse> invite(
+      @AuthenticationPrincipal String userId, @PathVariable UUID id) {
+    return ResponseEntity.ok(projectService.invite(id, UUID.fromString(userId)));
+  }
+
+  @PostMapping("/join/{token}")
+  public ResponseEntity<ProjectDetailResponse> join(
+      @AuthenticationPrincipal String userId, @PathVariable String token) {
+    return ResponseEntity.ok(projectService.joinProject(token, UUID.fromString(userId)));
+  }
+
+  @GetMapping("/{id}/members")
+  public ResponseEntity<List<ProjectMemberResponse>> listMembers(
+      @AuthenticationPrincipal String userId, @PathVariable UUID id) {
+    return ResponseEntity.ok(projectService.listMembers(id, UUID.fromString(userId)));
+  }
+
+  @DeleteMapping("/{id}/members/{memberId}")
+  public ResponseEntity<Void> removeMember(
+      @AuthenticationPrincipal String userId, @PathVariable UUID id, @PathVariable UUID memberId) {
+    projectService.removeMember(id, memberId, UUID.fromString(userId));
     return ResponseEntity.noContent().build();
   }
 }

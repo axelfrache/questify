@@ -54,18 +54,15 @@ public class QuestCompletedListener {
 
   @WithSpan("messaging.quest_completed_progression")
   private void processQuestCompleted(QuestCompletedEvent event) {
-    setEventAttributes("quest.completed", event.userId());
+    UUID recipientId = event.assigneeId() != null ? event.assigneeId() : event.userId();
+    setEventAttributes("quest.completed", recipientId);
     setUuidAttribute("questify.quest.id", event.questId());
     Span.current().setAttribute("questify.quest.xp_earned", event.xpEarned());
     Span.current().setAttribute("questify.quest.has_category", event.categoryName() != null);
-    log.debug("Received QuestCompletedEvent: userId={} xp={}", event.userId(), event.xpEarned());
+    log.debug("Received QuestCompletedEvent: recipient={} xp={}", recipientId, event.xpEarned());
     progressionService.awardXp(
-        event.userId(),
-        event.xpEarned(),
-        event.questId(),
-        event.categoryName(),
-        event.completedAt());
-    achievementService.evaluateAndUnlockAchievements(event.userId());
+        recipientId, event.xpEarned(), event.questId(), event.categoryName(), event.completedAt());
+    achievementService.evaluateAndUnlockAchievements(recipientId);
   }
 
   private static void setEventAttributes(String eventType, UUID userId) {

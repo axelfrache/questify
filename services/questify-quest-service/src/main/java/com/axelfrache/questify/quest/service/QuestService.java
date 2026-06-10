@@ -263,10 +263,13 @@ public class QuestService {
     setUuidAttribute("questify.user.id", userId);
     setUuidAttribute("questify.quest.requested_id", id);
     log.info("Completing quest occurrence={} user={}", id, userId);
-    var occurrence = questOccurrenceRepository.findByIdAndUserId(id, userId).orElse(null);
+    var occurrence = questOccurrenceRepository.findByIdAndOwnerOrAssignee(id, userId).orElse(null);
 
     if (occurrence == null) {
-      var template = findTemplateByIdAndUserOrThrow(id, userId);
+      var template =
+          questTemplateRepository
+              .findByIdAndOwnerOrAssignee(id, userId)
+              .orElseThrow(() -> new IllegalArgumentException("Quest not found: " + id));
       occurrence =
           QuestOccurrence.builder()
               .questTemplate(template)
@@ -297,32 +300,47 @@ public class QuestService {
     Span.current().setAttribute("questify.xp.awarded", xpEarned);
 
     log.info(
-        "Quest completed quest_id={} title=\"{}\" difficulty={} xp_earned={} user={}",
+        "Quest completed quest_id={} title=\"{}\" difficulty={} xp_earned={} completer={} owner={}",
         template.getId(),
         template.getTitle(),
         template.getDifficulty(),
         xpEarned,
-        userId);
+        userId,
+        template.getUserId());
 
     var categoryName = template.getCategory() != null ? template.getCategory().getName() : null;
     questEventPublisher.publishQuestCompleted(
-        userId,
+        template.getUserId(),
         template.getId(),
         template.getTitle(),
         xpEarned,
         categoryName,
-        occurrence.getCompletedAt());
-    saveToHistory(occurrence, xpEarned);
+        occurrence.getCompletedAt(),
+        userId);
+    saveToHistory(occurrence, xpEarned, userId);
 
     return toResponse(occurrence);
   }
 
-  private void saveToHistory(QuestOccurrence occurrence, int xpEarned) {
+  @WithSpan("quest.assign")
+  @Transactional
+  public QuestResponse assign(UUID id, UUID requesterId, UUID assigneeId) {
+    setUuidAttribute("questify.user.id", requesterId);
+    setUuidAttribute("questify.quest.requested_id", id);
+    setUuidAttribute("questify.quest.assignee_id", assigneeId);
+    var template = findTemplateByIdAndUserOrThrow(id, requesterId);
+    template.setAssigneeId(assigneeId);
+    questTemplateRepository.save(template);
+    log.info("Quest assigned quest_id={} assignee={} by={}", id, assigneeId, requesterId);
+    return toResponse(template);
+  }
+
+  private void saveToHistory(QuestOccurrence occurrence, int xpEarned, UUID completerId) {
     var template = occurrence.getQuestTemplate();
     var category = template.getCategory();
     var history =
         QuestHistory.builder()
-            .userId(template.getUserId())
+            .userId(completerId)
             .originalQuestId(template.getId())
             .title(template.getTitle())
             .description(template.getDescription())
@@ -659,18 +677,17 @@ public class QuestService {
   }
 
   @WithSpan("quest.find_by_project")
-  @Transactional(readOnly = true)
+  @Transactional
   public List<QuestResponse> findByProject(UUID projectId, UUID userId) {
     setUuidAttribute("questify.user.id", userId);
     setUuidAttribute("questify.project.id", projectId);
     ensureDailyOccurrences(userId);
-    var allOccurrences = questOccurrenceRepository.findAllByUserIdWithSubquests(userId);
+
+    var allOccurrences = questOccurrenceRepository.findAllByProjectIdWithSubquests(projectId);
 
     var occurrenceResponses =
         allOccurrences.stream()
             .filter(q -> q.getStatus() != QuestStatus.CANCELLED)
-            .filter(q -> projectId.equals(q.getQuestTemplate().getProjectId()))
-            .filter(q -> q.getQuestTemplate().isActive() && !q.getQuestTemplate().isDeleted())
             .filter(q -> q.getQuestTemplate().getParent() == null)
             .sorted((o1, o2) -> o2.getScheduledDate().compareTo(o1.getScheduledDate()))
             .map(this::toResponse)
@@ -680,8 +697,7 @@ public class QuestService {
         allOccurrences.stream().map(o -> o.getQuestTemplate().getId()).collect(Collectors.toSet());
 
     var floating =
-        questTemplateRepository.findByUserIdAndActiveTrueAndDeletedFalse(userId).stream()
-            .filter(t -> projectId.equals(t.getProjectId()))
+        questTemplateRepository.findByProjectIdAndActiveTrueAndDeletedFalse(projectId).stream()
             .filter(t -> t.getRecurrenceRule() == null)
             .filter(t -> !templateIdsWithOccurrences.contains(t.getId()))
             .filter(t -> t.getParent() == null)
@@ -823,7 +839,8 @@ public class QuestService {
         template.getParent() != null ? template.getParent().getId() : null,
         template.getParent() != null ? template.getParent().getTitle() : null,
         subquestCount,
-        completedSubquestCount);
+        completedSubquestCount,
+        template.getAssigneeId());
   }
 
   private CategorySource inferCategorySource(Category category) {
@@ -886,7 +903,8 @@ public class QuestService {
         template.getParent() != null ? template.getParent().getId() : null,
         template.getParent() != null ? template.getParent().getTitle() : null,
         0,
-        0);
+        0,
+        template.getAssigneeId());
   }
 
   private QuestTemplate findTemplateOrThrow(UUID id) {

@@ -37,9 +37,11 @@ public class QuestEventPublisher {
       String questTitle,
       int xpEarned,
       String categoryName,
-      Instant completedAt) {
+      Instant completedAt,
+      UUID assigneeId) {
     var event =
-        new QuestCompletedEvent(userId, questId, questTitle, xpEarned, categoryName, completedAt);
+        new QuestCompletedEvent(
+            userId, questId, questTitle, xpEarned, categoryName, completedAt, assigneeId);
     try {
       var outboxEvent =
           OutboxEvent.builder()
