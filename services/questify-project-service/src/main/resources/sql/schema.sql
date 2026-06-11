@@ -62,3 +62,16 @@ WHERE status = 'FAILED';
 CREATE INDEX IF NOT EXISTS idx_projects_outbox_pending
     ON projects.outbox_events (next_attempt_at, created_at)
     WHERE status = 'PENDING';
+
+CREATE TABLE IF NOT EXISTS projects.project_invitations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID NOT NULL REFERENCES projects.projects(id) ON DELETE CASCADE,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    accepted_by_user_id UUID,
+    accepted_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_project_invitations_token ON projects.project_invitations(token);
+CREATE INDEX IF NOT EXISTS idx_project_invitations_project_id ON projects.project_invitations(project_id);
