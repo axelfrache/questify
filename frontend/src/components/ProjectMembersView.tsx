@@ -83,7 +83,10 @@ export function ProjectMembersView({ project, quests }: ProjectMembersViewProps)
           const isCurrentUser = member.userId === user?.id;
 
           return (
-            <div key={member.userId} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+            <div
+              key={member.userId}
+              className="flex items-center justify-between p-3 rounded-lg border bg-card"
+            >
               <div className="flex-1">
                 <div className="text-sm font-medium">
                   {isCurrentUser ? t('project_detail.you') : `User ${member.userId.slice(0, 8)}`}
@@ -114,7 +117,8 @@ export function ProjectMembersView({ project, quests }: ProjectMembersViewProps)
                 {t('project_detail.unassigned')}
               </div>
               <div className="text-xs text-muted-foreground">
-                {getUnassignedQuestCount()} {t('project_detail.open_quest', { count: getUnassignedQuestCount() })}
+                {getUnassignedQuestCount()}{' '}
+                {t('project_detail.open_quest', { count: getUnassignedQuestCount() })}
               </div>
             </div>
           </div>
@@ -126,9 +130,7 @@ export function ProjectMembersView({ project, quests }: ProjectMembersViewProps)
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('project_detail.send_invite')}</DialogTitle>
-            <DialogDescription>
-              {t('project_detail.invite_description')}
-            </DialogDescription>
+            <DialogDescription>{t('project_detail.invite_description')}</DialogDescription>
           </DialogHeader>
 
           {inviteToken ? (
@@ -156,20 +158,15 @@ export function ProjectMembersView({ project, quests }: ProjectMembersViewProps)
                 {t('project_detail.share_instructions')}
               </p>
 
-              <Button
-                onClick={() => setInviteDialog(false)}
-                className="w-full"
-              >
+              <Button onClick={() => setInviteDialog(false)} className="w-full">
                 {t('project_detail.done')}
               </Button>
             </div>
           ) : (
-            <Button
-              onClick={handleInvite}
-              disabled={inviteMutation.isPending}
-              className="w-full"
-            >
-              {inviteMutation.isPending ? t('project_detail.generating') : t('project_detail.generate_invite')}
+            <Button onClick={handleInvite} disabled={inviteMutation.isPending} className="w-full">
+              {inviteMutation.isPending
+                ? t('project_detail.generating')
+                : t('project_detail.generate_invite')}
             </Button>
           )}
         </DialogContent>

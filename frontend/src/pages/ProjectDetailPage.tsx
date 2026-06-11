@@ -185,10 +185,10 @@ export function ProjectDetailPage() {
       {activeTab === 'quests' && (
         <>
           {isLoadingQuests ? (
-        <div className="space-y-2">
-          <Skeleton className="h-14 w-full" />
-          <Skeleton className="h-14 w-full" />
-        </div>
+            <div className="space-y-2">
+              <Skeleton className="h-14 w-full" />
+              <Skeleton className="h-14 w-full" />
+            </div>
           ) : !quests || quests.length === 0 ? (
             <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
               {t('project_detail.empty')}
