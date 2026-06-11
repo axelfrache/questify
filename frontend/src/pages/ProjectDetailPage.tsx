@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { QuestCard } from '@/components/QuestCard';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import { QuestViewDialog } from '@/components/QuestViewDialog';
+import { ProjectMembersView } from '@/components/ProjectMembersView';
 import { type QuestResponse } from '@/lib/api';
 import { Plus } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -48,6 +49,7 @@ export function ProjectDetailPage() {
   const [viewingQuest, setViewingQuest] = useState<QuestResponse | null>(null);
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
   const [parentQuest, setParentQuest] = useState<QuestResponse | null>(null);
+  const [activeTab, setActiveTab] = useState<'quests' | 'members'>('quests');
 
   const stats = useMemo(() => {
     if (!quests) return null;
@@ -142,74 +144,109 @@ export function ProjectDetailPage() {
         </div>
       )}
 
+      {/* Tabs */}
+      {project?.members && project.members.length > 0 && (
+        <div className="flex gap-2 border-b">
+          <button
+            onClick={() => setActiveTab('quests')}
+            className={`px-3 py-2 text-sm font-medium transition-colors ${
+              activeTab === 'quests'
+                ? 'text-foreground border-b-2 border-primary -mb-px'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {t('project_detail.quests')}
+          </button>
+          <button
+            onClick={() => setActiveTab('members')}
+            className={`px-3 py-2 text-sm font-medium transition-colors ${
+              activeTab === 'members'
+                ? 'text-foreground border-b-2 border-primary -mb-px'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {t('project_detail.members')} ({project.members.length})
+          </button>
+        </div>
+      )}
+
       {questsError && (
         <Alert variant="destructive">
           <AlertDescription>{t('inbox.load_failed')}</AlertDescription>
         </Alert>
       )}
 
-      {/* Quest list */}
-      {isLoadingQuests ? (
+      {/* Members tab */}
+      {activeTab === 'members' && project && (
+        <ProjectMembersView project={project} quests={quests || []} />
+      )}
+
+      {/* Quest list tab */}
+      {activeTab === 'quests' && (
+        <>
+          {isLoadingQuests ? (
         <div className="space-y-2">
           <Skeleton className="h-14 w-full" />
           <Skeleton className="h-14 w-full" />
         </div>
-      ) : !quests || quests.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
-          {t('project_detail.empty')}
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {pendingQuests.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold">{t('project_detail.quests')}</h2>
-                <span className="font-mono text-xs text-muted-foreground">
-                  {t('project_detail.items', { count: pendingQuests.length })}
-                </span>
-              </div>
-              <div className="space-y-1.5">
-                {pendingQuests.map((quest) => (
-                  <QuestCard
-                    key={quest.id}
-                    quest={quest}
-                    onComplete={handleComplete}
-                    onView={setViewingQuest}
-                    onEdit={setEditingQuest}
-                    onDelete={handleDelete}
-                    onSkip={(questId) => skipQuestMutation.mutate(questId)}
-                    onAddSubquest={setParentQuest}
-                    isPending={completeQuestMutation.isPending}
-                    showInlineSubquests
-                    showRegionMarker
-                  />
-                ))}
-              </div>
+          ) : !quests || quests.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
+              {t('project_detail.empty')}
             </div>
-          )}
+          ) : (
+            <div className="space-y-6">
+              {pendingQuests.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-semibold">{t('project_detail.quests')}</h2>
+                    <span className="font-mono text-xs text-muted-foreground">
+                      {t('project_detail.items', { count: pendingQuests.length })}
+                    </span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {pendingQuests.map((quest) => (
+                      <QuestCard
+                        key={quest.id}
+                        quest={quest}
+                        onComplete={handleComplete}
+                        onView={setViewingQuest}
+                        onEdit={setEditingQuest}
+                        onDelete={handleDelete}
+                        onSkip={(questId) => skipQuestMutation.mutate(questId)}
+                        onAddSubquest={setParentQuest}
+                        isPending={completeQuestMutation.isPending}
+                        showInlineSubquests
+                        showRegionMarker
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
 
-          {completedQuests.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-muted-foreground">
-                {t('project_detail.completed')}
-              </h2>
-              <div className="space-y-1.5">
-                {completedQuests.map((quest) => (
-                  <QuestCard
-                    key={quest.id}
-                    quest={quest}
-                    onComplete={handleComplete}
-                    onView={setViewingQuest}
-                    onEdit={setEditingQuest}
-                    onDelete={handleDelete}
-                    isPending={completeQuestMutation.isPending}
-                    showRegionMarker
-                  />
-                ))}
-              </div>
+              {completedQuests.length > 0 && (
+                <div className="space-y-3">
+                  <h2 className="text-sm font-semibold text-muted-foreground">
+                    {t('project_detail.completed')}
+                  </h2>
+                  <div className="space-y-1.5">
+                    {completedQuests.map((quest) => (
+                      <QuestCard
+                        key={quest.id}
+                        quest={quest}
+                        onComplete={handleComplete}
+                        onView={setViewingQuest}
+                        onEdit={setEditingQuest}
+                        onDelete={handleDelete}
+                        isPending={completeQuestMutation.isPending}
+                        showRegionMarker
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
-        </div>
+        </>
       )}
 
       <QuestViewDialog

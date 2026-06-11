@@ -587,6 +587,40 @@ class ApiClient {
     });
   }
 
+  async inviteProject(id: string): Promise<{ token: string; expiresAt: string }> {
+    return this.request<{ token: string; expiresAt: string }>(`/api/projects/${id}/invite`, {
+      method: 'POST',
+    });
+  }
+
+  async joinProject(token: string): Promise<ProjectDetailResponse> {
+    return this.request<ProjectDetailResponse>(`/api/projects/join/${token}`, {
+      method: 'POST',
+    });
+  }
+
+  async listProjectMembers(
+    projectId: string,
+    signal?: AbortSignal
+  ): Promise<ProjectMemberResponse[]> {
+    return this.request<ProjectMemberResponse[]>(`/api/projects/${projectId}/members`, {
+      signal,
+    });
+  }
+
+  async removeProjectMember(projectId: string, memberId: string): Promise<void> {
+    return this.request<void>(`/api/projects/${projectId}/members/${memberId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async assignQuest(questId: string, assigneeId: string): Promise<QuestResponse> {
+    return this.request<QuestResponse>(`/api/quests/${questId}/assign`, {
+      method: 'PATCH',
+      body: JSON.stringify({ assigneeId }),
+    });
+  }
+
   async getStatsOverview(signal?: AbortSignal): Promise<OverallStatsResponse> {
     return this.request<OverallStatsResponse>('/api/stats/overview', { signal });
   }
@@ -745,6 +779,7 @@ export interface QuestResponse {
   status: 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'SKIPPED';
   category?: CategoryResponse;
   projectId?: string;
+  assigneeId?: string;
   dueDate?: string;
   baseXpReward: number;
   totalXpReward: number;
@@ -809,6 +844,12 @@ export interface ProjectSidebarResponse {
   recent: ProjectSummaryResponse[];
 }
 
+export interface ProjectMemberResponse {
+  userId: string;
+  role: 'OWNER' | 'MEMBER';
+  joinedAt: string;
+}
+
 export interface ProjectDetailResponse {
   id: string;
   name: string;
@@ -818,6 +859,8 @@ export interface ProjectDetailResponse {
   archivedAt?: string;
   createdAt: string;
   updatedAt: string;
+  ownerUserId: string;
+  members: ProjectMemberResponse[];
 }
 
 export interface CreateProjectRequest {

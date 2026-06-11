@@ -502,6 +502,60 @@ export function useDeleteProject() {
   });
 }
 
+export function useInviteProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (projectId: string) => api.inviteProject(projectId),
+    onSuccess: () => {
+      invalidateProjectData(queryClient);
+    },
+  });
+}
+
+export function useJoinProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (token: string) => api.joinProject(token),
+    onSuccess: (project) => {
+      queryClient.setQueryData<ProjectDetailResponse>(
+        queryKeys.projects.detail(project.id),
+        project
+      );
+      invalidateProjectData(queryClient);
+    },
+  });
+}
+
+export function useProjectMembers(projectId: string) {
+  return useQuery({
+    queryKey: [...queryKeys.projects.detail(projectId), 'members'],
+    queryFn: ({ signal }) => api.listProjectMembers(projectId, signal),
+    enabled: !!projectId,
+  });
+}
+
+export function useRemoveProjectMember() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ projectId, memberId }: { projectId: string; memberId: string }) =>
+      api.removeProjectMember(projectId, memberId),
+    onSuccess: (_, { projectId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(projectId) });
+    },
+  });
+}
+
+export function useAssignQuest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ questId, assigneeId }: { questId: string; assigneeId: string }) =>
+      api.assignQuest(questId, assigneeId),
+    onSuccess: (quest) => {
+      patchQuestInListCaches(queryClient, quest.id, () => quest);
+    },
+  });
+}
+
 export function useStatsOverview() {
   return useQuery({
     queryKey: queryKeys.stats.overview,
