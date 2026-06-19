@@ -760,6 +760,10 @@ class ApiClient {
   async deleteNotification(id: string): Promise<void> {
     return this.request<void>(`/api/notifications/${id}`, { method: 'DELETE' });
   }
+
+  async deleteAllNotifications(): Promise<void> {
+    return this.request<void>('/api/notifications', { method: 'DELETE' });
+  }
 }
 
 export interface Page<T> {

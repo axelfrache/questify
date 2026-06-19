@@ -8,6 +8,7 @@ import {
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
   useDeleteNotification,
+  useDeleteAllNotifications,
 } from '@/hooks/use-api';
 import type { NotificationResponse, NotificationType } from '@/lib/api';
 
@@ -88,6 +89,7 @@ export function NotificationInbox() {
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
   const deleteNotification = useDeleteNotification();
+  const deleteAll = useDeleteAllNotifications();
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -110,15 +112,27 @@ export function NotificationInbox() {
       <PopoverContent align="end" sideOffset={8} className="w-80 p-0 overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <h3 className="text-sm font-semibold">{t('notifications.title')}</h3>
-          {unreadCount > 0 && (
-            <button
-              onClick={() => markAllRead.mutate()}
-              disabled={markAllRead.isPending}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-            >
-              <CheckCheck className="h-3.5 w-3.5" />
-              {t('notifications.mark_all_read')}
-            </button>
+          {notifications.length > 0 && (
+            <div className="flex items-center gap-3">
+              {unreadCount > 0 && (
+                <button
+                  onClick={() => markAllRead.mutate()}
+                  disabled={markAllRead.isPending}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                >
+                  <CheckCheck className="h-3.5 w-3.5" />
+                  {t('notifications.mark_all_read')}
+                </button>
+              )}
+              <button
+                onClick={() => deleteAll.mutate()}
+                disabled={deleteAll.isPending}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                {t('notifications.clear_all')}
+              </button>
+            </div>
           )}
         </div>
 

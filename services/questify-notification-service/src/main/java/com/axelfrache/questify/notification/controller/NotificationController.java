@@ -64,6 +64,12 @@ public class NotificationController {
     return ResponseEntity.noContent().build();
   }
 
+  @DeleteMapping
+  public ResponseEntity<Void> deleteAll(@AuthenticationPrincipal String userId) {
+    notificationService.deleteAll(UUID.fromString(userId));
+    return ResponseEntity.noContent().build();
+  }
+
   @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
   public SseEmitter stream(@AuthenticationPrincipal String userId) {
     return sseEmitterRegistry.subscribe(UUID.fromString(userId));

@@ -86,6 +86,13 @@ public class NotificationService {
         .ifPresent(notificationRepository::delete);
   }
 
+  @WithSpan("notification.delete_all")
+  @Transactional
+  public void deleteAll(UUID userId) {
+    setUuidAttribute("questify.user.id", userId);
+    notificationRepository.deleteByUserId(userId);
+  }
+
   @WithSpan("notification.create_scheduled_reminder")
   @Transactional
   public void createScheduledReminder(QuestScheduledEvent event) {

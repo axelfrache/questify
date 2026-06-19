@@ -744,3 +744,13 @@ export function useDeleteNotification() {
     },
   });
 }
+
+export function useDeleteAllNotifications() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.deleteAllNotifications(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+    },
+  });
+}
