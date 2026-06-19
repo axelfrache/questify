@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, Filter, ArrowUpDown, LayoutGrid } from 'lucide-react';
+import { Search, Filter, ArrowUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { GroupBy, SortBy, Density, QuickFilters } from '@/types/inboxTypes';
 import {
@@ -84,9 +84,7 @@ export function InboxControls({
 
   return (
     <div className="space-y-3">
-      {/* Unified toolbar */}
       <div className="flex items-center gap-0 rounded-md border border-border bg-card overflow-hidden">
-        {/* Search section */}
         <div className="flex flex-1 items-center gap-2 px-3 py-2">
           <Search className="h-[14px] w-[14px] shrink-0 text-muted-foreground" />
           <input
@@ -101,10 +99,8 @@ export function InboxControls({
           </kbd>
         </div>
 
-        {/* Separator */}
         <div className="h-6 w-px bg-border mx-0.5 shrink-0" />
 
-        {/* Filter (Group by) */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap h-full">
@@ -127,7 +123,6 @@ export function InboxControls({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Sort */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap h-full">
@@ -151,18 +146,27 @@ export function InboxControls({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Density */}
-        <button
-          onClick={onToggleDensity}
-          title={density === 'compact' ? t('inbox_controls.comfort') : t('inbox_controls.compact')}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap h-full"
-        >
-          <LayoutGrid className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">{DENSITY_LABELS[density]}</span>
-        </button>
+        <div className="flex items-center h-full">
+          {(['comfort', 'compact'] as const).map((mode, i) => (
+            <button
+              key={mode}
+              onClick={() => {
+                if (density !== mode) onToggleDensity();
+              }}
+              className={cn(
+                'flex items-center px-3 py-2 text-sm transition-colors whitespace-nowrap h-full',
+                i === 0 && 'border-r border-border',
+                density === mode
+                  ? 'text-foreground font-medium bg-muted/60'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              )}
+            >
+              {DENSITY_LABELS[mode]}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Filter chips + counter */}
       <div className="flex items-center gap-1.5">
         {chips.map((chip) => {
           const isActive = activeFilter === chip.id;

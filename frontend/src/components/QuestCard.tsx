@@ -53,6 +53,7 @@ function QuestCardInner({
   const isCompact = density === 'compact';
   const isCompleted = quest.status === 'COMPLETED';
   const hasRecurrence = quest.recurrenceInterval !== 'NONE';
+  const hasSubquests = quest.subquestCount > 0;
 
   const handleCheckboxClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (isCompleted || disabled || completing) return;
@@ -61,9 +62,60 @@ function QuestCardInner({
     setCompleting(true);
     setTimeout(() => {
       onComplete?.(quest.id, target);
-      // completing is cleared naturally on re-render when isCompleted becomes true
     }, 500);
   };
+
+  const handleContentClick = () => {
+    if (disabled || completing) return;
+    if (onView) onView(quest);
+    else if (!isCompleted) onEdit?.(quest);
+  };
+
+  const isClickable = (onView || (!isCompleted && onEdit)) && !disabled && !completing;
+
+  const actionsMenu = (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn(
+            'opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100',
+            isCompact ? 'h-6 w-6' : 'h-7 w-7'
+          )}
+          disabled={disabled}
+        >
+          <MoreVertical className={isCompact ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
+          <span className="sr-only">{t('quest_card.actions')}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => onEdit?.(quest)}>
+          <Edit className="mr-2 h-4 w-4" />
+          {t('quest_card.edit')}
+        </DropdownMenuItem>
+        {hasRecurrence && quest.status === 'PENDING' && onSkip && (
+          <DropdownMenuItem onClick={() => onSkip(quest.id)}>
+            <SkipForward className="mr-2 h-4 w-4" />
+            {t('quest_card.skip')}
+          </DropdownMenuItem>
+        )}
+        {!quest.parentId && onAddSubquest && (
+          <DropdownMenuItem onClick={() => onAddSubquest(quest)}>
+            <Plus className="mr-2 h-4 w-4" />
+            {t('quest_card.add_subquest')}
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem
+          onClick={() => onDelete?.(quest.id)}
+          className="text-destructive focus:text-destructive"
+        >
+          <Trash className="mr-2 h-4 w-4" />
+          {t('quest_card.delete')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   return (
     <div
@@ -75,140 +127,166 @@ function QuestCardInner({
         disabled && 'opacity-40 cursor-not-allowed'
       )}
     >
-      {/* Main row */}
-      <div
-        className={cn(
-          'relative flex items-center gap-3',
-          isCompact ? 'px-3.5 py-2.5' : 'px-4 py-3',
-          !isCompleted && !disabled && !completing && 'hover:bg-muted/40'
-        )}
-      >
-        {/* Checkbox */}
-        {!hideCheckbox && (
-          <div className="flex-shrink-0">
-            <Checkbox
-              checked={isCompleted || completing}
-              onClick={handleCheckboxClick}
-              disabled={isCompleted || isPending || disabled}
-              className="rounded-sm"
-            />
-          </div>
-        )}
-
-        {/* Content */}
+      {isCompact ? (
         <div
           className={cn(
-            'flex-1 min-w-0',
-            (onView || (!isCompleted && onEdit)) && !disabled && !completing && 'cursor-pointer'
+            'relative flex items-center gap-2 px-3 py-1.5',
+            !isCompleted && !disabled && !completing && 'hover:bg-muted/40'
           )}
-          onClick={() => {
-            if (disabled || completing) return;
-            if (onView) onView(quest);
-            else if (!isCompleted) onEdit?.(quest);
-          }}
         >
-          <div
+          {!hideCheckbox && (
+            <div className="flex-shrink-0">
+              <Checkbox
+                checked={isCompleted || completing}
+                onClick={handleCheckboxClick}
+                disabled={isCompleted || isPending || disabled}
+                className="rounded-sm"
+              />
+            </div>
+          )}
+
+          <span
             className={cn(
-              'text-sm font-medium leading-snug text-foreground',
+              'flex-1 min-w-0 text-sm leading-none truncate',
+              isClickable && 'cursor-pointer',
               (isCompleted || completing) && 'line-through text-muted-foreground'
             )}
+            onClick={handleContentClick}
           >
             {quest.title}
-          </div>
+          </span>
 
-          {/* Meta row */}
-          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-            <DifficultyChip difficulty={quest.difficulty} faded={isCompleted} />
+          {hasRecurrence && (
+            <span
+              className={cn('shrink-0 text-muted-foreground', isCompleted && 'opacity-50')}
+              title={RECURRENCE_LABELS[quest.recurrenceInterval]}
+            >
+              <Repeat2 className="h-3 w-3" />
+            </span>
+          )}
 
-            {hasRecurrence && (
-              <span
-                className={cn(
-                  'inline-flex items-center gap-1 text-[11px] text-muted-foreground',
-                  isCompleted && 'opacity-50'
-                )}
-              >
-                <Repeat2 className="h-3 w-3" />
-                {RECURRENCE_LABELS[quest.recurrenceInterval]}
-              </span>
-            )}
+          {hasSubquests && (
+            <span
+              className={cn(
+                'shrink-0 font-mono text-[10px] text-muted-foreground',
+                'rounded border border-border px-1.5 py-0.5 leading-none',
+                isCompleted && 'opacity-50'
+              )}
+            >
+              {quest.completedSubquestCount}/{quest.subquestCount}
+            </span>
+          )}
 
-            {showRegionMarker && quest.category?.name && (
-              <span
-                className={cn('text-[11px] text-muted-foreground', isCompleted && 'opacity-50')}
-              >
-                · {quest.category.name}
-              </span>
-            )}
+          <DifficultyChip difficulty={quest.difficulty} faded={isCompleted} />
 
-            {quest.parentTitle && (
-              <span
-                className={cn('text-[11px] text-muted-foreground', isCompleted && 'opacity-50')}
-              >
-                · {quest.parentTitle}
-              </span>
-            )}
-          </div>
-        </div>
+          {showRegionMarker && quest.category?.name && (
+            <span
+              className={cn(
+                'shrink-0 w-16 text-right truncate text-[11px] text-muted-foreground',
+                isCompleted && 'opacity-50'
+              )}
+            >
+              {quest.category.name}
+            </span>
+          )}
 
-        {/* Right: XP + actions */}
-        <div className="flex items-center gap-1.5 flex-shrink-0">
           <XpBadge xp={quest.totalXpReward} faded={isCompleted} />
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100"
-                disabled={disabled}
-              >
-                <MoreVertical className="h-3.5 w-3.5" />
-                <span className="sr-only">{t('quest_card.actions')}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit?.(quest)}>
-                <Edit className="mr-2 h-4 w-4" />
-                {t('quest_card.edit')}
-              </DropdownMenuItem>
-              {hasRecurrence && quest.status === 'PENDING' && onSkip && (
-                <DropdownMenuItem onClick={() => onSkip(quest.id)}>
-                  <SkipForward className="mr-2 h-4 w-4" />
-                  {t('quest_card.skip')}
-                </DropdownMenuItem>
-              )}
-              {!quest.parentId && onAddSubquest && (
-                <DropdownMenuItem onClick={() => onAddSubquest(quest)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t('quest_card.add_subquest')}
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem
-                onClick={() => onDelete?.(quest.id)}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash className="mr-2 h-4 w-4" />
-                {t('quest_card.delete')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {actionsMenu}
+
+          {completing && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute right-14 top-1/2 -translate-y-1/2 font-mono text-[13px] font-semibold text-primary"
+              style={{ animation: 'xpFloat 900ms ease-out forwards' }}
+            >
+              +{quest.totalXpReward} XP
+            </div>
+          )}
         </div>
+      ) : (
+        <div
+          className={cn(
+            'relative flex items-center gap-3 px-4 py-3',
+            !isCompleted && !disabled && !completing && 'hover:bg-muted/40'
+          )}
+        >
+          {!hideCheckbox && (
+            <div className="flex-shrink-0">
+              <Checkbox
+                checked={isCompleted || completing}
+                onClick={handleCheckboxClick}
+                disabled={isCompleted || isPending || disabled}
+                className="rounded-sm"
+              />
+            </div>
+          )}
 
-        {/* Floating XP text — plays during the 500ms completion window */}
-        {completing && (
           <div
-            aria-hidden
-            className="pointer-events-none absolute right-14 top-1/2 -translate-y-1/2 font-mono text-[13px] font-semibold text-primary"
-            style={{ animation: 'xpFloat 900ms ease-out forwards' }}
+            className={cn('flex-1 min-w-0', isClickable && 'cursor-pointer')}
+            onClick={handleContentClick}
           >
-            +{quest.totalXpReward} XP
-          </div>
-        )}
-      </div>
+            <div
+              className={cn(
+                'text-sm font-medium leading-snug text-foreground',
+                (isCompleted || completing) && 'line-through text-muted-foreground'
+              )}
+            >
+              {quest.title}
+            </div>
 
-      {/* Inline subquests — rendus dans le flux normal, le card s'étend verticalement */}
-      {showInlineSubquests && quest.subquestCount > 0 && (
-        <div className={isCompact ? 'px-3.5 pb-2.5' : 'px-4 pb-3'}>
+            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+              <DifficultyChip difficulty={quest.difficulty} faded={isCompleted} />
+
+              {hasRecurrence && (
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1 text-[11px] text-muted-foreground',
+                    isCompleted && 'opacity-50'
+                  )}
+                >
+                  <Repeat2 className="h-3 w-3" />
+                  {RECURRENCE_LABELS[quest.recurrenceInterval]}
+                </span>
+              )}
+
+              {showRegionMarker && quest.category?.name && (
+                <span
+                  className={cn('text-[11px] text-muted-foreground', isCompleted && 'opacity-50')}
+                >
+                  · {quest.category.name}
+                </span>
+              )}
+
+              {quest.parentTitle && (
+                <span
+                  className={cn('text-[11px] text-muted-foreground', isCompleted && 'opacity-50')}
+                >
+                  · {quest.parentTitle}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <XpBadge xp={quest.totalXpReward} faded={isCompleted} />
+            {actionsMenu}
+          </div>
+
+          {completing && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute right-14 top-1/2 -translate-y-1/2 font-mono text-[13px] font-semibold text-primary"
+              style={{ animation: 'xpFloat 900ms ease-out forwards' }}
+            >
+              +{quest.totalXpReward} XP
+            </div>
+          )}
+        </div>
+      )}
+
+      {!isCompact && showInlineSubquests && hasSubquests && (
+        <div className="px-4 pb-3">
           <InlineSubquests
             parentQuest={quest}
             onComplete={onComplete}
