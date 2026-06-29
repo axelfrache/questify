@@ -9,40 +9,40 @@ import { cn } from '@/lib/utils';
 
 const GRADES = [
   {
-    name: 'Initiate',
+    name: 'Flint',
     minLevel: 1,
     questsRequired: 0,
-    tooltip: 'Every legend begins with a single step.',
+    tooltip: 'Every spark begins here. Strike the stone.',
   },
   {
-    name: 'Traveler',
+    name: 'Iron',
     minLevel: 6,
     questsRequired: 10,
-    tooltip: 'The road stretches ahead. You have found your rhythm.',
+    tooltip: 'Solid. Reliable. You hold your ground.',
   },
   {
-    name: 'Explorer',
+    name: 'Gold',
     minLevel: 11,
     questsRequired: 25,
-    tooltip: 'Curiosity guides your path. New horizons await.',
+    tooltip: "You've earned something precious. Don't stop now.",
   },
   {
-    name: 'Adventurer',
+    name: 'Obsidian',
     minLevel: 21,
     questsRequired: 60,
-    tooltip: 'Challenges sharpen your spirit. You grow with each quest.',
+    tooltip: 'Forged under volcanic pressure. Sharp, dark, unstoppable.',
   },
   {
-    name: 'Hero',
+    name: 'Sapphire',
     minLevel: 36,
     questsRequired: 150,
-    tooltip: 'Your actions inspire others. A true hero rises.',
+    tooltip: 'Rare and brilliant. You are not like the others.',
   },
   {
-    name: 'Legend',
+    name: 'Diamond',
     minLevel: 51,
     questsRequired: 400,
-    tooltip: 'Stories will be told of your journey. You are eternal.',
+    tooltip: 'Formed under the greatest pressure. Nothing can break you.',
   },
 ];
 

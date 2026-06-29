@@ -45,7 +45,7 @@ public class UserProgression {
   @Enumerated(EnumType.STRING)
   @Builder.Default
   @Column(nullable = false)
-  private Grade grade = Grade.INITIATE;
+  private Grade grade = Grade.FLINT;
 
   @CreationTimestamp
   @Column(nullable = false, updatable = false)

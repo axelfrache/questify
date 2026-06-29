@@ -39,3 +39,12 @@ CREATE TABLE IF NOT EXISTS progression.quest_completion_records (
 
 CREATE INDEX IF NOT EXISTS idx_qcr_user_id ON progression.quest_completion_records(user_id);
 CREATE INDEX IF NOT EXISTS idx_ua_user_id ON progression.user_achievements(user_id);
+
+UPDATE progression.user_progressions SET grade = 'FLINT'    WHERE grade = 'INITIATE';
+UPDATE progression.user_progressions SET grade = 'IRON'     WHERE grade = 'TRAVELER';
+UPDATE progression.user_progressions SET grade = 'GOLD'     WHERE grade = 'EXPLORER';
+UPDATE progression.user_progressions SET grade = 'OBSIDIAN' WHERE grade = 'ADVENTURER';
+UPDATE progression.user_progressions SET grade = 'SAPPHIRE' WHERE grade = 'HERO';
+UPDATE progression.user_progressions SET grade = 'DIAMOND'  WHERE grade = 'LEGEND';
+
+ALTER TABLE progression.user_progressions ALTER COLUMN grade SET DEFAULT 'FLINT';

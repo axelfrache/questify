@@ -63,7 +63,7 @@ export function ProfilePage() {
   }
 
   const level = progression?.level ?? 1;
-  const gradeLabel = progression?.gradeLabel ?? 'Initiate';
+  const gradeLabel = progression?.gradeLabel ?? 'Flint';
   const totalXp = overview?.totalXp ?? progression?.totalXp ?? 0;
   const currentStreak = overview?.currentStreak ?? 0;
   const totalCompleted = overview?.totalCompleted ?? 0;

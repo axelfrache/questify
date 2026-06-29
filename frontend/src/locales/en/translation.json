@@ -285,18 +285,18 @@
     "complete_quests": "Complete {{count}} quests",
     "quests_progress": "{{completed}} / {{required}} quests",
     "grades": {
-      "Initiate": "Initiate",
-      "Traveler": "Traveler",
-      "Explorer": "Explorer",
-      "Adventurer": "Adventurer",
-      "Hero": "Hero",
-      "Legend": "Legend",
-      "Initiate_tooltip": "Every legend begins with a single step.",
-      "Traveler_tooltip": "The road stretches ahead. You have found your rhythm.",
-      "Explorer_tooltip": "Curiosity guides your path. New horizons await.",
-      "Adventurer_tooltip": "Challenges sharpen your spirit. You grow with each quest.",
-      "Hero_tooltip": "Your actions inspire others. A true hero rises.",
-      "Legend_tooltip": "Stories will be told of your journey. You are eternal."
+      "Flint": "Flint",
+      "Iron": "Iron",
+      "Gold": "Gold",
+      "Obsidian": "Obsidian",
+      "Sapphire": "Sapphire",
+      "Diamond": "Diamond",
+      "Flint_tooltip": "Every spark begins here. Strike the stone.",
+      "Iron_tooltip": "Solid. Reliable. You hold your ground.",
+      "Gold_tooltip": "You've earned something precious. Don't stop now.",
+      "Obsidian_tooltip": "Forged under volcanic pressure. Sharp, dark, unstoppable.",
+      "Sapphire_tooltip": "Rare and brilliant. You are not like the others.",
+      "Diamond_tooltip": "Formed under the greatest pressure. Nothing can break you."
     }
   },
   "upcoming": {
