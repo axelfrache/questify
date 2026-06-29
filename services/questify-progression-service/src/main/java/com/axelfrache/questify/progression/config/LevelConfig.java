@@ -13,13 +13,13 @@ import org.springframework.context.annotation.Configuration;
 public class LevelConfig {
 
   private int baseXp = 100;
-  private double multiplier = 1.0;
+  private double exponent = 1.8;
 
   @Getter(lombok.AccessLevel.NONE)
   private final ConcurrentHashMap<Integer, Long> totalXpCache = new ConcurrentHashMap<>();
 
   public long requiredXpForLevel(int level) {
-    return Math.round(baseXp * level * multiplier);
+    return Math.round(baseXp * Math.pow(level, exponent));
   }
 
   public long totalXpForLevel(int level) {
