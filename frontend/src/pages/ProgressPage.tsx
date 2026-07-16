@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Zap, Star, Check, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { gradeStyle } from '@/lib/grade-config';
 
 const GRADES = [
   {
@@ -121,6 +122,7 @@ export function ProgressPage() {
             {GRADES.map((grade, index) => {
               const isPast = index < currentGradeIndex;
               const isCurrent = index === currentGradeIndex;
+              const style = gradeStyle(grade.name);
 
               return (
                 <div
@@ -138,8 +140,12 @@ export function ProgressPage() {
                           className={cn(
                             'flex h-9 w-9 cursor-default items-center justify-center rounded-full border-2 font-mono text-xs font-medium transition-all',
                             isCurrent &&
-                              'border-primary bg-primary text-primary-foreground shadow-[0_0_0_3px_oklch(0.56_0.18_275_/_0.15)]',
-                            isPast && 'border-muted-foreground/40 bg-muted text-muted-foreground',
+                              cn(
+                                style.solid,
+                                style.ring,
+                                'text-primary-foreground ring-[3px]'
+                              ),
+                            isPast && cn(style.border, style.bg, style.text),
                             !isCurrent &&
                               !isPast &&
                               'border-border bg-muted/30 text-muted-foreground'
@@ -162,7 +168,7 @@ export function ProgressPage() {
                     <span
                       className={cn(
                         'text-center text-[10px] leading-tight',
-                        isCurrent && 'font-medium text-foreground',
+                        isCurrent && cn('font-medium', style.text),
                         !isCurrent && 'text-muted-foreground'
                       )}
                     >
@@ -192,7 +198,12 @@ export function ProgressPage() {
             <span className="text-xs text-muted-foreground">{t('progress.current_grade')}</span>
           </div>
           <div className="flex items-baseline justify-between gap-2">
-            <span className="font-mono text-3xl font-medium tracking-tight">
+            <span
+              className={cn(
+                'font-mono text-3xl font-medium tracking-tight',
+                gradeStyle(currentGrade).text
+              )}
+            >
               {t('progress.grades.' + currentGrade)}
             </span>
             <span className="text-sm text-muted-foreground">

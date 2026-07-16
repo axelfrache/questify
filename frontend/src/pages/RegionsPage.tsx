@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useCategories, useDeleteCategory, useQuests } from '@/hooks/use-api';
+import { useCategories, useDeleteCategory, useQuests, useStatsByCategory } from '@/hooks/use-api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -15,6 +15,7 @@ export function RegionsPage() {
   const { t } = useTranslation();
   const { data: categories, isLoading } = useCategories();
   const { data: quests } = useQuests(undefined, 'inbox');
+  const { data: categoryStats } = useStatsByCategory();
   const deleteCategory = useDeleteCategory();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -30,6 +31,14 @@ export function RegionsPage() {
     }
     return counts;
   }, [quests]);
+
+  const statsByCategoryName = useMemo(() => {
+    const map: Record<string, { questsCompleted: number; xpEarned: number }> = {};
+    for (const s of categoryStats ?? []) {
+      map[s.categoryName] = { questsCompleted: s.questsCompleted, xpEarned: s.xpEarned };
+    }
+    return map;
+  }, [categoryStats]);
 
   const handleDelete = (questAction: 'MOVE_TO_INBOX' | 'DELETE_ALL') => {
     if (!deletingCategory) return;
@@ -83,6 +92,8 @@ export function RegionsPage() {
               key={cat.id}
               stats={cat}
               questCount={questCountByCategory[cat.id] ?? 0}
+              completedCount={statsByCategoryName[cat.name]?.questsCompleted ?? 0}
+              xpEarned={statsByCategoryName[cat.name]?.xpEarned ?? 0}
               onClick={() => navigate(`/inbox?category=${cat.id}`)}
               onEdit={() => setEditingCategory(cat)}
               onDelete={() => setDeletingCategory(cat)}

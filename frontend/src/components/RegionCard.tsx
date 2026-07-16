@@ -13,6 +13,8 @@ import type { CategoryResponse } from '@/lib/api';
 interface RegionCardProps {
   stats: CategoryResponse;
   questCount?: number;
+  completedCount?: number;
+  xpEarned?: number;
   onClick?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -27,9 +29,19 @@ function getRegionIcon(stats: CategoryResponse): string {
   return '🧭';
 }
 
-export function RegionCard({ stats, questCount = 0, onClick, onEdit, onDelete }: RegionCardProps) {
+export function RegionCard({
+  stats,
+  questCount = 0,
+  completedCount = 0,
+  xpEarned = 0,
+  onClick,
+  onEdit,
+  onDelete,
+}: RegionCardProps) {
   const { t } = useTranslation();
   const canManage = stats.source !== 'GLOBAL';
+  const totalQuests = questCount + completedCount;
+  const explorationPercent = totalQuests > 0 ? Math.round((completedCount / totalQuests) * 100) : 0;
 
   return (
     <div
@@ -109,6 +121,27 @@ export function RegionCard({ stats, questCount = 0, onClick, onEdit, onDelete }:
           </DropdownMenu>
         )}
       </div>
+
+      {totalQuests > 0 && (
+        <div className="space-y-1.5 px-3.5 pb-3">
+          <div className="h-1 w-full overflow-hidden rounded-full bg-muted/40">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${explorationPercent}%`, background: stats.color }}
+            />
+          </div>
+          <div className="flex items-center justify-between font-mono text-[10px]">
+            <span className="text-muted-foreground">
+              {t('region_card.explored', { done: completedCount, total: totalQuests })}
+            </span>
+            {xpEarned > 0 && (
+              <span style={{ color: stats.color }}>
+                {t('region_card.xp', { xp: xpEarned.toLocaleString() })}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

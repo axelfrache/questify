@@ -433,9 +433,16 @@
   "region_card": {
     "quest_count_one": "{{count}} quête",
     "quest_count_other": "{{count}} quêtes",
+    "explored": "{{done}}/{{total}} terminées",
+    "xp": "{{xp}} XP",
     "actions": "Actions de la région",
     "edit": "Modifier",
     "delete": "Supprimer"
+  },
+  "level_up": {
+    "title": "Niveau supérieur",
+    "new_grade": "Nouveau grade débloqué",
+    "continue": "Continuer"
   },
   "admin": {
     "title": "Admin",

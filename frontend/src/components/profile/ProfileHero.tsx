@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowUpRight, Pencil, Sparkles, Target, Zap } from 'lucide-react';
+import { ArrowUpRight, Flame, Pencil, Target, Zap } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { GradeBadge } from '@/components/ui/grade-badge';
 import { Progress } from '@/components/ui/progress';
 
 interface ProfileHeroProps {
@@ -57,11 +58,7 @@ export function ProfileHero({
               <h1 className="truncate text-2xl font-semibold tracking-tight sm:text-3xl">
                 {username}
               </h1>
-              <div className="inline-flex items-center gap-2 rounded-md border border-border/70 bg-muted/50 px-2.5 py-1 text-xs">
-                <span className="font-semibold text-primary">Lvl {level}</span>
-                <span className="h-3 w-px bg-border" />
-                <span className="text-muted-foreground">{gradeLabel}</span>
-              </div>
+              <GradeBadge grade={gradeLabel} level={level} />
               {trimmedBio && (
                 <p className="text-sm text-muted-foreground leading-relaxed max-w-lg">
                   {trimmedBio}
@@ -87,7 +84,7 @@ export function ProfileHero({
           </div>
           <span className="h-3 w-px bg-border" />
           <div className="flex items-center gap-2">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <Flame className="h-3.5 w-3.5 text-streak" />
             <span className="font-mono font-medium">{currentStreak}</span>
             <span className="text-muted-foreground">{t('profile_hero.day_streak')}</span>
           </div>

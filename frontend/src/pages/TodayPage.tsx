@@ -14,28 +14,8 @@ import { type QuestResponse } from '@/lib/api';
 import { QuestCard } from '@/components/QuestCard';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import { QuestViewDialog } from '@/components/QuestViewDialog';
-import confetti from 'canvas-confetti';
-import { Flame } from 'lucide-react';
-
-const fireConfettiFromElement = (element: HTMLElement) => {
-  const rect = element.getBoundingClientRect();
-  const x = rect.left + rect.width / 2;
-  const y = rect.top + rect.height / 2;
-
-  confetti({
-    particleCount: 50,
-    spread: 60,
-    origin: {
-      x: x / window.innerWidth,
-      y: y / window.innerHeight,
-    },
-    colors: ['#4f46e5', '#818cf8', '#c7d2fe', '#a855f7', '#6366f1', '#e0e7ff'],
-    startVelocity: 25,
-    gravity: 0.8,
-    scalar: 0.9,
-    ticks: 100,
-  });
-};
+import { StreakBadge } from '@/components/ui/streak-badge';
+import { fireConfettiFromElement } from '@/lib/celebration';
 
 export function TodayPage() {
   const { t, i18n } = useTranslation();
@@ -144,19 +124,7 @@ export function TodayPage() {
               </p>
             </div>
 
-            {streak > 0 && (
-              <div
-                className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium"
-                style={{
-                  background: 'oklch(0.96 0.04 50)',
-                  borderColor: 'oklch(0.88 0.08 50)',
-                  color: 'oklch(0.55 0.15 40)',
-                }}
-              >
-                <Flame className="h-3 w-3" />
-                <span className="font-mono">{t('today.streak', { count: streak })}</span>
-              </div>
-            )}
+            {streak > 0 && <StreakBadge>{t('today.streak', { count: streak })}</StreakBadge>}
           </div>
 
           <div className="relative mt-4">

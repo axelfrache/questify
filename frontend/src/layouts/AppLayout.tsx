@@ -13,7 +13,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Plus, Zap } from 'lucide-react';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
+import { LevelUpOverlay } from '@/components/LevelUpOverlay';
 import { NotificationInbox } from '@/components/NotificationInbox';
+import { GradeGem } from '@/components/ui/grade-badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjectDetail, useUserProgression } from '@/hooks/use-api';
 import { useNotificationStream } from '@/hooks/useNotificationStream';
@@ -89,6 +91,7 @@ export function AppLayout() {
                   {progression.totalXp.toLocaleString()} XP
                 </span>
                 <span className="h-3 w-px bg-border" />
+                <GradeGem grade={progression.gradeLabel} className="h-1.5 w-1.5" />
                 <span className="text-[11px] text-muted-foreground">Lvl {progression.level}</span>
               </div>
             )}
@@ -110,6 +113,7 @@ export function AppLayout() {
             onOpenChange={setIsCreateDialogOpen}
             onQuestCreated={() => {}}
           />
+          <LevelUpOverlay />
         </div>
       </div>
     </SidebarProvider>
