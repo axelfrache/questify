@@ -110,8 +110,8 @@ public class ProgressionService {
   }
 
   private ProgressionResponse toResponse(UserProgression p) {
-    var level = p.getLevel();
-    var grade = p.getGrade();
+    var level = calculateLevel(p.getTotalXp());
+    var grade = Grade.fromLevel(level);
     var xpIntoCurrentLevel = p.getTotalXp() - levelConfig.totalXpForLevel(level - 1);
     var xpNeededForNext = levelConfig.requiredXpForLevel(level);
     var progressPercent =
