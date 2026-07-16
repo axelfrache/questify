@@ -140,11 +140,7 @@ export function ProgressPage() {
                           className={cn(
                             'flex h-9 w-9 cursor-default items-center justify-center rounded-full border-2 font-mono text-xs font-medium transition-all',
                             isCurrent &&
-                              cn(
-                                style.solid,
-                                style.ring,
-                                'text-primary-foreground ring-[3px]'
-                              ),
+                              cn(style.solid, style.ring, 'text-primary-foreground ring-[3px]'),
                             isPast && cn(style.border, style.bg, style.text),
                             !isCurrent &&
                               !isPast &&
