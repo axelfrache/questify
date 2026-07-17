@@ -614,7 +614,7 @@ class ApiClient {
     });
   }
 
-  async assignQuest(questId: string, assigneeId: string): Promise<QuestResponse> {
+  async assignQuest(questId: string, assigneeId: string | null): Promise<QuestResponse> {
     return this.request<QuestResponse>(`/api/quests/${questId}/assign`, {
       method: 'PATCH',
       body: JSON.stringify({ assigneeId }),
@@ -635,6 +635,12 @@ class ApiClient {
 
   async getUserProfile(id: string, signal?: AbortSignal): Promise<UserDto> {
     return this.request<UserDto>(`/api/users/${id}`, { signal });
+  }
+
+  async getUserSummaries(ids: string[], signal?: AbortSignal): Promise<PublicUserResponse[]> {
+    return this.request<PublicUserResponse[]>(`/api/users/summaries?ids=${ids.join(',')}`, {
+      signal,
+    });
   }
 
   async getUserProgression(id: string): Promise<UserProgressionDto> {
@@ -852,6 +858,12 @@ export interface ProjectMemberResponse {
   userId: string;
   role: 'OWNER' | 'MEMBER';
   joinedAt: string;
+}
+
+export interface PublicUserResponse {
+  id: string;
+  username: string;
+  profilePictureUrl: string | null;
 }
 
 export interface ProjectDetailResponse {

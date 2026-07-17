@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreVertical, Edit, Trash, SkipForward, Plus, Repeat2 } from 'lucide-react';
+import { MoreVertical, Edit, Trash, SkipForward, Plus, Repeat2, UserPlus } from 'lucide-react';
 import { DifficultyChip } from '@/components/ui/quest-meta-chip';
 import { XpBadge } from '@/components/ui/xp-badge';
 import { InlineSubquests } from '@/components/InlineSubquests';
@@ -24,6 +24,8 @@ interface QuestCardProps {
   onEdit?: (quest: QuestResponse) => void;
   onDelete?: (id: string) => void;
   onSkip?: (id: string) => void;
+  onAssign?: (quest: QuestResponse) => void;
+  assigneeName?: string;
   onAddSubquest?: (parentQuest: QuestResponse) => void;
   isPending?: boolean;
   disabled?: boolean;
@@ -41,6 +43,8 @@ function QuestCardInner({
   onEdit,
   onDelete,
   onSkip,
+  onAssign,
+  assigneeName,
   onAddSubquest,
   isPending = false,
   disabled = false,
@@ -100,6 +104,12 @@ function QuestCardInner({
           <DropdownMenuItem onClick={() => onSkip(quest.id)}>
             <SkipForward className="mr-2 h-4 w-4" />
             {t('quest_card.skip')}
+          </DropdownMenuItem>
+        )}
+        {onAssign && quest.status === 'PENDING' && (
+          <DropdownMenuItem onClick={() => onAssign(quest)}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            {t('quest_card.assign')}
           </DropdownMenuItem>
         )}
         {!quest.parentId && onAddSubquest && (
@@ -265,6 +275,18 @@ function QuestCardInner({
                   className={cn('text-[11px] text-muted-foreground', isCompleted && 'opacity-50')}
                 >
                   · {quest.parentTitle}
+                </span>
+              )}
+
+              {assigneeName && (
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1 text-[11px] text-muted-foreground',
+                    isCompleted && 'opacity-50'
+                  )}
+                >
+                  <UserPlus className="h-3 w-3" />
+                  {assigneeName}
                 </span>
               )}
             </div>

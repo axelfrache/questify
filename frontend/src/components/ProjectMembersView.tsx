@@ -1,7 +1,13 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
-import { useInviteProject, useRemoveProjectMember, useProjectMembers } from '@/hooks/use-api';
+import {
+  useInviteProject,
+  useRemoveProjectMember,
+  useProjectMembers,
+  useUserSummaries,
+} from '@/hooks/use-api';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -24,6 +30,8 @@ export function ProjectMembersView({ project, quests }: ProjectMembersViewProps)
   const { t } = useTranslation();
   const { user } = useAuth();
   const { data: members = [] } = useProjectMembers(project.id);
+  const { data: summaries } = useUserSummaries(members.map((m) => m.userId));
+  const userById = useMemo(() => new Map((summaries ?? []).map((u) => [u.id, u])), [summaries]);
   const inviteMutation = useInviteProject();
   const removeMutation = useRemoveProjectMember();
 
@@ -81,15 +89,33 @@ export function ProjectMembersView({ project, quests }: ProjectMembersViewProps)
         {members.map((member) => {
           const questCount = getMemberQuestCount(member.userId);
           const isCurrentUser = member.userId === user?.id;
+          const summary = userById.get(member.userId);
+          const name = summary?.username ?? `User ${member.userId.slice(0, 8)}`;
 
           return (
             <div
               key={member.userId}
-              className="flex items-center justify-between p-3 rounded-lg border bg-card"
+              className="flex items-center justify-between gap-3 p-3 rounded-lg border bg-card"
             >
-              <div className="flex-1">
-                <div className="text-sm font-medium">
-                  {isCurrentUser ? t('project_detail.you') : `User ${member.userId.slice(0, 8)}`}
+              <Avatar className="size-8">
+                <AvatarImage src={summary?.profilePictureUrl || undefined} alt={name} />
+                <AvatarFallback className="text-xs font-medium">
+                  {name.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 text-sm font-medium">
+                  <span className="truncate">{name}</span>
+                  {isCurrentUser && (
+                    <span className="text-xs font-normal text-muted-foreground">
+                      ({t('project_detail.you')})
+                    </span>
+                  )}
+                  {member.role === 'OWNER' && (
+                    <span className="rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                      {t('project_detail.role_owner')}
+                    </span>
+                  )}
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {questCount} {t('project_detail.open_quest', { count: questCount })}

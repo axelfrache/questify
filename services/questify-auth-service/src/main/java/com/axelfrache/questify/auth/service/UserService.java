@@ -1,6 +1,7 @@
 package com.axelfrache.questify.auth.service;
 
 import com.axelfrache.questify.auth.dto.ChangePasswordRequest;
+import com.axelfrache.questify.auth.dto.PublicUserResponse;
 import com.axelfrache.questify.auth.dto.UpdateUserRequest;
 import com.axelfrache.questify.auth.dto.UserDto;
 import com.axelfrache.questify.auth.messaging.UserEventPublisher;
@@ -11,6 +12,7 @@ import com.axelfrache.questify.auth.repository.UserRepository;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,15 @@ public class UserService {
   public UserDto getUserById(UUID id) {
     setUuidAttribute("questify.user.id", id);
     return toUserDto(findUserOrThrow(id));
+  }
+
+  @Transactional(readOnly = true)
+  @WithSpan("user.get_public_summaries")
+  public List<PublicUserResponse> getPublicUsers(List<UUID> ids) {
+    Span.current().setAttribute("questify.user.summary_count", ids.size());
+    return userRepository.findAllById(ids).stream()
+        .map(u -> new PublicUserResponse(u.getId(), u.getUsername(), u.getProfilePictureUrl()))
+        .toList();
   }
 
   @Transactional

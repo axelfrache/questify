@@ -45,6 +45,7 @@ export const queryKeys = {
   },
   users: {
     profile: (id: string) => ['users', 'profile', id] as const,
+    summaries: (ids: string[]) => ['users', 'summaries', ids.join(',')] as const,
   },
   admin: {
     settings: ['admin', 'settings'] as const,
@@ -548,10 +549,13 @@ export function useRemoveProjectMember() {
 export function useAssignQuest() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ questId, assigneeId }: { questId: string; assigneeId: string }) =>
+    mutationFn: ({ questId, assigneeId }: { questId: string; assigneeId: string | null }) =>
       api.assignQuest(questId, assigneeId),
     onSuccess: (quest) => {
       patchQuestInListCaches(queryClient, quest.id, () => quest);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.quests.all });
     },
   });
 }
@@ -590,6 +594,16 @@ export function useUserProgression(id?: string) {
     queryKey: queryKeys.progression.byUser(id ?? ''),
     queryFn: () => api.getUserProgression(id ?? ''),
     enabled: !!id,
+  });
+}
+
+export function useUserSummaries(ids: string[]) {
+  const sorted = [...ids].sort();
+  return useQuery({
+    queryKey: queryKeys.users.summaries(sorted),
+    queryFn: ({ signal }) => api.getUserSummaries(sorted, signal),
+    enabled: sorted.length > 0,
+    staleTime: 5 * 60_000,
   });
 }
 

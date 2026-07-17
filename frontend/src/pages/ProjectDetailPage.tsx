@@ -5,8 +5,10 @@ import {
   useCompleteQuest,
   useDeleteQuest,
   useProjectDetail,
+  useProjectMembers,
   useProjectQuests,
   useSkipQuest,
+  useUserSummaries,
 } from '@/hooks/use-api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -15,6 +17,7 @@ import { QuestCard } from '@/components/QuestCard';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import { QuestViewDialog } from '@/components/QuestViewDialog';
 import { ProjectMembersView } from '@/components/ProjectMembersView';
+import { AssignQuestDialog } from '@/components/AssignQuestDialog';
 import { type QuestResponse } from '@/lib/api';
 import { Plus } from 'lucide-react';
 import { fireConfettiFromElement } from '@/lib/celebration';
@@ -32,7 +35,15 @@ export function ProjectDetailPage() {
   const [viewingQuest, setViewingQuest] = useState<QuestResponse | null>(null);
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
   const [parentQuest, setParentQuest] = useState<QuestResponse | null>(null);
+  const [assigningQuest, setAssigningQuest] = useState<QuestResponse | null>(null);
   const [activeTab, setActiveTab] = useState<'quests' | 'members'>('quests');
+
+  const { data: members = [] } = useProjectMembers(id);
+  const { data: memberSummaries } = useUserSummaries(members.map((m) => m.userId));
+  const memberNameById = useMemo(
+    () => new Map((memberSummaries ?? []).map((u) => [u.id, u.username])),
+    [memberSummaries]
+  );
 
   const stats = useMemo(() => {
     if (!quests) return null;
@@ -196,6 +207,10 @@ export function ProjectDetailPage() {
                         onEdit={setEditingQuest}
                         onDelete={handleDelete}
                         onSkip={(questId) => skipQuestMutation.mutate(questId)}
+                        onAssign={setAssigningQuest}
+                        assigneeName={
+                          quest.assigneeId ? memberNameById.get(quest.assigneeId) : undefined
+                        }
                         onAddSubquest={setParentQuest}
                         isPending={completeQuestMutation.isPending}
                         showInlineSubquests
@@ -220,6 +235,9 @@ export function ProjectDetailPage() {
                         onView={setViewingQuest}
                         onEdit={setEditingQuest}
                         onDelete={handleDelete}
+                        assigneeName={
+                          quest.assigneeId ? memberNameById.get(quest.assigneeId) : undefined
+                        }
                         isPending={completeQuestMutation.isPending}
                         showRegionMarker
                       />
@@ -238,6 +256,12 @@ export function ProjectDetailPage() {
         onOpenChange={(open) => !open && setViewingQuest(null)}
         onEdit={setEditingQuest}
         onComplete={handleComplete}
+      />
+
+      <AssignQuestDialog
+        quest={assigningQuest}
+        projectId={id}
+        onOpenChange={(open) => !open && setAssigningQuest(null)}
       />
 
       <CreateQuestDialog

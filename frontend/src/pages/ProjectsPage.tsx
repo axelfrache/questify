@@ -34,6 +34,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
+import { JoinProjectDialog } from '@/components/JoinProjectDialog';
 import {
   Archive,
   ArchiveRestore,
@@ -45,6 +46,7 @@ import {
   Star,
   StarOff,
   ListFilter,
+  UserPlus,
 } from 'lucide-react';
 import { DropdownMenuContent as SortMenuContent } from '@/components/ui/dropdown-menu';
 
@@ -75,6 +77,7 @@ export function ProjectsPage() {
     quests: t('projects.sort_quests'),
   };
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isJoinOpen, setIsJoinOpen] = useState(false);
   const [projectToEdit, setProjectToEdit] = useState<ProjectSummaryResponse | null>(null);
   const [quickCreateProject, setQuickCreateProject] = useState<ProjectSummaryResponse | null>(null);
   const [createPrefillName, setCreatePrefillName] = useState('');
@@ -156,10 +159,21 @@ export function ProjectsPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t('projects.title')}</h1>
           <p className="text-sm text-muted-foreground">{t('projects.description')}</p>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)} size="sm" className="gap-1.5 shrink-0">
-          <Plus className="h-3.5 w-3.5" />
-          {t('projects.new_project')}
-        </Button>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            onClick={() => setIsJoinOpen(true)}
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+          >
+            <UserPlus className="h-3.5 w-3.5" />
+            {t('projects.join_project')}
+          </Button>
+          <Button onClick={() => setIsCreateOpen(true)} size="sm" className="gap-1.5">
+            <Plus className="h-3.5 w-3.5" />
+            {t('projects.new_project')}
+          </Button>
+        </div>
       </div>
 
       {/* Search + sort toolbar */}
@@ -267,6 +281,8 @@ export function ProjectsPage() {
         onOpenChange={(open) => !open && setQuickCreateProject(null)}
         projectId={quickCreateProject?.id}
       />
+
+      <JoinProjectDialog open={isJoinOpen} onOpenChange={setIsJoinOpen} />
 
       <ConfirmDialog
         open={!!deleteTarget}

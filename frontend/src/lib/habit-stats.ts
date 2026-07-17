@@ -5,11 +5,9 @@ import type { RecurrenceType } from '@/lib/quest-config';
 export type StreakUnit = 'day' | 'week' | 'month';
 
 export interface HabitStats {
-  /** UTC day keys (YYYY-MM-DD) with at least one completion */
   dayKeys: Set<string>;
   streak: number;
   streakUnit: StreakUnit;
-  /** Completions in the last 30 days */
   count30: number;
 }
 
@@ -43,11 +41,6 @@ function prevUtcMonth(date: Date) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - 1, 1));
 }
 
-/**
- * Counts consecutive periods with a completion, walking back from `now`.
- * The current period is a grace period: an empty current period does not
- * break the streak, it just is not counted yet.
- */
 function countStreak(has: (d: Date) => boolean, prev: (d: Date) => Date, now: Date) {
   let cursor = has(now) ? now : prev(now);
   let streak = 0;
@@ -97,7 +90,6 @@ export function computeHabitStats(
   return { dayKeys, streak, streakUnit, count30 };
 }
 
-/** Last `days` UTC day keys, oldest first, ending today. */
 export function lastUtcDayKeys(days: number, now = new Date()) {
   return Array.from({ length: days }, (_, i) => getUtcDateKey(addUtcDays(now, -(days - 1 - i))));
 }

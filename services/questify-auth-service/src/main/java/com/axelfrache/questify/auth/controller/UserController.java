@@ -2,11 +2,13 @@ package com.axelfrache.questify.auth.controller;
 
 import com.axelfrache.questify.auth.dto.ChangePasswordRequest;
 import com.axelfrache.questify.auth.dto.DeleteAccountRequest;
+import com.axelfrache.questify.auth.dto.PublicUserResponse;
 import com.axelfrache.questify.auth.dto.UpdateUserRequest;
 import com.axelfrache.questify.auth.dto.UserDto;
 import com.axelfrache.questify.auth.security.SecurityUtils;
 import com.axelfrache.questify.auth.service.UserService;
 import jakarta.validation.Valid;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -27,6 +29,12 @@ public class UserController {
   public ResponseEntity<UserDto> getUser(Authentication authentication, @PathVariable UUID id) {
     securityUtils.validateOwnership(authentication, id);
     return ResponseEntity.ok(userService.getUserById(id));
+  }
+
+  @GetMapping("/summaries")
+  public ResponseEntity<List<PublicUserResponse>> getUserSummaries(@RequestParam List<UUID> ids) {
+    if (ids.size() > 100) throw new IllegalArgumentException("Too many ids requested");
+    return ResponseEntity.ok(userService.getPublicUsers(ids));
   }
 
   @PutMapping("/{id}")
