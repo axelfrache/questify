@@ -10,13 +10,14 @@ import { getUtcDateKey } from '@/lib/activity-completion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MonthlyActivityGraph } from '@/components/ui/monthly-activity-graph';
+import { StreakBadge } from '@/components/ui/streak-badge';
 import { Calendar, LayoutGrid, Map } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 
 export function StatsPage() {
   const { t, i18n } = useTranslation();
-  const { isLoading: isLoadingOverview } = useStatsOverview();
+  const { data: overview, isLoading: isLoadingOverview } = useStatsOverview();
   const { data: categoryStats, isLoading: isLoadingCategories } = useStatsByCategory();
   const { data: categories } = useCategories();
   const { data: dailyStats, isLoading: isLoadingDaily } = useStatsByDay(7);
@@ -116,6 +117,9 @@ export function StatsPage() {
             </p>
           </div>
           <div className="flex items-start gap-5">
+            {(overview?.currentStreak ?? 0) > 0 && (
+              <StreakBadge>{t('stats.streak', { count: overview!.currentStreak })}</StreakBadge>
+            )}
             <div className="text-right">
               <p className="font-mono text-lg font-medium leading-none">{weeklyActiveDays}</p>
               <p className="mt-0.5 text-[10px] text-muted-foreground">{t('stats.active_days')}</p>
@@ -190,7 +194,7 @@ export function StatsPage() {
         <div className="mt-3 flex items-center justify-end gap-3 text-[10px] text-muted-foreground">
           {[
             { label: t('stats.full'), cls: 'bg-primary' },
-            { label: t('stats.partial'), cls: 'bg-primary/60' },
+            { label: t('stats.partial'), cls: 'bg-primary/55' },
             { label: t('stats.none'), cls: 'bg-muted/50' },
           ].map(({ label, cls }) => (
             <span key={label} className="flex items-center gap-1">

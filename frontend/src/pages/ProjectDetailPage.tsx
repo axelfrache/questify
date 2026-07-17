@@ -17,24 +17,7 @@ import { QuestViewDialog } from '@/components/QuestViewDialog';
 import { ProjectMembersView } from '@/components/ProjectMembersView';
 import { type QuestResponse } from '@/lib/api';
 import { Plus } from 'lucide-react';
-import confetti from 'canvas-confetti';
-
-const fireConfettiFromElement = (element: HTMLElement) => {
-  const rect = element.getBoundingClientRect();
-  confetti({
-    particleCount: 50,
-    spread: 60,
-    origin: {
-      x: (rect.left + rect.width / 2) / window.innerWidth,
-      y: (rect.top + rect.height / 2) / window.innerHeight,
-    },
-    colors: ['#4f46e5', '#818cf8', '#c7d2fe', '#a855f7', '#6366f1', '#e0e7ff'],
-    startVelocity: 25,
-    gravity: 0.8,
-    scalar: 0.9,
-    ticks: 100,
-  });
-};
+import { fireConfettiFromElement } from '@/lib/celebration';
 
 export function ProjectDetailPage() {
   const { id = '' } = useParams();

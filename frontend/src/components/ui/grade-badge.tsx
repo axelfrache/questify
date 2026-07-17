@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { gradeStyle } from '@/lib/grade-config';
 
@@ -24,6 +25,7 @@ interface GradeBadgeProps {
 }
 
 export function GradeBadge({ grade, label, level, className }: GradeBadgeProps) {
+  const { t } = useTranslation();
   const style = gradeStyle(grade);
   return (
     <span
@@ -39,7 +41,9 @@ export function GradeBadge({ grade, label, level, className }: GradeBadgeProps) 
       {level !== undefined && (
         <>
           <span className={cn('h-3 w-px opacity-30', style.solid)} />
-          <span className="font-mono text-muted-foreground">Lvl {level}</span>
+          <span className="font-mono text-muted-foreground">
+            {t('common.level_short', { level })}
+          </span>
         </>
       )}
     </span>

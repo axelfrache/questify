@@ -7,6 +7,7 @@
     "edit": "Modifier",
     "create": "Créer",
     "xp": "XP",
+    "level_short": "Niv. {{level}}",
     "quests_one": "{{count}} quête",
     "quests_other": "{{count}} quêtes",
     "all": "Tout",
@@ -257,6 +258,7 @@
   "stats": {
     "title": "Statistiques",
     "description": "Votre activité et régularité dans le temps",
+    "streak": "{{count}} jours consécutifs",
     "weekly_consistency": "Régularité hebdomadaire",
     "active_days": "jours actifs",
     "upcoming": "À venir",

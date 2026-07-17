@@ -1,5 +1,5 @@
 import { useHistory, useCategories } from '@/hooks/use-api';
-import { format, isToday, isYesterday, isSameYear } from 'date-fns';
+import { isToday, isYesterday, isSameYear } from 'date-fns';
 import { Calendar, Check, Filter, LayoutList } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { XpBadge } from '@/components/ui/xp-badge';
@@ -9,21 +9,26 @@ import type { QuestHistoryResponse } from '@/lib/api';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 
-function dateLabel(dateKey: string, t: TFunction) {
+function dateLabel(dateKey: string, t: TFunction, locale: string) {
   const date = new Date(dateKey + 'T12:00:00');
   if (isToday(date)) return t('history.today');
   if (isYesterday(date)) return t('history.yesterday');
-  if (!isSameYear(date, new Date())) return format(date, 'EEEE, MMM d, yyyy');
-  return format(date, 'EEEE, MMM d');
+  return date.toLocaleDateString(locale, {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+    ...(isSameYear(date, new Date()) ? {} : { year: 'numeric' }),
+  });
 }
 
-function timeLabel(completedAt: string) {
+function timeLabel(completedAt: string, locale: string) {
   const d = new Date(completedAt);
-  return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
 export function HistoryPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
   const { data: history, isLoading } = useHistory();
   const { data: categories } = useCategories();
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
@@ -112,7 +117,7 @@ export function HistoryPage() {
                 <div className="mb-3 flex items-center justify-between border-b border-border pb-2">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-sm font-semibold">{dateLabel(dateKey, t)}</span>
+                    <span className="text-sm font-semibold">{dateLabel(dateKey, t, locale)}</span>
                   </div>
                   <div className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
                     <span>{t('history.quests_count', { count: dayItems.length })}</span>
@@ -147,7 +152,7 @@ export function HistoryPage() {
 
                       {/* Time */}
                       <span className="flex-shrink-0 font-mono text-[11px] text-muted-foreground">
-                        {timeLabel(quest.completedAt)}
+                        {timeLabel(quest.completedAt, locale)}
                       </span>
 
                       {/* XP badge */}

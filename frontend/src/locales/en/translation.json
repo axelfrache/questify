@@ -7,6 +7,7 @@
     "edit": "Edit",
     "create": "Create",
     "xp": "XP",
+    "level_short": "Lvl {{level}}",
     "quests_one": "{{count}} quest",
     "quests_other": "{{count}} quests",
     "all": "All",
@@ -257,6 +258,7 @@
   "stats": {
     "title": "Stats",
     "description": "Your activity and consistency over time",
+    "streak": "{{count}} day streak",
     "weekly_consistency": "Weekly consistency",
     "active_days": "active days",
     "upcoming": "Upcoming",
