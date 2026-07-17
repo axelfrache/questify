@@ -231,7 +231,11 @@
     "title": "Habits",
     "description": "Manage your recurring quests.",
     "empty": "No habits set up yet. Create a recurring quest to see it here!",
-    "deleted": "Habit deleted"
+    "deleted": "Habit deleted",
+    "done_30d": "{{count}}× in 30 days",
+    "streak_day": "{{count}} day streak",
+    "streak_week": "{{count}} week streak",
+    "streak_month": "{{count}} month streak"
   },
   "history": {
     "title": "History",

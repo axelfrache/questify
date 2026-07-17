@@ -231,7 +231,11 @@
     "title": "Habitudes",
     "description": "Gérez vos quêtes récurrentes.",
     "empty": "Aucune habitude configurée pour l'instant. Créez une quête récurrente pour la voir ici !",
-    "deleted": "Habitude supprimée"
+    "deleted": "Habitude supprimée",
+    "done_30d": "{{count}}× en 30 jours",
+    "streak_day": "{{count}} jours consécutifs",
+    "streak_week": "{{count}} semaines consécutives",
+    "streak_month": "{{count}} mois consécutifs"
   },
   "history": {
     "title": "Historique",

@@ -1,16 +1,26 @@
-import { useState } from 'react';
-import { useQuests, useDeleteQuest } from '@/hooks/use-api';
+import { useMemo, useState } from 'react';
+import { useQuests, useDeleteQuest, useHistory } from '@/hooks/use-api';
 import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { QuestCard } from '@/components/QuestCard';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
+import { HabitConsistency } from '@/components/HabitConsistency';
+import { groupCompletionsByQuest } from '@/lib/habit-stats';
 import type { QuestResponse } from '@/lib/api';
+
+const NO_COMPLETIONS: Date[] = [];
 
 export function HabitsPage() {
   const { t } = useTranslation();
   const { data: habits, isLoading } = useQuests(undefined, 'recurring');
+  const { data: history } = useHistory(0, 300);
   const deleteQuest = useDeleteQuest(t('habits.deleted'));
   const [editingHabit, setEditingHabit] = useState<QuestResponse | null>(null);
+
+  const completionsByQuest = useMemo(
+    () => groupCompletionsByQuest(history?.content ?? []),
+    [history]
+  );
 
   if (isLoading) {
     return (
@@ -45,6 +55,13 @@ export function HabitsPage() {
               onEdit={setEditingHabit}
               onDelete={deleteQuest}
               hideCheckbox
+              footer={
+                <HabitConsistency
+                  completions={completionsByQuest.get(habit.id) ?? NO_COMPLETIONS}
+                  recurrence={habit.recurrenceInterval}
+                  color={habit.category?.color}
+                />
+              }
             />
           ))}
         </div>
