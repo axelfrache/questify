@@ -64,7 +64,8 @@ export function MonthlyActivityGraph({
   };
 
   const getCompletionColor = (completion?: DailyCompletionSnapshot) => {
-    if (!completion || completion.plannedQuests === 0) return 'bg-muted/40';
+    if (!completion || (completion.plannedQuests === 0 && completion.completedQuests === 0))
+      return 'bg-muted/40';
     if (completion.completionRate >= 100) return 'bg-primary';
     if (completion.completionRate >= 75) return 'bg-primary/65';
     if (completion.completionRate >= 50) return 'bg-primary/45';
@@ -163,7 +164,9 @@ export function MonthlyActivityGraph({
                           <p className="font-medium">{format(dayDate, 'EEE, MMM d')}</p>
                           {isFuture ? (
                             <p className="text-muted-foreground">Upcoming</p>
-                          ) : !completion || completion.plannedQuests === 0 ? (
+                          ) : !completion ||
+                            (completion.plannedQuests === 0 &&
+                              completion.completedQuests === 0) ? (
                             <p className="text-muted-foreground">No quests planned</p>
                           ) : (
                             <>

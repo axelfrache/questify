@@ -21,29 +21,38 @@ export function buildDailyCompletionMap(quests: QuestResponse[]) {
     uniqueQuests.set(quest.id, quest);
   });
 
-  const dailyCompletion = new Map<string, DailyCompletionSnapshot>();
+  const plannedByDate = new Map<string, number>();
+  const completedByDate = new Map<string, number>();
 
   uniqueQuests.forEach((quest) => {
-    const dateKey = getQuestDateKey(quest.dueDate);
-    if (!dateKey || quest.status === 'CANCELLED') return;
+    if (quest.status === 'CANCELLED') return;
 
-    const current = dailyCompletion.get(dateKey) ?? {
-      plannedQuests: 0,
-      completedQuests: 0,
-      completionRate: 0,
-    };
-
-    current.plannedQuests += 1;
-    if (quest.status === 'COMPLETED') {
-      current.completedQuests += 1;
+    const dueKey = getQuestDateKey(quest.dueDate);
+    if (dueKey) {
+      plannedByDate.set(dueKey, (plannedByDate.get(dueKey) ?? 0) + 1);
     }
 
-    current.completionRate =
-      current.plannedQuests > 0
-        ? Math.round((current.completedQuests / current.plannedQuests) * 100)
-        : 0;
+    if (quest.status === 'COMPLETED') {
+      const completedKey = getQuestDateKey(quest.completedAt);
+      if (completedKey) {
+        completedByDate.set(completedKey, (completedByDate.get(completedKey) ?? 0) + 1);
+      }
+    }
+  });
 
-    dailyCompletion.set(dateKey, current);
+  const allKeys = new Set([...plannedByDate.keys(), ...completedByDate.keys()]);
+  const dailyCompletion = new Map<string, DailyCompletionSnapshot>();
+
+  allKeys.forEach((key) => {
+    const plannedQuests = plannedByDate.get(key) ?? 0;
+    const completedQuests = completedByDate.get(key) ?? 0;
+    const completionRate =
+      plannedQuests > 0
+        ? Math.round((completedQuests / plannedQuests) * 100)
+        : completedQuests > 0
+          ? 100
+          : 0;
+    dailyCompletion.set(key, { plannedQuests, completedQuests, completionRate });
   });
 
   return Object.fromEntries(dailyCompletion);

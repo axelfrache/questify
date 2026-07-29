@@ -139,9 +139,11 @@ export function StatsPage() {
                 const isFuture = day.date > today;
                 const rate = day.completion?.completionRate ?? 0;
                 const planned = day.completion?.plannedQuests ?? 0;
+                const completed = day.completion?.completedQuests ?? 0;
+                const hasActivity = planned > 0 || completed > 0;
 
                 const barClass =
-                  isFuture || planned === 0
+                  isFuture || !hasActivity
                     ? 'bg-muted/40'
                     : rate >= 100
                       ? 'bg-primary'
@@ -167,13 +169,13 @@ export function StatsPage() {
                     <TooltipContent>
                       {isFuture ? (
                         <p className="text-xs">{t('stats.upcoming')}</p>
-                      ) : planned === 0 ? (
+                      ) : !hasActivity ? (
                         <p className="text-xs">{t('stats.no_quests_planned')}</p>
                       ) : (
                         <>
                           <p className="text-xs">
                             {t('stats.completed_of', {
-                              completed: day.completion?.completedQuests ?? 0,
+                              completed,
                               planned,
                             })}
                           </p>
