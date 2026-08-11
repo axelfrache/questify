@@ -165,8 +165,7 @@ export function MonthlyActivityGraph({
                           {isFuture ? (
                             <p className="text-muted-foreground">Upcoming</p>
                           ) : !completion ||
-                            (completion.plannedQuests === 0 &&
-                              completion.completedQuests === 0) ? (
+                            (completion.plannedQuests === 0 && completion.completedQuests === 0) ? (
                             <p className="text-muted-foreground">No quests planned</p>
                           ) : (
                             <>
