@@ -20,6 +20,11 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
   boolean existsByUserIdAndNameIgnoreCase(UUID userId, String name);
 
+  @Query(
+      "SELECT c FROM Category c WHERE (c.userId = :userId OR c.userId IS NULL)"
+          + " AND LOWER(c.name) = LOWER(:name) ORDER BY c.userId DESC")
+  List<Category> findAccessibleByName(@Param("userId") UUID userId, @Param("name") String name);
+
   List<Category> findBySourceIsNull();
 
   void deleteByUserId(UUID userId);

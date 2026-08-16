@@ -2,6 +2,9 @@ package com.axelfrache.questify.quest.controller;
 
 import com.axelfrache.questify.quest.dto.AssignQuestRequest;
 import com.axelfrache.questify.quest.dto.CreateQuestRequest;
+import com.axelfrache.questify.quest.dto.ImportProjectContentRequest;
+import com.axelfrache.questify.quest.dto.ImportResultResponse;
+import com.axelfrache.questify.quest.dto.ProjectContentExport;
 import com.axelfrache.questify.quest.dto.QuestResponse;
 import com.axelfrache.questify.quest.dto.UpdateQuestRequest;
 import com.axelfrache.questify.quest.model.QuestStatus;
@@ -111,5 +114,19 @@ public class QuestController {
   public ResponseEntity<List<QuestResponse>> findSubquests(
       @AuthenticationPrincipal String userId, @PathVariable UUID id) {
     return ResponseEntity.ok(questService.findSubquests(id, UUID.fromString(userId)));
+  }
+
+  @GetMapping("/export")
+  public ResponseEntity<ProjectContentExport> exportProject(
+      @AuthenticationPrincipal String userId, @RequestParam UUID projectId) {
+    return ResponseEntity.ok(questService.exportProjectContent(projectId, UUID.fromString(userId)));
+  }
+
+  @PostMapping("/import")
+  public ResponseEntity<ImportResultResponse> importProject(
+      @AuthenticationPrincipal String userId,
+      @Valid @RequestBody ImportProjectContentRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(questService.importProjectContent(UUID.fromString(userId), request));
   }
 }

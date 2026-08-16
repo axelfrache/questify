@@ -463,6 +463,22 @@ class ApiClient {
     return this.request<QuestResponse[]>(`/api/quests/${parentId}/subquests`, { signal });
   }
 
+  async exportProjectContent(
+    projectId: string,
+    signal?: AbortSignal
+  ): Promise<ProjectContentExport> {
+    return this.request<ProjectContentExport>(`/api/quests/export?projectId=${projectId}`, {
+      signal,
+    });
+  }
+
+  async importProjectContent(data: ImportProjectContentRequest): Promise<ImportResultResponse> {
+    return this.request<ImportResultResponse>('/api/quests/import', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   async createQuest(data: CreateQuestRequest): Promise<QuestResponse> {
     return this.request<QuestResponse>('/api/quests', {
       method: 'POST',
@@ -837,6 +853,59 @@ export interface CategoryResponse {
   icon: string;
   source: 'DEFAULT' | 'CUSTOM' | 'GLOBAL';
   isGlobal: boolean;
+}
+
+export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD' | 'EPIC';
+export type RecurrenceType = 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
+
+export interface ExportedCategory {
+  name: string;
+  icon?: string;
+  color?: string;
+}
+
+export interface ExportedSubquest {
+  title: string;
+  description?: string;
+  difficulty?: Difficulty;
+  baseXpReward?: number;
+  categoryName?: string;
+}
+
+export interface ExportedQuest {
+  title: string;
+  description?: string;
+  difficulty?: Difficulty;
+  baseXpReward?: number;
+  categoryName?: string;
+  recurrenceInterval?: RecurrenceType;
+  recurrenceDays?: number[];
+  subquests?: ExportedSubquest[];
+}
+
+export interface ProjectContentExport {
+  categories: ExportedCategory[];
+  quests: ExportedQuest[];
+}
+
+export interface ImportProjectContentRequest {
+  projectId: string;
+  categories: ExportedCategory[];
+  quests: ExportedQuest[];
+}
+
+export interface ImportResultResponse {
+  questsCreated: number;
+  subquestsCreated: number;
+  categoriesCreated: number;
+}
+
+export interface ProjectExportBundle {
+  format: 'questify.project.v1';
+  exportedAt: string;
+  project: { name: string; icon?: string; description?: string };
+  categories: ExportedCategory[];
+  quests: ExportedQuest[];
 }
 
 export interface ProjectSummaryResponse {

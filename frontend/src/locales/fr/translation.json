@@ -6,6 +6,7 @@
     "delete": "Supprimer",
     "edit": "Modifier",
     "create": "Créer",
+    "close": "Fermer",
     "xp": "XP",
     "level_short": "Niv. {{level}}",
     "quests_one": "{{count}} quête",
@@ -208,7 +209,31 @@
     "pin": "Épingler",
     "add_quest": "Ajouter une quête",
     "restore": "Restaurer",
-    "archive": "Archiver"
+    "archive": "Archiver",
+    "import": {
+      "button": "Importer",
+      "title": "Importer un projet",
+      "description": "Collez un fichier de projet Questify exporté, ou déposez-le ci-dessous.",
+      "drop_hint": "Déposez un fichier .questify.json ici",
+      "ready": "Prêt à importer « {{name}} »",
+      "confirm": "Importer le projet",
+      "importing": "Importation…",
+      "success": "« {{name}} » importé ({{count}} quêtes)",
+      "failed": "Échec de l'importation. Veuillez réessayer.",
+      "error_json": "Ce contenu n'est pas un JSON valide.",
+      "error_format": "Fichier non pris en charge : un export de projet Questify est attendu."
+    },
+    "export": {
+      "menu": "Exporter…",
+      "title": "Exporter « {{name}} »",
+      "description": "Un fichier portable avec les quêtes, régions et paramètres de ce projet.",
+      "loading": "Préparation de l'export…",
+      "copy": "Copier",
+      "copied": "Copié",
+      "copy_failed": "Impossible de copier dans le presse-papiers",
+      "download": "Télécharger .json",
+      "failed": "Impossible d'exporter ce projet"
+    }
   },
   "project_detail": {
     "total_quests": "Total des quêtes",

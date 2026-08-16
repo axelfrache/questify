@@ -6,6 +6,7 @@
     "delete": "Delete",
     "edit": "Edit",
     "create": "Create",
+    "close": "Close",
     "xp": "XP",
     "level_short": "Lvl {{level}}",
     "quests_one": "{{count}} quest",
@@ -208,7 +209,31 @@
     "pin": "Pin",
     "add_quest": "Add quest",
     "restore": "Restore",
-    "archive": "Archive"
+    "archive": "Archive",
+    "import": {
+      "button": "Import",
+      "title": "Import project",
+      "description": "Paste an exported Questify project file, or drop it below.",
+      "drop_hint": "Drop a .questify.json file here",
+      "ready": "Ready to import \"{{name}}\"",
+      "confirm": "Import project",
+      "importing": "Importing…",
+      "success": "Imported \"{{name}}\" ({{count}} quests)",
+      "failed": "Import failed. Please try again.",
+      "error_json": "That doesn't look like valid JSON.",
+      "error_format": "Unsupported file: expected a Questify project export."
+    },
+    "export": {
+      "menu": "Export…",
+      "title": "Export \"{{name}}\"",
+      "description": "A portable file with this project's quests, regions and settings.",
+      "loading": "Preparing export…",
+      "copy": "Copy",
+      "copied": "Copied",
+      "copy_failed": "Couldn't copy to clipboard",
+      "download": "Download .json",
+      "failed": "Couldn't export this project"
+    }
   },
   "project_detail": {
     "total_quests": "Total quests",

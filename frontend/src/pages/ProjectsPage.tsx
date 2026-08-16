@@ -35,10 +35,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { CreateQuestDialog } from '@/components/CreateQuestDialog';
 import { JoinProjectDialog } from '@/components/JoinProjectDialog';
+import { ExportProjectDialog } from '@/components/ExportProjectDialog';
+import { ImportProjectDialog } from '@/components/ImportProjectDialog';
 import {
   Archive,
   ArchiveRestore,
   ArrowRight,
+  Download,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -46,6 +49,7 @@ import {
   Star,
   StarOff,
   ListFilter,
+  Upload,
   UserPlus,
 } from 'lucide-react';
 import { DropdownMenuContent as SortMenuContent } from '@/components/ui/dropdown-menu';
@@ -78,10 +82,12 @@ export function ProjectsPage() {
   };
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [projectToEdit, setProjectToEdit] = useState<ProjectSummaryResponse | null>(null);
   const [quickCreateProject, setQuickCreateProject] = useState<ProjectSummaryResponse | null>(null);
   const [createPrefillName, setCreatePrefillName] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<ProjectSummaryResponse | null>(null);
+  const [exportTarget, setExportTarget] = useState<ProjectSummaryResponse | null>(null);
 
   const { data: projects, isLoading } = useProjectsList(
     search,
@@ -168,6 +174,15 @@ export function ProjectsPage() {
           >
             <UserPlus className="h-3.5 w-3.5" />
             {t('projects.join_project')}
+          </Button>
+          <Button
+            onClick={() => setIsImportOpen(true)}
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+          >
+            <Upload className="h-3.5 w-3.5" />
+            {t('projects.import.button')}
           </Button>
           <Button onClick={() => setIsCreateOpen(true)} size="sm" className="gap-1.5">
             <Plus className="h-3.5 w-3.5" />
@@ -256,6 +271,7 @@ export function ProjectsPage() {
               onAddQuest={() => setQuickCreateProject(project)}
               onTogglePin={() => handleTogglePin(project.id, project.pinned)}
               onEdit={() => setProjectToEdit(project)}
+              onExport={() => setExportTarget(project)}
               onToggleArchive={() => handleToggleArchive(project.id, project.archived)}
               onDelete={() => handleDeleteProject(project)}
             />
@@ -284,6 +300,13 @@ export function ProjectsPage() {
 
       <JoinProjectDialog open={isJoinOpen} onOpenChange={setIsJoinOpen} />
 
+      <ImportProjectDialog open={isImportOpen} onOpenChange={setIsImportOpen} />
+
+      <ExportProjectDialog
+        project={exportTarget}
+        onOpenChange={(open) => !open && setExportTarget(null)}
+      />
+
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
@@ -302,6 +325,7 @@ interface ProjectCardProps {
   onAddQuest: () => void;
   onTogglePin: () => void;
   onEdit: () => void;
+  onExport: () => void;
   onToggleArchive: () => void;
   onDelete: () => void;
 }
@@ -313,6 +337,7 @@ function ProjectCard({
   onAddQuest,
   onTogglePin,
   onEdit,
+  onExport,
   onToggleArchive,
   onDelete,
 }: ProjectCardProps) {
@@ -373,6 +398,10 @@ function ProjectCard({
             <DropdownMenuItem onClick={onEdit}>
               <Pencil className="mr-2 h-4 w-4" />
               {t('common.edit')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onExport}>
+              <Download className="mr-2 h-4 w-4" />
+              {t('projects.export.menu')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onAddQuest}>
               <Plus className="mr-2 h-4 w-4" />

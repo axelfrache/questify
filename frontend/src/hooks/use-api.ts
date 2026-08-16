@@ -13,12 +13,15 @@ import {
   type CreateProjectRequest,
   type CreateQuestRequest,
   type ProjectDetailResponse,
+  type ProjectExportBundle,
+  type ProjectSummaryResponse,
   type QuestResponse,
   type UpdateProjectRequest,
   type UpdateQuestRequest,
   type UserDto,
   type NotificationResponse,
 } from '@/lib/api';
+import { buildExportBundle } from '@/lib/project-export';
 
 type QuestStatus = 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'SKIPPED';
 type QuestView = 'today' | 'inbox' | 'upcoming' | 'recurring';
@@ -497,6 +500,49 @@ export function useDeleteProject() {
   return useMutation({
     mutationFn: (id: string) => api.deleteProject(id),
     onSuccess: () => {
+      invalidateProjectData(queryClient);
+      queryClient.invalidateQueries({ queryKey: queryKeys.quests.all });
+    },
+  });
+}
+
+export function useExportProject() {
+  return useMutation({
+    mutationFn: async (
+      project: Pick<ProjectSummaryResponse, 'id' | 'name' | 'icon' | 'description'>
+    ) => {
+      const content = await api.exportProjectContent(project.id);
+      return buildExportBundle(project, content);
+    },
+  });
+}
+
+export function useImportProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (bundle: ProjectExportBundle) => {
+      const project = await api.createProject({
+        name: bundle.project.name,
+        description: bundle.project.description,
+        icon: bundle.project.icon,
+      });
+      try {
+        const result = await api.importProjectContent({
+          projectId: project.id,
+          categories: bundle.categories ?? [],
+          quests: bundle.quests ?? [],
+        });
+        return { project, result };
+      } catch (error) {
+        await api.deleteProject(project.id).catch(() => undefined);
+        throw error;
+      }
+    },
+    onSuccess: ({ project }) => {
+      queryClient.setQueryData<ProjectDetailResponse>(
+        queryKeys.projects.detail(project.id),
+        project
+      );
       invalidateProjectData(queryClient);
       queryClient.invalidateQueries({ queryKey: queryKeys.quests.all });
     },

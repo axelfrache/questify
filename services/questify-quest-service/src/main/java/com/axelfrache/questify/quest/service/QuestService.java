@@ -2,6 +2,12 @@ package com.axelfrache.questify.quest.service;
 
 import com.axelfrache.questify.quest.dto.CategoryResponse;
 import com.axelfrache.questify.quest.dto.CreateQuestRequest;
+import com.axelfrache.questify.quest.dto.ExportedCategory;
+import com.axelfrache.questify.quest.dto.ExportedQuest;
+import com.axelfrache.questify.quest.dto.ExportedSubquest;
+import com.axelfrache.questify.quest.dto.ImportProjectContentRequest;
+import com.axelfrache.questify.quest.dto.ImportResultResponse;
+import com.axelfrache.questify.quest.dto.ProjectContentExport;
 import com.axelfrache.questify.quest.dto.QuestResponse;
 import com.axelfrache.questify.quest.dto.UpdateQuestRequest;
 import com.axelfrache.questify.quest.messaging.QuestEventPublisher;
@@ -26,7 +32,9 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -707,6 +715,212 @@ public class QuestService {
     var result = new ArrayList<QuestResponse>(floating);
     result.addAll(occurrenceResponses);
     return result;
+  }
+
+  @WithSpan("quest.export")
+  @Transactional(readOnly = true)
+  public ProjectContentExport exportProjectContent(UUID projectId, UUID userId) {
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.project.id", projectId);
+
+    var parents =
+        questTemplateRepository.findByProjectIdAndActiveTrueAndDeletedFalse(projectId).stream()
+            .filter(t -> t.getParent() == null)
+            .sorted(Comparator.comparing(QuestTemplate::getCreatedAt))
+            .toList();
+
+    var quests = parents.stream().map(this::toExportedQuest).toList();
+
+    Map<String, ExportedCategory> categoriesByName = new LinkedHashMap<>();
+    parents.forEach(
+        parent -> {
+          collectExportedCategory(parent.getCategory(), categoriesByName);
+          questTemplateRepository
+              .findSubquestsWithOccurrences(parent.getId())
+              .forEach(sq -> collectExportedCategory(sq.getCategory(), categoriesByName));
+        });
+
+    Span.current().setAttribute("questify.export.quest_count", quests.size());
+    Span.current().setAttribute("questify.export.category_count", categoriesByName.size());
+    log.info(
+        "Exporting project content project={} quests={} categories={} user={}",
+        projectId,
+        quests.size(),
+        categoriesByName.size(),
+        userId);
+    return new ProjectContentExport(List.copyOf(categoriesByName.values()), quests);
+  }
+
+  @WithSpan("quest.import")
+  @Transactional
+  public ImportResultResponse importProjectContent(
+      UUID userId, ImportProjectContentRequest request) {
+    setUuidAttribute("questify.user.id", userId);
+    setUuidAttribute("questify.project.id", request.projectId());
+
+    var categoriesByName = new LinkedHashMap<String, Category>();
+    var categoriesCreated = new int[] {0};
+    if (request.categories() != null) {
+      request
+          .categories()
+          .forEach(
+              exported -> {
+                var resolved = resolveOrCreateCategory(userId, exported, categoriesCreated);
+                if (resolved != null) categoriesByName.put(normalizeKey(exported.name()), resolved);
+              });
+    }
+
+    var quests = request.quests() != null ? request.quests() : List.<ExportedQuest>of();
+    var subquestsCreated = 0;
+    for (var exported : quests) {
+      var template =
+          saveImportedQuest(userId, request.projectId(), exported, null, categoriesByName);
+      if (exported.subquests() != null) {
+        for (var subquest : exported.subquests()) {
+          saveImportedQuest(
+              userId, request.projectId(), toExportedQuest(subquest), template, categoriesByName);
+          subquestsCreated++;
+        }
+      }
+    }
+
+    ensureDailyOccurrences(userId);
+
+    Span.current().setAttribute("questify.import.quest_count", quests.size());
+    Span.current().setAttribute("questify.import.subquest_count", subquestsCreated);
+    Span.current().setAttribute("questify.import.category_count", categoriesCreated[0]);
+    log.info(
+        "Imported project content project={} quests={} subquests={} categories={} user={}",
+        request.projectId(),
+        quests.size(),
+        subquestsCreated,
+        categoriesCreated[0],
+        userId);
+    return new ImportResultResponse(quests.size(), subquestsCreated, categoriesCreated[0]);
+  }
+
+  private ExportedQuest toExportedQuest(QuestTemplate parent) {
+    var subquests =
+        questTemplateRepository.findSubquestsWithOccurrences(parent.getId()).stream()
+            .sorted(Comparator.comparing(QuestTemplate::getCreatedAt))
+            .map(
+                sq ->
+                    new ExportedSubquest(
+                        sq.getTitle(),
+                        sq.getDescription(),
+                        sq.getDifficulty(),
+                        sq.getBaseXpReward(),
+                        sq.getCategory() != null ? sq.getCategory().getName() : null))
+            .toList();
+
+    var recurrenceType = RecurrenceType.NONE;
+    List<Integer> recurrenceDays = null;
+    if (parent.getRecurrenceRule() != null) {
+      recurrenceType = parent.getRecurrenceRule().getType();
+      recurrenceDays = toDaysOfWeek(parent.getRecurrenceRule().getDaysOfWeek());
+    }
+
+    return new ExportedQuest(
+        parent.getTitle(),
+        parent.getDescription(),
+        parent.getDifficulty(),
+        parent.getBaseXpReward(),
+        parent.getCategory() != null ? parent.getCategory().getName() : null,
+        recurrenceType,
+        recurrenceDays,
+        subquests);
+  }
+
+  private ExportedQuest toExportedQuest(ExportedSubquest subquest) {
+    return new ExportedQuest(
+        subquest.title(),
+        subquest.description(),
+        subquest.difficulty(),
+        subquest.baseXpReward(),
+        subquest.categoryName(),
+        RecurrenceType.NONE,
+        null,
+        null);
+  }
+
+  private void collectExportedCategory(Category category, Map<String, ExportedCategory> target) {
+    if (category == null) return;
+    target.putIfAbsent(
+        normalizeKey(category.getName()),
+        new ExportedCategory(category.getName(), category.getIcon(), category.getColor()));
+  }
+
+  private QuestTemplate saveImportedQuest(
+      UUID userId,
+      UUID projectId,
+      ExportedQuest exported,
+      QuestTemplate parent,
+      Map<String, Category> categoriesByName) {
+    RecurrenceRule recurrenceRule = null;
+    if (parent == null
+        && exported.recurrenceInterval() != null
+        && exported.recurrenceInterval() != RecurrenceType.NONE) {
+      var daysOfWeek =
+          exported.recurrenceDays() != null
+              ? exported.recurrenceDays().stream().map(DayOfWeek::of).toList()
+              : null;
+      recurrenceRule =
+          RecurrenceRule.builder()
+              .type(exported.recurrenceInterval())
+              .interval(1)
+              .daysOfWeek(daysOfWeek)
+              .build();
+    }
+
+    var template =
+        QuestTemplate.builder()
+            .title(exported.title())
+            .description(exported.description())
+            .difficulty(exported.difficulty() != null ? exported.difficulty() : Difficulty.MEDIUM)
+            .baseXpReward(exported.baseXpReward() != null ? exported.baseXpReward() : 50)
+            .category(resolveImportCategory(exported.categoryName(), categoriesByName))
+            .projectId(projectId)
+            .userId(userId)
+            .recurrenceRule(recurrenceRule)
+            .parent(parent)
+            .active(true)
+            .build();
+    return questTemplateRepository.save(template);
+  }
+
+  private Category resolveImportCategory(
+      String categoryName, Map<String, Category> categoriesByName) {
+    if (categoryName == null || categoryName.isBlank()) return null;
+    return categoriesByName.get(normalizeKey(categoryName));
+  }
+
+  private Category resolveOrCreateCategory(
+      UUID userId, ExportedCategory exported, int[] createdCounter) {
+    if (exported.name() == null || exported.name().isBlank()) return null;
+
+    var existing = categoryRepository.findAccessibleByName(userId, exported.name());
+    if (!existing.isEmpty()) {
+      return existing.stream()
+          .filter(c -> userId.equals(c.getUserId()))
+          .findFirst()
+          .orElse(existing.getFirst());
+    }
+
+    var created =
+        categoryRepository.save(
+            Category.builder()
+                .name(exported.name())
+                .icon(exported.icon())
+                .color(exported.color())
+                .source(CategorySource.CUSTOM)
+                .userId(userId)
+                .build());
+    createdCounter[0]++;
+    return created;
+  }
+
+  private static String normalizeKey(String name) {
+    return name == null ? "" : name.trim().toLowerCase();
   }
 
   private CategoryResponse toCategoryResponse(Category category) {
