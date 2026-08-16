@@ -4,9 +4,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Zap, Star, Check, ChevronRight } from 'lucide-react';
+import { GradeGem } from '@/components/ui/grade-badge';
+import { Zap, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { gradeStyle } from '@/lib/grade-config';
+import { gradeKey, gradeStyle } from '@/lib/grade-config';
 
 const GRADES = [
   {
@@ -48,7 +49,7 @@ const GRADES = [
 ];
 
 function getGradeIndex(gradeLabel: string) {
-  return GRADES.findIndex((g) => g.name === gradeLabel);
+  return GRADES.findIndex((g) => g.name === gradeKey(gradeLabel));
 }
 
 function getNextGrade(currentGrade: string) {
@@ -58,7 +59,7 @@ function getNextGrade(currentGrade: string) {
 }
 
 function getGradeProgress(level: number, currentGrade: string) {
-  const grade = GRADES.find((g) => g.name === currentGrade);
+  const grade = GRADES.find((g) => g.name === gradeKey(currentGrade));
   if (!grade) return 0;
   const next = getNextGrade(currentGrade);
   if (!next) return 100;
@@ -90,7 +91,7 @@ export function ProgressPage() {
     );
   }
 
-  const currentGrade = progression?.gradeLabel || 'Initiate';
+  const currentGrade = gradeKey(progression?.gradeLabel || 'Flint');
   const currentLevel = progression?.level || 1;
   const totalXp = progression?.totalXp || 0;
   const currentGradeIndex = getGradeIndex(currentGrade);
@@ -123,6 +124,7 @@ export function ProgressPage() {
               const isPast = index < currentGradeIndex;
               const isCurrent = index === currentGradeIndex;
               const style = gradeStyle(grade.name);
+              const gemSize = 28 + index * 3;
 
               return (
                 <div
@@ -132,26 +134,18 @@ export function ProgressPage() {
                     index < GRADES.length - 1 ? 'flex-1' : 'flex-shrink-0'
                   )}
                 >
-                  {/* Node + label — always centered */}
                   <div className="flex flex-shrink-0 flex-col items-center gap-2">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div
                           className={cn(
-                            'flex h-9 w-9 cursor-default items-center justify-center rounded-full border-2 font-mono text-xs font-medium transition-all',
-                            isCurrent &&
-                              cn(style.solid, style.ring, 'text-primary-foreground ring-[3px]'),
-                            isPast && cn(style.border, style.bg, style.text),
-                            !isCurrent &&
-                              !isPast &&
-                              'border-border bg-muted/30 text-muted-foreground'
+                            'flex h-12 w-12 cursor-default items-center justify-center transition-all',
+                            isCurrent && 'scale-110',
+                            isPast && 'opacity-85',
+                            !isCurrent && !isPast && 'opacity-35 grayscale'
                           )}
                         >
-                          {isCurrent ? (
-                            <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
-                          ) : (
-                            grade.minLevel
-                          )}
+                          <GradeGem grade={grade.name} size={gemSize} />
                         </div>
                       </TooltipTrigger>
                       <TooltipContent
@@ -170,14 +164,12 @@ export function ProgressPage() {
                     >
                       {t('progress.grades.' + grade.name)}
                     </span>
+                    <span className="font-mono text-[10px] leading-none text-muted-foreground">
+                      {t('common.level_short', { level: grade.minLevel })}
+                    </span>
                   </div>
 
-                  {/* Arrow to next node — mt-[11px] centers chevron on the h-9 circle */}
-                  {index < GRADES.length - 1 && (
-                    <div className="flex flex-1 items-start justify-center mt-[11px]">
-                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-                    </div>
-                  )}
+                  {index < GRADES.length - 1 && <div className="mx-1 mt-6 h-px flex-1 bg-border" />}
                 </div>
               );
             })}
@@ -186,22 +178,24 @@ export function ProgressPage() {
       </div>
 
       {/* Two stat cards */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Current grade */}
+      <div className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-lg border bg-card p-4">
           <div className="mb-3 flex items-center gap-1.5">
             <Star className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">{t('progress.current_grade')}</span>
           </div>
-          <div className="flex items-baseline justify-between gap-2">
-            <span
-              className={cn(
-                'font-mono text-3xl font-medium tracking-tight',
-                gradeStyle(currentGrade).text
-              )}
-            >
-              {t('progress.grades.' + currentGrade)}
-            </span>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <GradeGem grade={currentGrade} size={34} />
+              <span
+                className={cn(
+                  'truncate text-3xl font-semibold tracking-tight',
+                  gradeStyle(currentGrade).text
+                )}
+              >
+                {t('progress.grades.' + currentGrade)}
+              </span>
+            </div>
             <span className="text-sm text-muted-foreground">
               {t('progress.level', { level: currentLevel })}
             </span>
@@ -214,7 +208,6 @@ export function ProgressPage() {
           </div>
         </div>
 
-        {/* Total experience */}
         <div className="rounded-lg border bg-card p-4">
           <div className="mb-3 flex items-center gap-1.5">
             <Zap className="h-3.5 w-3.5 text-muted-foreground" />

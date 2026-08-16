@@ -329,18 +329,18 @@
     "complete_quests": "Terminer {{count}} quêtes",
     "quests_progress": "{{completed}} / {{required}} quêtes",
     "grades": {
-      "Flint": "Silex",
-      "Iron": "Fer",
-      "Gold": "Or",
-      "Obsidian": "Obsidienne",
-      "Sapphire": "Saphir",
-      "Diamond": "Diamant",
-      "Flint_tooltip": "Toute étincelle commence ici. Frappe la pierre.",
-      "Iron_tooltip": "Solide. Fiable. Tu tiens bon.",
-      "Gold_tooltip": "Tu as gagné quelque chose de précieux. N'arrête pas.",
-      "Obsidian_tooltip": "Forgé sous la pression volcanique. Tranchant, sombre, implacable.",
-      "Sapphire_tooltip": "Rare et brillant. Tu n'es pas comme les autres.",
-      "Diamond_tooltip": "Formé sous la pression absolue. Rien ne peut te briser."
+      "Flint": "Initié",
+      "Iron": "Vagabond",
+      "Gold": "Aventurier",
+      "Obsidian": "Pionnier",
+      "Sapphire": "Luminaire",
+      "Diamond": "Légende",
+      "Flint_tooltip": "Premiers pas. Chaque quête apprend encore quelque chose.",
+      "Iron_tooltip": "L'élan se construit. L'habitude de revenir s'installe.",
+      "Gold_tooltip": "Quêtes plus grandes, vraies séries. Tu es lancé.",
+      "Obsidian_tooltip": "Tu guides ta progression au lieu de seulement la suivre.",
+      "Sapphire_tooltip": "Un modèle de régularité. Les autres remarquent la série.",
+      "Diamond_tooltip": "Le voyage lui-même devient la récompense."
     }
   },
   "upcoming": {

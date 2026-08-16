@@ -4,7 +4,17 @@ export interface GradeStyle {
   border: string;
   solid: string;
   ring: string;
+  color: string;
 }
+
+export const GRADE_ALIASES: Record<string, string> = {
+  Initiate: 'Flint',
+  Wanderer: 'Iron',
+  Adventurer: 'Gold',
+  Vanguard: 'Obsidian',
+  Luminary: 'Sapphire',
+  Legend: 'Diamond',
+};
 
 export const GRADE_STYLES: Record<string, GradeStyle> = {
   Flint: {
@@ -13,6 +23,7 @@ export const GRADE_STYLES: Record<string, GradeStyle> = {
     border: 'border-grade-flint/30',
     solid: 'bg-grade-flint border-grade-flint',
     ring: 'ring-grade-flint/20',
+    color: 'var(--grade-flint)',
   },
   Iron: {
     text: 'text-grade-iron',
@@ -20,6 +31,7 @@ export const GRADE_STYLES: Record<string, GradeStyle> = {
     border: 'border-grade-iron/30',
     solid: 'bg-grade-iron border-grade-iron',
     ring: 'ring-grade-iron/20',
+    color: 'var(--grade-iron)',
   },
   Gold: {
     text: 'text-grade-gold',
@@ -27,6 +39,7 @@ export const GRADE_STYLES: Record<string, GradeStyle> = {
     border: 'border-grade-gold/30',
     solid: 'bg-grade-gold border-grade-gold',
     ring: 'ring-grade-gold/20',
+    color: 'var(--grade-gold)',
   },
   Obsidian: {
     text: 'text-grade-obsidian',
@@ -34,6 +47,7 @@ export const GRADE_STYLES: Record<string, GradeStyle> = {
     border: 'border-grade-obsidian/30',
     solid: 'bg-grade-obsidian border-grade-obsidian',
     ring: 'ring-grade-obsidian/20',
+    color: 'var(--grade-obsidian)',
   },
   Sapphire: {
     text: 'text-grade-sapphire',
@@ -41,6 +55,7 @@ export const GRADE_STYLES: Record<string, GradeStyle> = {
     border: 'border-grade-sapphire/30',
     solid: 'bg-grade-sapphire border-grade-sapphire',
     ring: 'ring-grade-sapphire/20',
+    color: 'var(--grade-sapphire)',
   },
   Diamond: {
     text: 'text-grade-diamond',
@@ -48,6 +63,7 @@ export const GRADE_STYLES: Record<string, GradeStyle> = {
     border: 'border-grade-diamond/30',
     solid: 'bg-grade-diamond border-grade-diamond',
     ring: 'ring-grade-diamond/20',
+    color: 'var(--grade-diamond)',
   },
 };
 
@@ -57,8 +73,13 @@ export const FALLBACK_GRADE_STYLE: GradeStyle = {
   border: 'border-primary/30',
   solid: 'bg-primary border-primary',
   ring: 'ring-primary/20',
+  color: 'var(--primary)',
 };
 
+export function gradeKey(grade: string): string {
+  return GRADE_STYLES[grade] ? grade : (GRADE_ALIASES[grade] ?? grade);
+}
+
 export function gradeStyle(grade: string): GradeStyle {
-  return GRADE_STYLES[grade] ?? FALLBACK_GRADE_STYLE;
+  return GRADE_STYLES[gradeKey(grade)] ?? FALLBACK_GRADE_STYLE;
 }

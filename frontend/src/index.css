@@ -150,12 +150,12 @@
   --streak: oklch(0.65 0.18 40);
 
   /* Grade materials */
-  --grade-flint: oklch(0.5 0.02 70);
-  --grade-iron: oklch(0.52 0.03 255);
-  --grade-gold: oklch(0.6 0.13 85);
-  --grade-obsidian: oklch(0.4 0.1 310);
-  --grade-sapphire: oklch(0.52 0.16 255);
-  --grade-diamond: oklch(0.58 0.1 210);
+  --grade-flint: oklch(0.55 0.035 80);
+  --grade-iron: oklch(0.58 0.08 200);
+  --grade-gold: oklch(0.62 0.13 145);
+  --grade-obsidian: oklch(0.6 0.17 255);
+  --grade-sapphire: oklch(0.62 0.2 300);
+  --grade-diamond: oklch(0.75 0.19 70);
 }
 
 .dark {
@@ -222,12 +222,12 @@
   --streak: oklch(0.7 0.17 40);
 
   /* Grade materials (dark) */
-  --grade-flint: oklch(0.68 0.02 70);
-  --grade-iron: oklch(0.7 0.03 255);
-  --grade-gold: oklch(0.75 0.13 85);
-  --grade-obsidian: oklch(0.65 0.13 310);
-  --grade-sapphire: oklch(0.68 0.15 255);
-  --grade-diamond: oklch(0.78 0.1 210);
+  --grade-flint: oklch(0.68 0.035 80);
+  --grade-iron: oklch(0.7 0.08 200);
+  --grade-gold: oklch(0.74 0.13 145);
+  --grade-obsidian: oklch(0.72 0.17 255);
+  --grade-sapphire: oklch(0.74 0.2 300);
+  --grade-diamond: oklch(0.82 0.19 70);
 }
 
 @layer base {

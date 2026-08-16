@@ -39,6 +39,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjectsSidebar, useUserProgression } from '@/hooks/use-api';
 import { useTranslation } from 'react-i18next';
+import { gradeKey } from '@/lib/grade-config';
 
 const navItems = [
   { key: 'nav.inbox', url: '/inbox', icon: Inbox },
@@ -99,7 +100,12 @@ export function AppSidebar() {
                 </div>
                 {progression && (
                   <div className="font-mono text-[10px] text-sidebar-foreground/50 leading-tight">
-                    {t('nav.level', { level: progression.level, grade: progression.gradeLabel })}
+                    {t('nav.level', {
+                      level: progression.level,
+                      grade: t('progress.grades.' + gradeKey(progression.gradeLabel), {
+                        defaultValue: progression.gradeLabel,
+                      }),
+                    })}
                   </div>
                 )}
               </div>

@@ -329,18 +329,18 @@
     "complete_quests": "Complete {{count}} quests",
     "quests_progress": "{{completed}} / {{required}} quests",
     "grades": {
-      "Flint": "Flint",
-      "Iron": "Iron",
-      "Gold": "Gold",
-      "Obsidian": "Obsidian",
-      "Sapphire": "Sapphire",
-      "Diamond": "Diamond",
-      "Flint_tooltip": "Every spark begins here. Strike the stone.",
-      "Iron_tooltip": "Solid. Reliable. You hold your ground.",
-      "Gold_tooltip": "You've earned something precious. Don't stop now.",
-      "Obsidian_tooltip": "Forged under volcanic pressure. Sharp, dark, unstoppable.",
-      "Sapphire_tooltip": "Rare and brilliant. You are not like the others.",
-      "Diamond_tooltip": "Formed under the greatest pressure. Nothing can break you."
+      "Flint": "Initiate",
+      "Iron": "Wanderer",
+      "Gold": "Adventurer",
+      "Obsidian": "Vanguard",
+      "Sapphire": "Luminary",
+      "Diamond": "Legend",
+      "Flint_tooltip": "First steps. Every quest still teaches something.",
+      "Iron_tooltip": "Momentum builds. The habit of showing up sets in.",
+      "Gold_tooltip": "Bigger quests, real streaks. You're in it now.",
+      "Obsidian_tooltip": "Leading your own progress, not just following it.",
+      "Sapphire_tooltip": "A model of consistency. Others notice the streak.",
+      "Diamond_tooltip": "The journey itself becomes the reward."
     }
   },
   "upcoming": {
