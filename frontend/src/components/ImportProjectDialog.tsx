@@ -105,7 +105,7 @@ export function ImportProjectDialog({ open, onOpenChange }: ImportProjectDialogP
           onChange={(e) => setText(e.target.value)}
           placeholder='{ "format": "questify.project.v1", "project": { "name": "…" }, "quests": [ … ] }'
           rows={5}
-          className="font-mono text-xs"
+          className="max-h-[40vh] resize-none overflow-auto font-mono text-xs [field-sizing:fixed]"
         />
 
         {preview && (

@@ -65,7 +65,7 @@ export function ExportProjectDialog({ project, onOpenChange }: ExportProjectDial
           readOnly
           value={exportProject.isPending ? t('projects.export.loading') : json}
           rows={8}
-          className="font-mono text-xs"
+          className="h-64 max-h-[50vh] resize-none overflow-auto font-mono text-xs [field-sizing:fixed]"
         />
 
         <DialogFooter>
