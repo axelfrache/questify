@@ -119,60 +119,64 @@ export function ProgressPage() {
         </div>
 
         <TooltipProvider delayDuration={150}>
-          <div className="flex w-full items-start py-1">
-            {GRADES.map((grade, index) => {
-              const isPast = index < currentGradeIndex;
-              const isCurrent = index === currentGradeIndex;
-              const style = gradeStyle(grade.name);
-              const gemSize = 28 + index * 3;
+          <div className="-mx-2 overflow-x-auto px-2 pb-1 scrollbar-hide">
+            <div className="flex min-w-max items-start py-1 sm:min-w-full">
+              {GRADES.map((grade, index) => {
+                const isPast = index < currentGradeIndex;
+                const isCurrent = index === currentGradeIndex;
+                const style = gradeStyle(grade.name);
+                const gemSize = 28 + index * 3;
 
-              return (
-                <div
-                  key={grade.name}
-                  className={cn(
-                    'flex items-start',
-                    index < GRADES.length - 1 ? 'flex-1' : 'flex-shrink-0'
-                  )}
-                >
-                  <div className="flex flex-shrink-0 flex-col items-center gap-2">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div
-                          className={cn(
-                            'flex h-12 w-12 cursor-default items-center justify-center transition-all',
-                            isCurrent && 'scale-110',
-                            isPast && 'opacity-85',
-                            !isCurrent && !isPast && 'opacity-35 grayscale'
-                          )}
+                return (
+                  <div
+                    key={grade.name}
+                    className={cn(
+                      'flex items-start',
+                      index < GRADES.length - 1 ? 'sm:flex-1' : 'sm:flex-shrink-0'
+                    )}
+                  >
+                    <div className="flex w-16 flex-shrink-0 flex-col items-center gap-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={cn(
+                              'flex h-12 w-12 cursor-default items-center justify-center transition-all',
+                              isCurrent && 'scale-110',
+                              isPast && 'opacity-85',
+                              !isCurrent && !isPast && 'opacity-35 grayscale'
+                            )}
+                          >
+                            <GradeGem grade={grade.name} size={gemSize} />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="top"
+                          className="max-w-[180px] text-center text-xs italic"
                         >
-                          <GradeGem grade={grade.name} size={gemSize} />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent
-                        side="top"
-                        className="max-w-[180px] text-center text-xs italic"
+                          {t('progress.grades.' + grade.name + '_tooltip')}
+                        </TooltipContent>
+                      </Tooltip>
+                      <span
+                        className={cn(
+                          'max-w-16 text-center text-[10px] leading-tight',
+                          isCurrent && cn('font-medium', style.text),
+                          !isCurrent && 'text-muted-foreground'
+                        )}
                       >
-                        {t('progress.grades.' + grade.name + '_tooltip')}
-                      </TooltipContent>
-                    </Tooltip>
-                    <span
-                      className={cn(
-                        'text-center text-[10px] leading-tight',
-                        isCurrent && cn('font-medium', style.text),
-                        !isCurrent && 'text-muted-foreground'
-                      )}
-                    >
-                      {t('progress.grades.' + grade.name)}
-                    </span>
-                    <span className="font-mono text-[10px] leading-none text-muted-foreground">
-                      {t('common.level_short', { level: grade.minLevel })}
-                    </span>
-                  </div>
+                        {t('progress.grades.' + grade.name)}
+                      </span>
+                      <span className="font-mono text-[10px] leading-none text-muted-foreground">
+                        {t('common.level_short', { level: grade.minLevel })}
+                      </span>
+                    </div>
 
-                  {index < GRADES.length - 1 && <div className="mx-1 mt-6 h-px flex-1 bg-border" />}
-                </div>
-              );
-            })}
+                    {index < GRADES.length - 1 && (
+                      <div className="mx-1 mt-6 h-px w-8 flex-shrink-0 bg-border sm:flex-1" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </TooltipProvider>
       </div>
@@ -184,12 +188,12 @@ export function ProgressPage() {
             <Star className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">{t('progress.current_grade')}</span>
           </div>
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
               <GradeGem grade={currentGrade} size={34} />
               <span
                 className={cn(
-                  'truncate text-3xl font-semibold tracking-tight',
+                  'truncate text-2xl font-semibold tracking-tight sm:text-3xl',
                   gradeStyle(currentGrade).text
                 )}
               >
