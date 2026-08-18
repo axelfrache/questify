@@ -211,16 +211,8 @@ public class ProjectService {
   public InviteResponse invite(UUID projectId, UUID requesterId) {
     setUuidAttribute("questify.project.id", projectId);
     setUuidAttribute("questify.user.id", requesterId);
-    var project =
-        projectRepository
-            .findById(projectId)
-            .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
-    var membership =
-        projectMemberRepository
-            .findByProjectAndUserId(project, requesterId)
-            .orElseThrow(() -> new AccessDeniedException("Access denied to this project"));
-    if (membership.getRole() != ProjectRole.OWNER)
-      throw new AccessDeniedException("Only the project owner can invite members");
+    var project = findProjectOrThrow(projectId);
+    requireManageMembers(project, requesterId);
 
     var token = UUID.randomUUID().toString();
     var expiresAt = Instant.now().plus(INVITE_TTL);
@@ -273,20 +265,74 @@ public class ProjectService {
   public void removeMember(UUID projectId, UUID targetUserId, UUID requesterId) {
     setUuidAttribute("questify.project.id", projectId);
     setUuidAttribute("questify.user.id", requesterId);
-    var project =
-        projectRepository
-            .findById(projectId)
-            .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
-    var membership =
-        projectMemberRepository
-            .findByProjectAndUserId(project, requesterId)
-            .orElseThrow(() -> new AccessDeniedException("Access denied to this project"));
-    if (membership.getRole() != ProjectRole.OWNER)
-      throw new AccessDeniedException("Only the project owner can remove members");
+    var project = findProjectOrThrow(projectId);
+    var requester = requireManageMembers(project, requesterId);
     if (targetUserId.equals(requesterId))
-      throw new IllegalArgumentException("Owner cannot remove themselves");
+      throw new IllegalArgumentException("You cannot remove yourself from the project");
+
+    var target = findMemberOrThrow(project, targetUserId);
+    if (target.getRole() == ProjectRole.OWNER)
+      throw new IllegalArgumentException("The project owner cannot be removed");
+    if (requester.getRole() == ProjectRole.ADMIN && target.getRole() == ProjectRole.ADMIN)
+      throw new AccessDeniedException("Admins cannot remove other admins");
+
     projectMemberRepository.deleteByProjectAndUserId(project, targetUserId);
     log.info("Member {} removed from project {} by {}", targetUserId, projectId, requesterId);
+  }
+
+  @WithSpan("project.change_member_role")
+  @Transactional
+  public ProjectDetailResponse changeMemberRole(
+      UUID projectId, UUID targetUserId, ProjectRole newRole, UUID requesterId) {
+    setUuidAttribute("questify.project.id", projectId);
+    setUuidAttribute("questify.user.id", requesterId);
+    if (newRole == ProjectRole.OWNER)
+      throw new IllegalArgumentException("Ownership cannot be assigned through a role change");
+
+    var project = findProjectOrThrow(projectId);
+    var requester = requireManageMembers(project, requesterId);
+    var target = findMemberOrThrow(project, targetUserId);
+    if (target.getRole() == ProjectRole.OWNER)
+      throw new IllegalArgumentException("The project owner's role cannot be changed");
+    if (requester.getRole() == ProjectRole.ADMIN) {
+      if (target.getRole() == ProjectRole.ADMIN)
+        throw new AccessDeniedException("Admins cannot change another admin's role");
+      if (newRole == ProjectRole.ADMIN)
+        throw new AccessDeniedException("Only the owner can promote members to admin");
+    }
+
+    target.setRole(newRole);
+    projectMemberRepository.save(target);
+    log.info(
+        "Member {} role changed to {} in project {} by {}",
+        targetUserId,
+        newRole,
+        projectId,
+        requesterId);
+    var pinned = userProjectPinRepository.existsByUserIdAndProject(requesterId, project);
+    return toDetail(project, pinned);
+  }
+
+  private Project findProjectOrThrow(UUID projectId) {
+    return projectRepository
+        .findById(projectId)
+        .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
+  }
+
+  private ProjectMember findMemberOrThrow(Project project, UUID userId) {
+    return projectMemberRepository
+        .findByProjectAndUserId(project, userId)
+        .orElseThrow(() -> new IllegalArgumentException("Member not found in this project"));
+  }
+
+  private ProjectMember requireManageMembers(Project project, UUID userId) {
+    var membership =
+        projectMemberRepository
+            .findByProjectAndUserId(project, userId)
+            .orElseThrow(() -> new AccessDeniedException("Access denied to this project"));
+    if (membership.getRole() != ProjectRole.OWNER && membership.getRole() != ProjectRole.ADMIN)
+      throw new AccessDeniedException("Only owners and admins can manage members");
+    return membership;
   }
 
   private Project requireMember(UUID projectId, UUID userId) {

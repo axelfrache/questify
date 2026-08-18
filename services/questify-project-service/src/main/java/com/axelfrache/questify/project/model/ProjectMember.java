@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
@@ -33,6 +34,7 @@ import org.hibernate.annotations.CreationTimestamp;
       @Index(name = "idx_project_members_project_id", columnList = "project_id")
     })
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

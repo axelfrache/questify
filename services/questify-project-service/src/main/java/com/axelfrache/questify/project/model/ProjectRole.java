@@ -2,5 +2,7 @@ package com.axelfrache.questify.project.model;
 
 public enum ProjectRole {
   OWNER,
-  MEMBER
+  ADMIN,
+  MEMBER,
+  VIEWER
 }

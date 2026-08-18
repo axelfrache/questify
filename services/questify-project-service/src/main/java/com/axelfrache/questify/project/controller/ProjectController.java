@@ -6,6 +6,7 @@ import com.axelfrache.questify.project.dto.ProjectDetailResponse;
 import com.axelfrache.questify.project.dto.ProjectMemberResponse;
 import com.axelfrache.questify.project.dto.ProjectSidebarResponse;
 import com.axelfrache.questify.project.dto.ProjectSummaryResponse;
+import com.axelfrache.questify.project.dto.UpdateMemberRoleRequest;
 import com.axelfrache.questify.project.dto.UpdateProjectRequest;
 import com.axelfrache.questify.project.service.ProjectService;
 import jakarta.validation.Valid;
@@ -110,5 +111,15 @@ public class ProjectController {
       @AuthenticationPrincipal String userId, @PathVariable UUID id, @PathVariable UUID memberId) {
     projectService.removeMember(id, memberId, UUID.fromString(userId));
     return ResponseEntity.noContent().build();
+  }
+
+  @PatchMapping("/{id}/members/{memberId}/role")
+  public ResponseEntity<ProjectDetailResponse> changeMemberRole(
+      @AuthenticationPrincipal String userId,
+      @PathVariable UUID id,
+      @PathVariable UUID memberId,
+      @Valid @RequestBody UpdateMemberRoleRequest request) {
+    return ResponseEntity.ok(
+        projectService.changeMemberRole(id, memberId, request.role(), UUID.fromString(userId)));
   }
 }
