@@ -264,7 +264,16 @@
     "done": "Done",
     "token_copied": "Invite link copied!",
     "invite_failed": "Failed to create invite",
-    "confirm_remove_member": "Remove this member from the project?"
+    "confirm_remove_member": "Remove this member from the project?",
+    "role_admin": "Admin",
+    "role_member": "Member",
+    "role_viewer": "Viewer",
+    "set_role": "Set as {{role}}",
+    "remove_member": "Remove from project",
+    "member_action_failed": "Couldn't update this member",
+    "assignee": "Assignee:",
+    "assignee_all": "Everyone",
+    "assignee_unassigned": "Unassigned"
   },
   "habits": {
     "title": "Habits",

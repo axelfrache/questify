@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   useCompleteQuest,
   useDeleteQuest,
@@ -19,6 +20,7 @@ import { QuestViewDialog } from '@/components/QuestViewDialog';
 import { ProjectMembersView } from '@/components/ProjectMembersView';
 import { AssignQuestDialog } from '@/components/AssignQuestDialog';
 import { type QuestResponse } from '@/lib/api';
+import { cn } from '@/lib/utils';
 import { Plus } from 'lucide-react';
 import { fireConfettiFromElement } from '@/lib/celebration';
 
@@ -37,13 +39,39 @@ export function ProjectDetailPage() {
   const [parentQuest, setParentQuest] = useState<QuestResponse | null>(null);
   const [assigningQuest, setAssigningQuest] = useState<QuestResponse | null>(null);
   const [activeTab, setActiveTab] = useState<'quests' | 'members'>('quests');
+  const [assigneeFilter, setAssigneeFilter] = useState<string>('all');
 
+  const { user } = useAuth();
   const { data: members = [] } = useProjectMembers(id);
   const { data: memberSummaries } = useUserSummaries(members.map((m) => m.userId));
   const memberNameById = useMemo(
     () => new Map((memberSummaries ?? []).map((u) => [u.id, u.username])),
     [memberSummaries]
   );
+
+  const myRole = members.find((m) => m.userId === user?.id)?.role;
+  const canEdit = myRole !== 'VIEWER';
+
+  const assigneeFilters = useMemo(() => {
+    const base = [
+      { id: 'all', label: t('project_detail.assignee_all') },
+      { id: 'unassigned', label: t('project_detail.assignee_unassigned') },
+    ];
+    const perMember = members.map((m) => ({
+      id: m.userId,
+      label:
+        m.userId === user?.id
+          ? t('project_detail.you')
+          : (memberNameById.get(m.userId) ?? `User ${m.userId.slice(0, 8)}`),
+    }));
+    return [...base, ...perMember];
+  }, [members, memberNameById, user?.id, t]);
+
+  const matchesAssignee = (quest: QuestResponse) => {
+    if (assigneeFilter === 'all') return true;
+    if (assigneeFilter === 'unassigned') return !quest.assigneeId;
+    return quest.assigneeId === assigneeFilter;
+  };
 
   const stats = useMemo(() => {
     if (!quests) return null;
@@ -110,10 +138,16 @@ export function ProjectDetailPage() {
             )}
           </div>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)} size="sm" className="gap-1.5 shrink-0">
-          <Plus className="h-3.5 w-3.5" />
-          {t('project_detail.add_quest')}
-        </Button>
+        {canEdit && (
+          <Button
+            onClick={() => setIsCreateDialogOpen(true)}
+            size="sm"
+            className="gap-1.5 shrink-0"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            {t('project_detail.add_quest')}
+          </Button>
+        )}
       </div>
 
       {/* Stat tiles */}
@@ -189,16 +223,40 @@ export function ProjectDetailPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              {pendingQuests.length > 0 && (
+              {members.length > 1 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                  <span className="mr-1 shrink-0 text-xs text-muted-foreground">
+                    {t('project_detail.assignee')}
+                  </span>
+                  {assigneeFilters.map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => setAssigneeFilter(f.id)}
+                      className={cn(
+                        'shrink-0 rounded-full border px-2.5 py-1 text-xs transition-colors',
+                        assigneeFilter === f.id
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {pendingQuests.filter(matchesAssignee).length > 0 && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h2 className="text-sm font-semibold">{t('project_detail.quests')}</h2>
                     <span className="font-mono text-xs text-muted-foreground">
-                      {t('project_detail.items', { count: pendingQuests.length })}
+                      {t('project_detail.items', {
+                        count: pendingQuests.filter(matchesAssignee).length,
+                      })}
                     </span>
                   </div>
                   <div className="space-y-1.5">
-                    {pendingQuests.map((quest) => (
+                    {pendingQuests.filter(matchesAssignee).map((quest) => (
                       <QuestCard
                         key={quest.id}
                         quest={quest}

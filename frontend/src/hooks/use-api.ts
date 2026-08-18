@@ -14,6 +14,7 @@ import {
   type CreateQuestRequest,
   type ProjectDetailResponse,
   type ProjectExportBundle,
+  type ProjectRole,
   type ProjectSummaryResponse,
   type QuestResponse,
   type UpdateProjectRequest,
@@ -588,6 +589,28 @@ export function useRemoveProjectMember() {
       api.removeProjectMember(projectId, memberId),
     onSuccess: (_, { projectId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(projectId) });
+    },
+  });
+}
+
+export function useChangeMemberRole() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      projectId,
+      memberId,
+      role,
+    }: {
+      projectId: string;
+      memberId: string;
+      role: ProjectRole;
+    }) => api.changeMemberRole(projectId, memberId, role),
+    onSuccess: (project) => {
+      queryClient.setQueryData<ProjectDetailResponse>(
+        queryKeys.projects.detail(project.id),
+        project
+      );
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(project.id) });
     },
   });
 }

@@ -630,6 +630,20 @@ class ApiClient {
     });
   }
 
+  async changeMemberRole(
+    projectId: string,
+    memberId: string,
+    role: ProjectRole
+  ): Promise<ProjectDetailResponse> {
+    return this.request<ProjectDetailResponse>(
+      `/api/projects/${projectId}/members/${memberId}/role`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ role }),
+      }
+    );
+  }
+
   async assignQuest(questId: string, assigneeId: string | null): Promise<QuestResponse> {
     return this.request<QuestResponse>(`/api/quests/${questId}/assign`, {
       method: 'PATCH',
@@ -923,9 +937,11 @@ export interface ProjectSidebarResponse {
   recent: ProjectSummaryResponse[];
 }
 
+export type ProjectRole = 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER';
+
 export interface ProjectMemberResponse {
   userId: string;
-  role: 'OWNER' | 'MEMBER';
+  role: ProjectRole;
   joinedAt: string;
 }
 
@@ -1037,6 +1053,7 @@ export type NotificationType =
   | 'QUEST_DUE_SOON'
   | 'QUEST_OVERDUE'
   | 'QUEST_COMPLETED'
+  | 'QUEST_ASSIGNED'
   | 'LEVEL_UP'
   | 'STREAK_AT_RISK';
 

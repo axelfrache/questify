@@ -264,7 +264,16 @@
     "done": "Terminé",
     "token_copied": "Lien d'invitation copié !",
     "invite_failed": "Impossible de créer l'invitation",
-    "confirm_remove_member": "Supprimer ce membre du projet ?"
+    "confirm_remove_member": "Supprimer ce membre du projet ?",
+    "role_admin": "Admin",
+    "role_member": "Membre",
+    "role_viewer": "Lecteur",
+    "set_role": "Définir comme {{role}}",
+    "remove_member": "Retirer du projet",
+    "member_action_failed": "Impossible de mettre à jour ce membre",
+    "assignee": "Assigné :",
+    "assignee_all": "Tout le monde",
+    "assignee_unassigned": "Non assigné"
   },
   "habits": {
     "title": "Habitudes",

@@ -1,4 +1,14 @@
-import { Bell, CheckCheck, Trash2, Zap, Flame, AlertTriangle, Trophy, Clock } from 'lucide-react';
+import {
+  Bell,
+  CheckCheck,
+  Trash2,
+  Zap,
+  Flame,
+  AlertTriangle,
+  Trophy,
+  Clock,
+  Target,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -21,6 +31,7 @@ const NOTIFICATION_CONFIG: Record<NotificationType, NotificationConfig> = {
   QUEST_DUE_SOON: { icon: Clock, color: 'text-amber-500' },
   QUEST_OVERDUE: { icon: AlertTriangle, color: 'text-red-500' },
   QUEST_COMPLETED: { icon: Trophy, color: 'text-primary' },
+  QUEST_ASSIGNED: { icon: Target, color: 'text-sky-500' },
   LEVEL_UP: { icon: Zap, color: 'text-violet-500' },
   STREAK_AT_RISK: { icon: Flame, color: 'text-orange-500' },
 };
