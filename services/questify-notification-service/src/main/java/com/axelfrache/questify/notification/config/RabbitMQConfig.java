@@ -40,6 +40,18 @@ public class RabbitMQConfig {
   }
 
   @Bean
+  public Queue questAssignedQueue() {
+    return new Queue(QueueConstants.QUEST_ASSIGNED_QUEUE, true);
+  }
+
+  @Bean
+  public Binding questAssignedBinding(Queue questAssignedQueue, TopicExchange questifyExchange) {
+    return BindingBuilder.bind(questAssignedQueue)
+        .to(questifyExchange)
+        .with(QueueConstants.QUEST_ASSIGNED_ROUTING_KEY);
+  }
+
+  @Bean
   public Queue userDeletedQueue() {
     return new Queue(QueueConstants.USER_DELETED_QUEUE, true);
   }

@@ -339,6 +339,10 @@ public class QuestService {
     var template = findTemplateByIdAndUserOrThrow(id, requesterId);
     template.setAssigneeId(assigneeId);
     questTemplateRepository.save(template);
+    if (assigneeId != null && !assigneeId.equals(template.getUserId())) {
+      questEventPublisher.publishQuestAssigned(
+          requesterId, assigneeId, template.getId(), template.getTitle(), template.getProjectId());
+    }
     log.info("Quest assigned quest_id={} assignee={} by={}", id, assigneeId, requesterId);
     return toResponse(template);
   }

@@ -5,5 +5,6 @@ public enum NotificationType {
   QUEST_OVERDUE,
   QUEST_COMPLETED,
   LEVEL_UP,
-  STREAK_AT_RISK
+  STREAK_AT_RISK,
+  QUEST_ASSIGNED
 }

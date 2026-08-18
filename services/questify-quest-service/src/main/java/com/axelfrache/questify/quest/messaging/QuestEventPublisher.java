@@ -104,6 +104,27 @@ public class QuestEventPublisher {
     }
   }
 
+  public void publishQuestAssigned(
+      UUID assignerId, UUID assigneeId, UUID questId, String questTitle, UUID projectId) {
+    var event = new QuestAssignedEvent(assignerId, assigneeId, questId, questTitle, projectId);
+    try {
+      outboxEventRepository.save(
+          OutboxEvent.builder()
+              .routingKey(QueueConstants.QUEST_ASSIGNED_ROUTING_KEY)
+              .payload(objectMapper.writeValueAsString(event))
+              .typeId(QuestAssignedEvent.class.getName())
+              .traceparent(currentTraceparent())
+              .build());
+      log.debug(
+          "Queued QuestAssignedEvent to outbox: assigner={} assignee={} questId={}",
+          assignerId,
+          assigneeId,
+          questId);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Failed to serialize QuestAssignedEvent", e);
+    }
+  }
+
   public void publishCategoryDeleted(UUID userId, String categoryName) {
     var event = new CategoryDeletedEvent(userId, categoryName);
     try {
