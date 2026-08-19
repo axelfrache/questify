@@ -2,12 +2,14 @@ package com.axelfrache.questify.project.controller;
 
 import com.axelfrache.questify.project.dto.CreateInvitationRequest;
 import com.axelfrache.questify.project.dto.CreateProjectRequest;
+import com.axelfrache.questify.project.dto.InviteLinkResponse;
 import com.axelfrache.questify.project.dto.InviteResponse;
 import com.axelfrache.questify.project.dto.PendingInvitationResponse;
 import com.axelfrache.questify.project.dto.ProjectDetailResponse;
 import com.axelfrache.questify.project.dto.ProjectMemberResponse;
 import com.axelfrache.questify.project.dto.ProjectSidebarResponse;
 import com.axelfrache.questify.project.dto.ProjectSummaryResponse;
+import com.axelfrache.questify.project.dto.UpdateInviteLinkRequest;
 import com.axelfrache.questify.project.dto.UpdateMemberRoleRequest;
 import com.axelfrache.questify.project.dto.UpdateProjectRequest;
 import com.axelfrache.questify.project.service.ProjectService;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -133,6 +136,26 @@ public class ProjectController {
       @PathVariable UUID invitationId) {
     projectService.cancelInvitation(id, invitationId, UUID.fromString(userId));
     return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping("/{id}/invite-link")
+  public ResponseEntity<InviteLinkResponse> getInviteLink(
+      @AuthenticationPrincipal String userId, @PathVariable UUID id) {
+    return ResponseEntity.ok(projectService.getInviteLink(id, UUID.fromString(userId)));
+  }
+
+  @PutMapping("/{id}/invite-link")
+  public ResponseEntity<InviteLinkResponse> updateInviteLink(
+      @AuthenticationPrincipal String userId,
+      @PathVariable UUID id,
+      @Valid @RequestBody UpdateInviteLinkRequest request) {
+    return ResponseEntity.ok(projectService.updateInviteLink(id, UUID.fromString(userId), request));
+  }
+
+  @PostMapping("/{id}/invite-link/reset")
+  public ResponseEntity<InviteLinkResponse> resetInviteLink(
+      @AuthenticationPrincipal String userId, @PathVariable UUID id) {
+    return ResponseEntity.ok(projectService.resetInviteLink(id, UUID.fromString(userId)));
   }
 
   @GetMapping("/{id}/members")

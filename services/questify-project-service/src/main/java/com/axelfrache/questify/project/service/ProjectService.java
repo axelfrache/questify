@@ -2,12 +2,14 @@ package com.axelfrache.questify.project.service;
 
 import com.axelfrache.questify.project.dto.CreateInvitationRequest;
 import com.axelfrache.questify.project.dto.CreateProjectRequest;
+import com.axelfrache.questify.project.dto.InviteLinkResponse;
 import com.axelfrache.questify.project.dto.InviteResponse;
 import com.axelfrache.questify.project.dto.PendingInvitationResponse;
 import com.axelfrache.questify.project.dto.ProjectDetailResponse;
 import com.axelfrache.questify.project.dto.ProjectMemberResponse;
 import com.axelfrache.questify.project.dto.ProjectSidebarResponse;
 import com.axelfrache.questify.project.dto.ProjectSummaryResponse;
+import com.axelfrache.questify.project.dto.UpdateInviteLinkRequest;
 import com.axelfrache.questify.project.dto.UpdateProjectRequest;
 import com.axelfrache.questify.project.messaging.ProjectEventPublisher;
 import com.axelfrache.questify.project.model.Project;
@@ -335,10 +337,13 @@ public class ProjectService {
   @Transactional
   public ProjectDetailResponse joinProject(String token, UUID userId) {
     setUuidAttribute("questify.user.id", userId);
-    var invitation =
-        projectInvitationRepository
-            .findByToken(token)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid invite token"));
+    return projectInvitationRepository
+        .findByToken(token)
+        .map(invitation -> joinViaInvitation(invitation, userId))
+        .orElseGet(() -> joinViaLink(token, userId));
+  }
+
+  private ProjectDetailResponse joinViaInvitation(ProjectInvitation invitation, UUID userId) {
     if (invitation.isCancelled())
       throw new IllegalStateException("This invitation has been cancelled");
     if (invitation.isExpired()) throw new IllegalStateException("This invite link has expired");
@@ -346,22 +351,77 @@ public class ProjectService {
       throw new IllegalStateException("This invite link has already been used");
 
     var project = invitation.getProject();
-    if (!projectMemberRepository.existsByProjectAndUserId(project, userId)) {
-      projectMemberRepository.save(
-          ProjectMember.builder()
-              .project(project)
-              .userId(userId)
-              .role(invitation.getRole())
-              .build());
-      log.info("User {} joined project {} as {}", userId, project.getId(), invitation.getRole());
-    }
-
+    addMemberIfAbsent(project, userId, invitation.getRole());
     invitation.setAcceptedByUserId(userId);
     invitation.setAcceptedAt(Instant.now());
     projectInvitationRepository.save(invitation);
-
     var pinned = userProjectPinRepository.existsByUserIdAndProject(userId, project);
     return toDetail(project, pinned);
+  }
+
+  private ProjectDetailResponse joinViaLink(String token, UUID userId) {
+    var project =
+        projectRepository
+            .findByInviteLinkToken(token)
+            .filter(Project::isInviteLinkEnabled)
+            .orElseThrow(() -> new IllegalArgumentException("Invalid invite token"));
+    addMemberIfAbsent(project, userId, project.getInviteLinkRole());
+    var pinned = userProjectPinRepository.existsByUserIdAndProject(userId, project);
+    return toDetail(project, pinned);
+  }
+
+  private void addMemberIfAbsent(Project project, UUID userId, ProjectRole role) {
+    if (!projectMemberRepository.existsByProjectAndUserId(project, userId)) {
+      projectMemberRepository.save(
+          ProjectMember.builder().project(project).userId(userId).role(role).build());
+      log.info("User {} joined project {} as {}", userId, project.getId(), role);
+    }
+  }
+
+  @WithSpan("project.get_invite_link")
+  @Transactional(readOnly = true)
+  public InviteLinkResponse getInviteLink(UUID projectId, UUID requesterId) {
+    var project = findProjectOrThrow(projectId);
+    requireManageMembers(project, requesterId);
+    return toInviteLink(project);
+  }
+
+  @WithSpan("project.update_invite_link")
+  @Transactional
+  public InviteLinkResponse updateInviteLink(
+      UUID projectId, UUID requesterId, UpdateInviteLinkRequest request) {
+    if (request.role() == ProjectRole.OWNER || request.role() == ProjectRole.ADMIN)
+      throw new IllegalArgumentException("Invite links can only grant member or viewer roles");
+    var project = findProjectOrThrow(projectId);
+    requireManageMembers(project, requesterId);
+    project.setInviteLinkEnabled(request.enabled());
+    project.setInviteLinkRole(request.role());
+    if (request.enabled() && project.getInviteLinkToken() == null)
+      project.setInviteLinkToken(UUID.randomUUID().toString());
+    projectRepository.save(project);
+    log.info(
+        "Invite link updated project_id={} enabled={} role={}",
+        projectId,
+        request.enabled(),
+        request.role());
+    return toInviteLink(project);
+  }
+
+  @WithSpan("project.reset_invite_link")
+  @Transactional
+  public InviteLinkResponse resetInviteLink(UUID projectId, UUID requesterId) {
+    var project = findProjectOrThrow(projectId);
+    requireManageMembers(project, requesterId);
+    project.setInviteLinkToken(UUID.randomUUID().toString());
+    projectRepository.save(project);
+    log.info("Invite link reset project_id={}", projectId);
+    return toInviteLink(project);
+  }
+
+  private InviteLinkResponse toInviteLink(Project project) {
+    var url =
+        project.getInviteLinkToken() != null ? buildJoinUrl(project.getInviteLinkToken()) : null;
+    return new InviteLinkResponse(project.isInviteLinkEnabled(), project.getInviteLinkRole(), url);
   }
 
   @WithSpan("project.list_members")

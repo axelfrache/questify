@@ -2,6 +2,8 @@ package com.axelfrache.questify.project.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -46,6 +48,18 @@ public class Project {
 
   @Column(length = 10)
   private String icon;
+
+  @Column(name = "invite_link_token", unique = true)
+  private String inviteLinkToken;
+
+  @Column(name = "invite_link_enabled", nullable = false)
+  @Builder.Default
+  private boolean inviteLinkEnabled = false;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "invite_link_role", nullable = false, length = 20)
+  @Builder.Default
+  private ProjectRole inviteLinkRole = ProjectRole.MEMBER;
 
   private Instant archivedAt;
 

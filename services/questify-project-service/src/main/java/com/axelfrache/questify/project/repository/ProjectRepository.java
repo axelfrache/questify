@@ -2,6 +2,7 @@ package com.axelfrache.questify.project.repository;
 
 import com.axelfrache.questify.project.model.Project;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -40,6 +41,8 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
   List<Project> findAllByMemberUserId(@Param("userId") UUID userId);
 
   List<Project> findByOwnerUserId(UUID ownerUserId);
+
+  Optional<Project> findByInviteLinkToken(String inviteLinkToken);
 
   void deleteByOwnerUserId(UUID ownerUserId);
 }

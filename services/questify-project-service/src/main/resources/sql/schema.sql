@@ -6,10 +6,17 @@ CREATE TABLE IF NOT EXISTS projects.projects (
     name VARCHAR(120) NOT NULL,
     description VARCHAR(2000),
     icon VARCHAR(10),
+    invite_link_token VARCHAR(255) UNIQUE,
+    invite_link_enabled BOOLEAN NOT NULL DEFAULT false,
+    invite_link_role VARCHAR(20) NOT NULL DEFAULT 'MEMBER',
     archived_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE projects.projects ADD COLUMN IF NOT EXISTS invite_link_token VARCHAR(255) UNIQUE;
+ALTER TABLE projects.projects ADD COLUMN IF NOT EXISTS invite_link_enabled BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE projects.projects ADD COLUMN IF NOT EXISTS invite_link_role VARCHAR(20) NOT NULL DEFAULT 'MEMBER';
 
 CREATE INDEX IF NOT EXISTS idx_projects_owner_user_id ON projects.projects(owner_user_id);
 CREATE INDEX IF NOT EXISTS idx_projects_updated_at ON projects.projects(updated_at);
