@@ -1,7 +1,7 @@
 # Questify
 
 [![CI](https://github.com/axelfrache/questify/actions/workflows/ci.yml/badge.svg)](https://github.com/axelfrache/questify/actions/workflows/ci.yml)
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.x-6DB33F?logo=spring-boot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -119,4 +119,8 @@ pnpm run format        # Fix formatting
 
 ## License
 
-This project is distributed under [MIT License](LICENSE).
+Copyright (C) 2026 Axel Frache.
+
+This project is distributed under the [GNU Affero General Public License v3.0](LICENSE).
+Because Questify is served over a network, any modified version you run as a
+network service must make its source available to its users (AGPL §13).
