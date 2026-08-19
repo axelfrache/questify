@@ -245,15 +245,13 @@
     "items": "{{count}} éléments",
     "empty": "Aucune quête dans ce projet pour l'instant.",
     "members": "Membres",
-    "invite": "+ Inviter",
+    "invite": "Inviter",
     "you": "Vous",
     "role_owner": "Propriétaire",
     "assign_title": "Assigner la quête",
     "assign_success": "Quête assignée",
     "assign_failed": "Impossible d'assigner la quête",
     "unassign": "Retirer l'assignation",
-    "open_quest": "{{count}} quête ouverte",
-    "open_quest_plural": "{{count}} quêtes ouvertes",
     "unassigned": "Non assignée",
     "send_invite": "Inviter des membres",
     "invite_description": "Générez un lien d'invitation à partager avec vos coéquipiers.",
@@ -288,7 +286,9 @@
     "invite_link_hint": "Toute personne avec le lien peut rejoindre",
     "grants_role": "Rôle accordé :",
     "reset_link": "Réinitialiser le lien",
-    "link_copied": "Lien copié"
+    "link_copied": "Lien copié",
+    "open_quest_one": "{{count}} quête ouverte",
+    "open_quest_other": "{{count}} quêtes ouvertes"
   },
   "habits": {
     "title": "Habitudes",

@@ -245,15 +245,13 @@
     "items": "{{count}} items",
     "empty": "No quests in this project yet.",
     "members": "Members",
-    "invite": "+ Invite",
+    "invite": "Invite",
     "you": "You",
     "role_owner": "Owner",
     "assign_title": "Assign quest",
     "assign_success": "Quest assigned",
     "assign_failed": "Failed to assign quest",
     "unassign": "Remove assignment",
-    "open_quest": "{{count}} open quest",
-    "open_quest_plural": "{{count}} open quests",
     "unassigned": "Unassigned",
     "send_invite": "Invite members",
     "invite_description": "Generate an invite link to share with team members.",
@@ -288,7 +286,9 @@
     "invite_link_hint": "Anyone with the link can join",
     "grants_role": "Grants role:",
     "reset_link": "Reset link",
-    "link_copied": "Link copied"
+    "link_copied": "Link copied",
+    "open_quest_one": "{{count}} open quest",
+    "open_quest_other": "{{count}} open quests"
   },
   "habits": {
     "title": "Habits",

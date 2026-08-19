@@ -188,7 +188,7 @@ export function ProjectMembersView({ project, quests }: ProjectMembersViewProps)
                   )}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {questCount} {t('project_detail.open_quest', { count: questCount })}
+                  {t('project_detail.open_quest', { count: questCount })}
                 </div>
               </div>
 
