@@ -1,7 +1,9 @@
 package com.axelfrache.questify.project.controller;
 
+import com.axelfrache.questify.project.dto.CreateInvitationRequest;
 import com.axelfrache.questify.project.dto.CreateProjectRequest;
 import com.axelfrache.questify.project.dto.InviteResponse;
+import com.axelfrache.questify.project.dto.PendingInvitationResponse;
 import com.axelfrache.questify.project.dto.ProjectDetailResponse;
 import com.axelfrache.questify.project.dto.ProjectMemberResponse;
 import com.axelfrache.questify.project.dto.ProjectSidebarResponse;
@@ -98,6 +100,39 @@ public class ProjectController {
   public ResponseEntity<ProjectDetailResponse> join(
       @AuthenticationPrincipal String userId, @PathVariable String token) {
     return ResponseEntity.ok(projectService.joinProject(token, UUID.fromString(userId)));
+  }
+
+  @PostMapping("/{id}/invitations")
+  public ResponseEntity<PendingInvitationResponse> createInvitation(
+      @AuthenticationPrincipal String userId,
+      @PathVariable UUID id,
+      @Valid @RequestBody CreateInvitationRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(projectService.createInvitation(id, UUID.fromString(userId), request));
+  }
+
+  @GetMapping("/{id}/invitations")
+  public ResponseEntity<List<PendingInvitationResponse>> listInvitations(
+      @AuthenticationPrincipal String userId, @PathVariable UUID id) {
+    return ResponseEntity.ok(projectService.listPendingInvitations(id, UUID.fromString(userId)));
+  }
+
+  @PostMapping("/{id}/invitations/{invitationId}/resend")
+  public ResponseEntity<PendingInvitationResponse> resendInvitation(
+      @AuthenticationPrincipal String userId,
+      @PathVariable UUID id,
+      @PathVariable UUID invitationId) {
+    return ResponseEntity.ok(
+        projectService.resendInvitation(id, invitationId, UUID.fromString(userId)));
+  }
+
+  @DeleteMapping("/{id}/invitations/{invitationId}")
+  public ResponseEntity<Void> cancelInvitation(
+      @AuthenticationPrincipal String userId,
+      @PathVariable UUID id,
+      @PathVariable UUID invitationId) {
+    projectService.cancelInvitation(id, invitationId, UUID.fromString(userId));
+    return ResponseEntity.noContent().build();
   }
 
   @GetMapping("/{id}/members")

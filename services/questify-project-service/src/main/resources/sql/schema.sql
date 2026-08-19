@@ -67,11 +67,18 @@ CREATE TABLE IF NOT EXISTS projects.project_invitations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES projects.projects(id) ON DELETE CASCADE,
     token VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(320),
+    role VARCHAR(20) NOT NULL DEFAULT 'MEMBER',
     expires_at TIMESTAMPTZ NOT NULL,
     accepted_by_user_id UUID,
     accepted_at TIMESTAMPTZ,
+    cancelled_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE projects.project_invitations ADD COLUMN IF NOT EXISTS email VARCHAR(320);
+ALTER TABLE projects.project_invitations ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'MEMBER';
+ALTER TABLE projects.project_invitations ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMPTZ;
 
 CREATE INDEX IF NOT EXISTS idx_project_invitations_token ON projects.project_invitations(token);
 CREATE INDEX IF NOT EXISTS idx_project_invitations_project_id ON projects.project_invitations(project_id);

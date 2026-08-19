@@ -2,6 +2,8 @@ package com.axelfrache.questify.project.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -41,6 +43,14 @@ public class ProjectInvitation {
   @Column(nullable = false, unique = true)
   private String token;
 
+  @Column(length = 320)
+  private String email;
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 20)
+  @Builder.Default
+  private ProjectRole role = ProjectRole.MEMBER;
+
   @Column(nullable = false)
   private Instant expiresAt;
 
@@ -49,6 +59,9 @@ public class ProjectInvitation {
 
   @Column(name = "accepted_at")
   private Instant acceptedAt;
+
+  @Column(name = "cancelled_at")
+  private Instant cancelledAt;
 
   @CreationTimestamp
   @Column(nullable = false, updatable = false)
@@ -60,5 +73,13 @@ public class ProjectInvitation {
 
   public boolean isAccepted() {
     return acceptedByUserId != null;
+  }
+
+  public boolean isCancelled() {
+    return cancelledAt != null;
+  }
+
+  public boolean isPending() {
+    return !isAccepted() && !isCancelled() && !isExpired();
   }
 }

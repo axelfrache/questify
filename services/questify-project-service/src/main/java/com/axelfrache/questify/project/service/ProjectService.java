@@ -1,7 +1,9 @@
 package com.axelfrache.questify.project.service;
 
+import com.axelfrache.questify.project.dto.CreateInvitationRequest;
 import com.axelfrache.questify.project.dto.CreateProjectRequest;
 import com.axelfrache.questify.project.dto.InviteResponse;
+import com.axelfrache.questify.project.dto.PendingInvitationResponse;
 import com.axelfrache.questify.project.dto.ProjectDetailResponse;
 import com.axelfrache.questify.project.dto.ProjectMemberResponse;
 import com.axelfrache.questify.project.dto.ProjectSidebarResponse;
@@ -29,6 +31,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -50,6 +53,10 @@ public class ProjectService {
   private final ProjectInvitationRepository projectInvitationRepository;
   private final UserProjectPinRepository userProjectPinRepository;
   private final ProjectEventPublisher projectEventPublisher;
+  private final MailService mailService;
+
+  @Value("${questify.app.public-url:http://localhost:80}")
+  private String appPublicUrl;
 
   @WithSpan("project.get_sidebar")
   @Transactional(readOnly = true)
@@ -222,6 +229,108 @@ public class ProjectService {
     return new InviteResponse(token, expiresAt);
   }
 
+  @WithSpan("project.create_invitation")
+  @Transactional
+  public PendingInvitationResponse createInvitation(
+      UUID projectId, UUID requesterId, CreateInvitationRequest request) {
+    setUuidAttribute("questify.project.id", projectId);
+    setUuidAttribute("questify.user.id", requesterId);
+    if (request.role() == ProjectRole.OWNER)
+      throw new IllegalArgumentException("Cannot invite someone as owner");
+
+    var project = findProjectOrThrow(projectId);
+    var requester = requireManageMembers(project, requesterId);
+    if (requester.getRole() == ProjectRole.ADMIN && request.role() == ProjectRole.ADMIN)
+      throw new AccessDeniedException("Only the owner can invite admins");
+
+    var token = UUID.randomUUID().toString();
+    var invitation =
+        projectInvitationRepository.save(
+            ProjectInvitation.builder()
+                .project(project)
+                .token(token)
+                .email(request.email().trim())
+                .role(request.role())
+                .expiresAt(Instant.now().plus(INVITE_TTL))
+                .build());
+    mailService.sendProjectInvitationEmail(
+        invitation.getEmail(), project.getName(), invitation.getRole(), buildJoinUrl(token));
+    log.info(
+        "Invitation created project_id={} email={} role={}",
+        projectId,
+        invitation.getEmail(),
+        invitation.getRole());
+    return toPending(invitation);
+  }
+
+  @WithSpan("project.list_invitations")
+  @Transactional(readOnly = true)
+  public List<PendingInvitationResponse> listPendingInvitations(UUID projectId, UUID requesterId) {
+    var project = findProjectOrThrow(projectId);
+    requireManageMembers(project, requesterId);
+    return projectInvitationRepository
+        .findByProjectAndAcceptedAtIsNullAndCancelledAtIsNullOrderByCreatedAtDesc(project)
+        .stream()
+        .filter(inv -> inv.getEmail() != null)
+        .map(this::toPending)
+        .toList();
+  }
+
+  @WithSpan("project.resend_invitation")
+  @Transactional
+  public PendingInvitationResponse resendInvitation(
+      UUID projectId, UUID invitationId, UUID requesterId) {
+    var project = findProjectOrThrow(projectId);
+    requireManageMembers(project, requesterId);
+    var invitation = findInvitationOrThrow(project, invitationId);
+    if (invitation.isAccepted() || invitation.isCancelled())
+      throw new IllegalStateException("This invitation is no longer active");
+    if (invitation.getEmail() == null)
+      throw new IllegalArgumentException("This invitation has no email to resend to");
+
+    invitation.setExpiresAt(Instant.now().plus(INVITE_TTL));
+    projectInvitationRepository.save(invitation);
+    mailService.sendProjectInvitationEmail(
+        invitation.getEmail(),
+        project.getName(),
+        invitation.getRole(),
+        buildJoinUrl(invitation.getToken()));
+    log.info("Invitation resent project_id={} email={}", projectId, invitation.getEmail());
+    return toPending(invitation);
+  }
+
+  @WithSpan("project.cancel_invitation")
+  @Transactional
+  public void cancelInvitation(UUID projectId, UUID invitationId, UUID requesterId) {
+    var project = findProjectOrThrow(projectId);
+    requireManageMembers(project, requesterId);
+    var invitation = findInvitationOrThrow(project, invitationId);
+    if (invitation.isAccepted())
+      throw new IllegalStateException("This invitation has already been accepted");
+    invitation.setCancelledAt(Instant.now());
+    projectInvitationRepository.save(invitation);
+    log.info("Invitation cancelled project_id={} invitation_id={}", projectId, invitationId);
+  }
+
+  private ProjectInvitation findInvitationOrThrow(Project project, UUID invitationId) {
+    return projectInvitationRepository
+        .findByIdAndProject(invitationId, project)
+        .orElseThrow(() -> new IllegalArgumentException("Invitation not found"));
+  }
+
+  private String buildJoinUrl(String token) {
+    var base =
+        appPublicUrl.endsWith("/")
+            ? appPublicUrl.substring(0, appPublicUrl.length() - 1)
+            : appPublicUrl;
+    return base + "/join/" + token;
+  }
+
+  private PendingInvitationResponse toPending(ProjectInvitation inv) {
+    return new PendingInvitationResponse(
+        inv.getId(), inv.getEmail(), inv.getRole(), inv.getExpiresAt(), inv.getCreatedAt());
+  }
+
   @WithSpan("project.join")
   @Transactional
   public ProjectDetailResponse joinProject(String token, UUID userId) {
@@ -230,6 +339,8 @@ public class ProjectService {
         projectInvitationRepository
             .findByToken(token)
             .orElseThrow(() -> new IllegalArgumentException("Invalid invite token"));
+    if (invitation.isCancelled())
+      throw new IllegalStateException("This invitation has been cancelled");
     if (invitation.isExpired()) throw new IllegalStateException("This invite link has expired");
     if (invitation.isAccepted())
       throw new IllegalStateException("This invite link has already been used");
@@ -237,8 +348,12 @@ public class ProjectService {
     var project = invitation.getProject();
     if (!projectMemberRepository.existsByProjectAndUserId(project, userId)) {
       projectMemberRepository.save(
-          ProjectMember.builder().project(project).userId(userId).role(ProjectRole.MEMBER).build());
-      log.info("User {} joined project {}", userId, project.getId());
+          ProjectMember.builder()
+              .project(project)
+              .userId(userId)
+              .role(invitation.getRole())
+              .build());
+      log.info("User {} joined project {} as {}", userId, project.getId(), invitation.getRole());
     }
 
     invitation.setAcceptedByUserId(userId);
