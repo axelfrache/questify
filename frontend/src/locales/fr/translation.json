@@ -273,7 +273,17 @@
     "member_action_failed": "Impossible de mettre à jour ce membre",
     "assignee": "Assigné :",
     "assignee_all": "Tout le monde",
-    "assignee_unassigned": "Non assigné"
+    "assignee_unassigned": "Non assigné",
+    "invite_to": "Inviter à « {{name}} »",
+    "invite_email_tab": "Email",
+    "invite_link_tab": "Lien",
+    "invite_email_placeholder": "nom@exemple.com",
+    "invite_sent": "Invitation envoyée à {{email}}",
+    "invite_email_failed": "Impossible d'envoyer l'invitation",
+    "pending_invites": "Invitations en attente",
+    "invited_as": "Invité comme {{role}} · En attente",
+    "resend": "Renvoyer",
+    "invitation_resent": "Invitation renvoyée"
   },
   "habits": {
     "title": "Habitudes",
@@ -552,5 +562,10 @@
   "subquests": {
     "count": "{{completed}}/{{total}} sous-quêtes",
     "loading": "Chargement..."
+  },
+  "join": {
+    "joining": "Connexion au projet…",
+    "failed": "Cette invitation est invalide ou a expiré.",
+    "back_to_projects": "Retour aux projets"
   }
 }

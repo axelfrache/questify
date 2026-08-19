@@ -273,7 +273,17 @@
     "member_action_failed": "Couldn't update this member",
     "assignee": "Assignee:",
     "assignee_all": "Everyone",
-    "assignee_unassigned": "Unassigned"
+    "assignee_unassigned": "Unassigned",
+    "invite_to": "Invite to \"{{name}}\"",
+    "invite_email_tab": "Email",
+    "invite_link_tab": "Link",
+    "invite_email_placeholder": "name@example.com",
+    "invite_sent": "Invitation sent to {{email}}",
+    "invite_email_failed": "Couldn't send the invitation",
+    "pending_invites": "Pending invites",
+    "invited_as": "Invited as {{role}} · Pending",
+    "resend": "Resend",
+    "invitation_resent": "Invitation resent"
   },
   "habits": {
     "title": "Habits",
@@ -552,5 +562,10 @@
   "subquests": {
     "count": "{{completed}}/{{total}} subquests",
     "loading": "Loading..."
+  },
+  "join": {
+    "joining": "Joining project…",
+    "failed": "This invitation is invalid or has expired.",
+    "back_to_projects": "Back to projects"
   }
 }

@@ -3,14 +3,19 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import {
+  useCancelInvitation,
   useChangeMemberRole,
+  useCreateInvitation,
   useInviteProject,
+  useProjectInvitations,
   useRemoveProjectMember,
+  useResendInvitation,
   useProjectMembers,
   useUserSummaries,
 } from '@/hooks/use-api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -25,9 +30,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
-import { ChevronDown, Copy, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, Copy, Mail, Plus, RotateCw, Trash2, X } from 'lucide-react';
 import type { ProjectDetailResponse, ProjectRole, QuestResponse } from '@/lib/api';
 
 interface ProjectMembersViewProps {
@@ -50,18 +63,27 @@ export function ProjectMembersView({ project, quests }: ProjectMembersViewProps)
   const { data: members = [] } = useProjectMembers(project.id);
   const { data: summaries } = useUserSummaries(members.map((m) => m.userId));
   const userById = useMemo(() => new Map((summaries ?? []).map((u) => [u.id, u])), [summaries]);
+
   const inviteMutation = useInviteProject();
   const removeMutation = useRemoveProjectMember();
   const roleMutation = useChangeMemberRole();
-
-  const [inviteDialog, setInviteDialog] = useState(false);
-  const [inviteToken, setInviteToken] = useState<string | null>(null);
-  const [inviteExpiry, setInviteExpiry] = useState<string | null>(null);
+  const createInvitation = useCreateInvitation();
+  const resendInvitation = useResendInvitation();
+  const cancelInvitation = useCancelInvitation();
 
   const myRole = members.find((m) => m.userId === user?.id)?.role;
   const canManage = myRole === 'OWNER' || myRole === 'ADMIN';
 
+  const { data: invitations = [] } = useProjectInvitations(canManage ? project.id : '');
+
+  const [inviteDialog, setInviteDialog] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<ProjectRole>('MEMBER');
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
+
   const roleLabel = (role: ProjectRole) => t(`project_detail.role_${role.toLowerCase()}`);
+
+  const invitableRoles = ASSIGNABLE_ROLES.filter((role) => myRole === 'OWNER' || role !== 'ADMIN');
 
   const roleOptionsFor = (targetRole: ProjectRole) =>
     ASSIGNABLE_ROLES.filter((role) => role !== targetRole).filter(
@@ -74,11 +96,32 @@ export function ProjectMembersView({ project, quests }: ProjectMembersViewProps)
     return true;
   };
 
-  const handleInvite = async () => {
+  const openInvite = () => {
+    setInviteEmail('');
+    setInviteRole('MEMBER');
+    setInviteToken(null);
+    setInviteDialog(true);
+  };
+
+  const handleSendEmail = () => {
+    const email = inviteEmail.trim();
+    if (!email) return;
+    createInvitation.mutate(
+      { projectId: project.id, data: { email, role: inviteRole } },
+      {
+        onSuccess: () => {
+          toast.success(t('project_detail.invite_sent', { email }));
+          setInviteEmail('');
+        },
+        onError: () => toast.error(t('project_detail.invite_email_failed')),
+      }
+    );
+  };
+
+  const handleGenerateLink = async () => {
     try {
       const result = await inviteMutation.mutateAsync(project.id);
       setInviteToken(result.token);
-      setInviteExpiry(result.expiresAt);
     } catch {
       toast.error(t('project_detail.invite_failed'));
     }
@@ -110,14 +153,12 @@ export function ProjectMembersView({ project, quests }: ProjectMembersViewProps)
   const getMemberQuestCount = (memberId: string) =>
     quests.filter((q) => q.assigneeId === memberId && q.status === 'PENDING').length;
 
-  const unassignedCount = quests.filter((q) => !q.assigneeId && q.status === 'PENDING').length;
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">{t('project_detail.members')}</h3>
         {canManage && (
-          <Button size="sm" onClick={() => setInviteDialog(true)} className="gap-1.5">
+          <Button size="sm" onClick={openInvite} className="gap-1.5">
             <Plus className="h-3.5 w-3.5" />
             {t('project_detail.invite')}
           </Button>
@@ -202,64 +243,142 @@ export function ProjectMembersView({ project, quests }: ProjectMembersViewProps)
             </div>
           );
         })}
-
-        {unassignedCount > 0 && (
-          <div className="flex items-center justify-between rounded-lg border border-dashed bg-card p-3">
-            <div className="flex-1">
-              <div className="text-sm font-medium text-muted-foreground">
-                {t('project_detail.unassigned')}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {unassignedCount} {t('project_detail.open_quest', { count: unassignedCount })}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
+      {canManage && invitations.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="text-xs font-semibold text-muted-foreground">
+            {t('project_detail.pending_invites')}
+          </h4>
+          <div className="grid gap-2">
+            {invitations.map((inv) => (
+              <div
+                key={inv.id}
+                className="flex items-center gap-3 rounded-lg border border-dashed bg-card p-3"
+              >
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                  <Mail className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm">{inv.email}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {t('project_detail.invited_as', { role: roleLabel(inv.role) })}
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1 text-xs"
+                  disabled={resendInvitation.isPending}
+                  onClick={() =>
+                    resendInvitation.mutate(
+                      { projectId: project.id, invitationId: inv.id },
+                      {
+                        onSuccess: () => toast.success(t('project_detail.invitation_resent')),
+                        onError: () => toast.error(t('project_detail.member_action_failed')),
+                      }
+                    )
+                  }
+                >
+                  <RotateCw className="h-3.5 w-3.5" />
+                  {t('project_detail.resend')}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground"
+                  onClick={() =>
+                    cancelInvitation.mutate({ projectId: project.id, invitationId: inv.id })
+                  }
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <Dialog open={inviteDialog} onOpenChange={setInviteDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{t('project_detail.send_invite')}</DialogTitle>
+            <DialogTitle>{t('project_detail.invite_to', { name: project.name })}</DialogTitle>
             <DialogDescription>{t('project_detail.invite_description')}</DialogDescription>
           </DialogHeader>
 
-          {inviteToken ? (
-            <div className="space-y-4">
-              <Alert>
-                <AlertDescription className="text-xs">
-                  {t('project_detail.invite_expires')}
-                  {inviteExpiry && new Date(inviteExpiry).toLocaleDateString()}
-                </AlertDescription>
-              </Alert>
+          <Tabs defaultValue="email">
+            <TabsList className="w-fit">
+              <TabsTrigger value="email">{t('project_detail.invite_email_tab')}</TabsTrigger>
+              <TabsTrigger value="link">{t('project_detail.invite_link_tab')}</TabsTrigger>
+            </TabsList>
 
+            <TabsContent value="email" className="space-y-3 pt-3">
               <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={inviteToken}
-                  readOnly
-                  className="flex-1 rounded-md border bg-muted px-3 py-2 font-mono text-sm"
+                <Input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder={t('project_detail.invite_email_placeholder')}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendEmail()}
                 />
-                <Button size="sm" onClick={handleCopyToken} variant="outline">
-                  <Copy className="h-4 w-4" />
+                <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as ProjectRole)}>
+                  <SelectTrigger className="w-32 shrink-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {invitableRoles.map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {roleLabel(role)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleSendEmail}
+                  disabled={!inviteEmail.trim() || createInvitation.isPending}
+                >
+                  {createInvitation.isPending
+                    ? t('project_detail.generating')
+                    : t('project_detail.send_invite')}
                 </Button>
               </div>
+            </TabsContent>
 
-              <p className="text-xs text-muted-foreground">
-                {t('project_detail.share_instructions')}
-              </p>
-
-              <Button onClick={() => setInviteDialog(false)} className="w-full">
-                {t('project_detail.done')}
-              </Button>
-            </div>
-          ) : (
-            <Button onClick={handleInvite} disabled={inviteMutation.isPending} className="w-full">
-              {inviteMutation.isPending
-                ? t('project_detail.generating')
-                : t('project_detail.generate_invite')}
-            </Button>
-          )}
+            <TabsContent value="link" className="space-y-3 pt-3">
+              {inviteToken ? (
+                <>
+                  <Alert>
+                    <AlertDescription className="text-xs">
+                      {t('project_detail.share_instructions')}
+                    </AlertDescription>
+                  </Alert>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={inviteToken}
+                      readOnly
+                      className="flex-1 rounded-md border bg-muted px-3 py-2 font-mono text-sm"
+                    />
+                    <Button size="sm" onClick={handleCopyToken} variant="outline">
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <Button
+                  onClick={handleGenerateLink}
+                  disabled={inviteMutation.isPending}
+                  className="w-full"
+                >
+                  {inviteMutation.isPending
+                    ? t('project_detail.generating')
+                    : t('project_detail.generate_invite')}
+                </Button>
+              )}
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>

@@ -644,6 +644,41 @@ class ApiClient {
     );
   }
 
+  async listProjectInvitations(
+    projectId: string,
+    signal?: AbortSignal
+  ): Promise<PendingInvitationResponse[]> {
+    return this.request<PendingInvitationResponse[]>(`/api/projects/${projectId}/invitations`, {
+      signal,
+    });
+  }
+
+  async createInvitation(
+    projectId: string,
+    data: CreateInvitationRequest
+  ): Promise<PendingInvitationResponse> {
+    return this.request<PendingInvitationResponse>(`/api/projects/${projectId}/invitations`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async resendInvitation(
+    projectId: string,
+    invitationId: string
+  ): Promise<PendingInvitationResponse> {
+    return this.request<PendingInvitationResponse>(
+      `/api/projects/${projectId}/invitations/${invitationId}/resend`,
+      { method: 'POST' }
+    );
+  }
+
+  async cancelInvitation(projectId: string, invitationId: string): Promise<void> {
+    return this.request<void>(`/api/projects/${projectId}/invitations/${invitationId}`, {
+      method: 'DELETE',
+    });
+  }
+
   async assignQuest(questId: string, assigneeId: string | null): Promise<QuestResponse> {
     return this.request<QuestResponse>(`/api/quests/${questId}/assign`, {
       method: 'PATCH',
@@ -943,6 +978,19 @@ export interface ProjectMemberResponse {
   userId: string;
   role: ProjectRole;
   joinedAt: string;
+}
+
+export interface CreateInvitationRequest {
+  email: string;
+  role: ProjectRole;
+}
+
+export interface PendingInvitationResponse {
+  id: string;
+  email: string;
+  role: ProjectRole;
+  expiresAt: string;
+  createdAt: string;
 }
 
 export interface PublicUserResponse {

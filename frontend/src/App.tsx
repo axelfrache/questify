@@ -68,6 +68,11 @@ const ProjectDetailPage = lazy(async () => {
   return { default: module.ProjectDetailPage };
 });
 
+const JoinPage = lazy(async () => {
+  const module = await import('@/pages/JoinPage');
+  return { default: module.JoinPage };
+});
+
 const HabitsPage = lazy(async () => {
   const module = await import('@/pages/HabitsPage');
   return { default: module.HabitsPage };
@@ -160,6 +165,7 @@ function App() {
                   <Route path="/regions" element={<RegionsPage />} />
                   <Route path="/projects" element={<ProjectsPage />} />
                   <Route path="/projects/:id" element={<ProjectDetailPage />} />
+                  <Route path="/join/:token" element={<JoinPage />} />
                   <Route path="/habits" element={<HabitsPage />} />
                   <Route path="/progress" element={<ProgressPage />} />
                   <Route path="/stats" element={<StatsPage />} />

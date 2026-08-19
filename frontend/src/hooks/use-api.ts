@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import {
   api,
   type CreateCategoryRequest,
+  type CreateInvitationRequest,
   type CreateProjectRequest,
   type CreateQuestRequest,
   type ProjectDetailResponse,
@@ -612,6 +613,45 @@ export function useChangeMemberRole() {
       );
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(project.id) });
     },
+  });
+}
+
+export function useProjectInvitations(projectId: string) {
+  return useQuery({
+    queryKey: [...queryKeys.projects.detail(projectId), 'invitations'],
+    queryFn: ({ signal }) => api.listProjectInvitations(projectId, signal),
+    enabled: !!projectId,
+  });
+}
+
+export function useCreateInvitation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ projectId, data }: { projectId: string; data: CreateInvitationRequest }) =>
+      api.createInvitation(projectId, data),
+    onSuccess: (_, { projectId }) =>
+      queryClient.invalidateQueries({
+        queryKey: [...queryKeys.projects.detail(projectId), 'invitations'],
+      }),
+  });
+}
+
+export function useResendInvitation() {
+  return useMutation({
+    mutationFn: ({ projectId, invitationId }: { projectId: string; invitationId: string }) =>
+      api.resendInvitation(projectId, invitationId),
+  });
+}
+
+export function useCancelInvitation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ projectId, invitationId }: { projectId: string; invitationId: string }) =>
+      api.cancelInvitation(projectId, invitationId),
+    onSuccess: (_, { projectId }) =>
+      queryClient.invalidateQueries({
+        queryKey: [...queryKeys.projects.detail(projectId), 'invitations'],
+      }),
   });
 }
 
