@@ -679,6 +679,26 @@ class ApiClient {
     });
   }
 
+  async getInviteLink(projectId: string, signal?: AbortSignal): Promise<InviteLinkResponse> {
+    return this.request<InviteLinkResponse>(`/api/projects/${projectId}/invite-link`, { signal });
+  }
+
+  async updateInviteLink(
+    projectId: string,
+    data: { enabled: boolean; role: ProjectRole }
+  ): Promise<InviteLinkResponse> {
+    return this.request<InviteLinkResponse>(`/api/projects/${projectId}/invite-link`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async resetInviteLink(projectId: string): Promise<InviteLinkResponse> {
+    return this.request<InviteLinkResponse>(`/api/projects/${projectId}/invite-link/reset`, {
+      method: 'POST',
+    });
+  }
+
   async assignQuest(questId: string, assigneeId: string | null): Promise<QuestResponse> {
     return this.request<QuestResponse>(`/api/quests/${questId}/assign`, {
       method: 'PATCH',
@@ -991,6 +1011,12 @@ export interface PendingInvitationResponse {
   role: ProjectRole;
   expiresAt: string;
   createdAt: string;
+}
+
+export interface InviteLinkResponse {
+  enabled: boolean;
+  role: ProjectRole;
+  url: string | null;
 }
 
 export interface PublicUserResponse {

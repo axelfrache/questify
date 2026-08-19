@@ -283,7 +283,12 @@
     "pending_invites": "Invitations en attente",
     "invited_as": "Invité comme {{role}} · En attente",
     "resend": "Renvoyer",
-    "invitation_resent": "Invitation renvoyée"
+    "invitation_resent": "Invitation renvoyée",
+    "invite_link": "Lien d'invitation",
+    "invite_link_hint": "Toute personne avec le lien peut rejoindre",
+    "grants_role": "Rôle accordé :",
+    "reset_link": "Réinitialiser le lien",
+    "link_copied": "Lien copié"
   },
   "habits": {
     "title": "Habitudes",

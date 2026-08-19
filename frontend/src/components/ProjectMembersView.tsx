@@ -6,11 +6,13 @@ import {
   useCancelInvitation,
   useChangeMemberRole,
   useCreateInvitation,
-  useInviteProject,
+  useInviteLink,
   useProjectInvitations,
   useRemoveProjectMember,
   useResendInvitation,
+  useResetInviteLink,
   useProjectMembers,
+  useUpdateInviteLink,
   useUserSummaries,
 } from '@/hooks/use-api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -37,8 +39,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { ChevronDown, Copy, Mail, Plus, RotateCw, Trash2, X } from 'lucide-react';
 import type { ProjectDetailResponse, ProjectRole, QuestResponse } from '@/lib/api';
@@ -56,6 +58,7 @@ const ROLE_BADGE: Record<ProjectRole, string> = {
 };
 
 const ASSIGNABLE_ROLES: ProjectRole[] = ['ADMIN', 'MEMBER', 'VIEWER'];
+const LINK_ROLES: ProjectRole[] = ['MEMBER', 'VIEWER'];
 
 export function ProjectMembersView({ project, quests }: ProjectMembersViewProps) {
   const { t } = useTranslation();
@@ -64,22 +67,23 @@ export function ProjectMembersView({ project, quests }: ProjectMembersViewProps)
   const { data: summaries } = useUserSummaries(members.map((m) => m.userId));
   const userById = useMemo(() => new Map((summaries ?? []).map((u) => [u.id, u])), [summaries]);
 
-  const inviteMutation = useInviteProject();
   const removeMutation = useRemoveProjectMember();
   const roleMutation = useChangeMemberRole();
   const createInvitation = useCreateInvitation();
   const resendInvitation = useResendInvitation();
   const cancelInvitation = useCancelInvitation();
+  const updateInviteLink = useUpdateInviteLink();
+  const resetInviteLink = useResetInviteLink();
 
   const myRole = members.find((m) => m.userId === user?.id)?.role;
   const canManage = myRole === 'OWNER' || myRole === 'ADMIN';
 
-  const { data: invitations = [] } = useProjectInvitations(canManage ? project.id : '');
-
   const [inviteDialog, setInviteDialog] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<ProjectRole>('MEMBER');
-  const [inviteToken, setInviteToken] = useState<string | null>(null);
+
+  const { data: invitations = [] } = useProjectInvitations(canManage ? project.id : '');
+  const { data: link } = useInviteLink(project.id, canManage && inviteDialog);
 
   const roleLabel = (role: ProjectRole) => t(`project_detail.role_${role.toLowerCase()}`);
 
@@ -99,7 +103,6 @@ export function ProjectMembersView({ project, quests }: ProjectMembersViewProps)
   const openInvite = () => {
     setInviteEmail('');
     setInviteRole('MEMBER');
-    setInviteToken(null);
     setInviteDialog(true);
   };
 
@@ -118,19 +121,10 @@ export function ProjectMembersView({ project, quests }: ProjectMembersViewProps)
     );
   };
 
-  const handleGenerateLink = async () => {
-    try {
-      const result = await inviteMutation.mutateAsync(project.id);
-      setInviteToken(result.token);
-    } catch {
-      toast.error(t('project_detail.invite_failed'));
-    }
-  };
-
-  const handleCopyToken = () => {
-    if (inviteToken) {
-      navigator.clipboard.writeText(inviteToken);
-      toast.success(t('project_detail.token_copied'));
+  const handleCopyLink = () => {
+    if (link?.url) {
+      navigator.clipboard.writeText(link.url);
+      toast.success(t('project_detail.link_copied'));
     }
   };
 
@@ -347,35 +341,80 @@ export function ProjectMembersView({ project, quests }: ProjectMembersViewProps)
             </TabsContent>
 
             <TabsContent value="link" className="space-y-3 pt-3">
-              {inviteToken ? (
-                <>
-                  <Alert>
-                    <AlertDescription className="text-xs">
-                      {t('project_detail.share_instructions')}
-                    </AlertDescription>
-                  </Alert>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-medium">{t('project_detail.invite_link')}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {t('project_detail.invite_link_hint')}
+                  </div>
+                </div>
+                <Switch
+                  checked={!!link?.enabled}
+                  disabled={updateInviteLink.isPending}
+                  onCheckedChange={(checked) =>
+                    updateInviteLink.mutate({
+                      projectId: project.id,
+                      enabled: checked,
+                      role: link?.role ?? 'MEMBER',
+                    })
+                  }
+                />
+              </div>
+
+              {link?.enabled && (
+                <div className="space-y-3">
                   <div className="flex gap-2">
                     <input
-                      type="text"
-                      value={inviteToken}
                       readOnly
-                      className="flex-1 rounded-md border bg-muted px-3 py-2 font-mono text-sm"
+                      value={link.url ?? ''}
+                      className="flex-1 rounded-md border bg-muted px-3 py-2 font-mono text-xs"
                     />
-                    <Button size="sm" onClick={handleCopyToken} variant="outline">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleCopyLink}
+                      disabled={!link.url}
+                    >
                       <Copy className="h-4 w-4" />
                     </Button>
                   </div>
-                </>
-              ) : (
-                <Button
-                  onClick={handleGenerateLink}
-                  disabled={inviteMutation.isPending}
-                  className="w-full"
-                >
-                  {inviteMutation.isPending
-                    ? t('project_detail.generating')
-                    : t('project_detail.generate_invite')}
-                </Button>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {t('project_detail.grants_role')}
+                    </span>
+                    <Select
+                      value={link.role}
+                      onValueChange={(v) =>
+                        updateInviteLink.mutate({
+                          projectId: project.id,
+                          enabled: true,
+                          role: v as ProjectRole,
+                        })
+                      }
+                    >
+                      <SelectTrigger className="h-8 w-28">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {LINK_ROLES.map((role) => (
+                          <SelectItem key={role} value={role}>
+                            {roleLabel(role)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="flex-1" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-muted-foreground"
+                      disabled={resetInviteLink.isPending}
+                      onClick={() => resetInviteLink.mutate({ projectId: project.id })}
+                    >
+                      {t('project_detail.reset_link')}
+                    </Button>
+                  </div>
+                </div>
               )}
             </TabsContent>
           </Tabs>

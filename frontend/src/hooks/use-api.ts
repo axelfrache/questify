@@ -655,6 +655,40 @@ export function useCancelInvitation() {
   });
 }
 
+export function useInviteLink(projectId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: [...queryKeys.projects.detail(projectId), 'invite-link'],
+    queryFn: ({ signal }) => api.getInviteLink(projectId, signal),
+    enabled: enabled && !!projectId,
+  });
+}
+
+export function useUpdateInviteLink() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      projectId,
+      enabled,
+      role,
+    }: {
+      projectId: string;
+      enabled: boolean;
+      role: ProjectRole;
+    }) => api.updateInviteLink(projectId, { enabled, role }),
+    onSuccess: (link, { projectId }) =>
+      queryClient.setQueryData([...queryKeys.projects.detail(projectId), 'invite-link'], link),
+  });
+}
+
+export function useResetInviteLink() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ projectId }: { projectId: string }) => api.resetInviteLink(projectId),
+    onSuccess: (link, { projectId }) =>
+      queryClient.setQueryData([...queryKeys.projects.detail(projectId), 'invite-link'], link),
+  });
+}
+
 export function useAssignQuest() {
   const queryClient = useQueryClient();
   return useMutation({

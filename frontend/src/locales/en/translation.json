@@ -283,7 +283,12 @@
     "pending_invites": "Pending invites",
     "invited_as": "Invited as {{role}} · Pending",
     "resend": "Resend",
-    "invitation_resent": "Invitation resent"
+    "invitation_resent": "Invitation resent",
+    "invite_link": "Invite link",
+    "invite_link_hint": "Anyone with the link can join",
+    "grants_role": "Grants role:",
+    "reset_link": "Reset link",
+    "link_copied": "Link copied"
   },
   "habits": {
     "title": "Habits",
