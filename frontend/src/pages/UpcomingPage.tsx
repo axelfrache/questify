@@ -24,6 +24,7 @@ import {
   useSkipQuest,
 } from '@/hooks/use-api';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import type { QuestResponse, ProjectSummaryResponse } from '@/lib/api';
 import { QuestCard } from '@/components/QuestCard';
@@ -61,12 +62,15 @@ function MiniCalendar({
   onPrev,
   onNext,
   questDates,
+  questCountByDate,
 }: {
   viewMonth: Date;
   onPrev: () => void;
   onNext: () => void;
   questDates: Set<string>;
+  questCountByDate: Map<string, number>;
 }) {
+  const { t } = useTranslation();
   const monthStart = startOfMonth(viewMonth);
   const monthEnd = endOfMonth(viewMonth);
   const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
@@ -104,35 +108,53 @@ function MiniCalendar({
         ))}
       </div>
 
-      <div className="grid grid-cols-7">
-        {days.map((day) => {
-          const dateStr = format(day, 'yyyy-MM-dd');
-          const hasQuests = questDates.has(dateStr) && isSameMonth(day, viewMonth);
-          const isCurrentDay = isToday(day);
-          const inMonth = isSameMonth(day, viewMonth);
+      <TooltipProvider delayDuration={150}>
+        <div className="grid grid-cols-7">
+          {days.map((day) => {
+            const dateStr = format(day, 'yyyy-MM-dd');
+            const hasQuests = questDates.has(dateStr) && isSameMonth(day, viewMonth);
+            const isCurrentDay = isToday(day);
+            const inMonth = isSameMonth(day, viewMonth);
+            const count = questCountByDate.get(dateStr) ?? 0;
 
-          return (
-            <div key={dateStr} className="flex flex-col items-center py-0.5">
-              <div
-                className={cn(
-                  'flex h-6 w-6 items-center justify-center rounded-full text-[11px] tabular-nums transition-colors',
-                  isCurrentDay && 'bg-primary text-primary-foreground font-semibold',
-                  !isCurrentDay && inMonth && 'text-foreground',
-                  !inMonth && 'text-muted-foreground/30'
-                )}
-              >
-                {format(day, 'd')}
+            const cell = (
+              <div className="flex flex-col items-center py-0.5">
+                <div
+                  className={cn(
+                    'flex h-6 w-6 items-center justify-center rounded-full text-[11px] tabular-nums transition-colors',
+                    isCurrentDay && 'bg-primary text-primary-foreground font-semibold',
+                    !isCurrentDay && inMonth && 'text-foreground',
+                    !inMonth && 'text-muted-foreground/30'
+                  )}
+                >
+                  {format(day, 'd')}
+                </div>
+                <div
+                  className={cn(
+                    'h-1 w-1 rounded-full mt-0.5',
+                    hasQuests ? 'bg-primary/70' : 'invisible'
+                  )}
+                />
               </div>
-              <div
-                className={cn(
-                  'h-1 w-1 rounded-full mt-0.5',
-                  hasQuests ? 'bg-primary/70' : 'invisible'
-                )}
-              />
-            </div>
-          );
-        })}
-      </div>
+            );
+
+            if (!hasQuests) return <div key={dateStr}>{cell}</div>;
+
+            return (
+              <Tooltip key={dateStr}>
+                <TooltipTrigger asChild>
+                  <button type="button" className="cursor-default">
+                    {cell}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  {t('upcoming.calendar_day', { count })}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
+      </TooltipProvider>
     </div>
   );
 }
@@ -142,6 +164,125 @@ function StatRow({ label, value }: { label: string; value: React.ReactNode }) {
     <div className="flex items-center justify-between text-xs">
       <span className="text-muted-foreground">{label}</span>
       <span className="font-medium tabular-nums">{value}</span>
+    </div>
+  );
+}
+
+interface DayLoad {
+  date: Date;
+  dateStr: string;
+  count: number;
+  quests: QuestResponse[];
+}
+
+const LOAD_WARN_THRESHOLD = 3;
+const LOAD_OVER_THRESHOLD = 6;
+
+function LoadStrip({
+  days,
+  selectedDay,
+  onSelectDay,
+}: {
+  days: DayLoad[];
+  selectedDay: string | null;
+  onSelectDay: (dateStr: string) => void;
+}) {
+  const { t } = useTranslation();
+  const max = Math.max(4, ...days.map((d) => d.count));
+
+  return (
+    <div className="space-y-2">
+      <TooltipProvider delayDuration={150}>
+        <div className="grid grid-cols-7 gap-1 rounded-lg border border-border bg-card p-2">
+          {days.map((day) => {
+            const isSelected = selectedDay === day.dateStr;
+            const level =
+              day.count >= LOAD_OVER_THRESHOLD
+                ? 'over'
+                : day.count >= LOAD_WARN_THRESHOLD
+                  ? 'busy'
+                  : 'normal';
+            const barColor =
+              level === 'over'
+                ? 'bg-destructive'
+                : level === 'busy'
+                  ? 'bg-quest-hard'
+                  : 'bg-primary';
+            const countColor =
+              level === 'over'
+                ? 'text-destructive'
+                : level === 'busy'
+                  ? 'text-quest-hard'
+                  : 'text-muted-foreground';
+            const barHeight = day.count ? Math.max(4, Math.round((day.count / max) * 32)) : 0;
+
+            return (
+              <Tooltip key={day.dateStr}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => onSelectDay(day.dateStr)}
+                    className={cn(
+                      'flex flex-col items-center gap-1.5 rounded-md py-2 transition-colors',
+                      isSelected ? 'bg-primary/10 ring-1 ring-primary/30' : 'hover:bg-muted/60'
+                    )}
+                  >
+                    <span className="text-[10px] font-medium uppercase text-muted-foreground">
+                      {format(day.date, 'EEE')}
+                    </span>
+                    <span className="text-sm font-semibold tabular-nums">
+                      {format(day.date, 'd')}
+                    </span>
+                    <span className="flex h-8 w-2.5 items-end justify-center rounded-full bg-muted/70">
+                      {barHeight > 0 && (
+                        <span
+                          className={cn('block w-full rounded-full', barColor)}
+                          style={{ height: barHeight }}
+                        />
+                      )}
+                    </span>
+                    <span className={cn('font-mono text-[10px] leading-none', countColor)}>
+                      {day.count || ''}
+                    </span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-[220px]">
+                  <p className="font-medium">{format(day.date, 'EEEE d MMMM')}</p>
+                  {day.quests.length === 0 ? (
+                    <p className="text-background/70">{t('upcoming.day_empty')}</p>
+                  ) : (
+                    <ul className="mt-1 space-y-0.5">
+                      {day.quests.slice(0, 4).map((q) => (
+                        <li key={q.id} className="truncate">
+                          {q.title}
+                        </li>
+                      ))}
+                      {day.quests.length > 4 && (
+                        <li className="text-background/70">+{day.quests.length - 4}</li>
+                      )}
+                    </ul>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
+      </TooltipProvider>
+
+      <div className="flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-sm bg-primary" />
+          {t('upcoming.load_legend_normal')}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-sm bg-quest-hard" />
+          {t('upcoming.load_legend_busy')}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-sm bg-destructive" />
+          {t('upcoming.load_legend_over')}
+        </span>
+      </div>
     </div>
   );
 }
@@ -156,6 +297,7 @@ export function UpcomingPage() {
   const [viewMonth, setViewMonth] = useState(() => new Date());
   const [viewingQuest, setViewingQuest] = useState<QuestResponse | null>(null);
   const [editingQuest, setEditingQuest] = useState<QuestResponse | null>(null);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   const handleComplete = (id: string, checkboxElement?: HTMLElement) => {
     if (checkboxElement) fireConfettiFromElement(checkboxElement);
@@ -188,6 +330,35 @@ export function UpcomingPage() {
     return set;
   }, [quests]);
 
+  const questCountByDate = useMemo(() => {
+    const map = new Map<string, number>();
+    (quests ?? []).forEach((q) => {
+      if (!q.dueDate) return;
+      const dateStr = q.dueDate.split('T')[0];
+      map.set(dateStr, (map.get(dateStr) ?? 0) + 1);
+    });
+    return map;
+  }, [quests]);
+
+  const loadDays = useMemo<DayLoad[]>(() => {
+    return Array.from({ length: 7 }, (_, i) => {
+      const date = addDays(today, i + 1);
+      const dateStr = format(date, 'yyyy-MM-dd');
+      const dayQuests = (quests ?? []).filter((q) => q.dueDate?.split('T')[0] === dateStr);
+      const count = dayQuests.reduce(
+        (s, q) =>
+          s + (q.subquestCount > 0 ? Math.max(1, q.subquestCount - q.completedSubquestCount) : 1),
+        0
+      );
+      return { date, dateStr, count, quests: dayQuests };
+    });
+  }, [quests, today]);
+
+  const visibleQuests = useMemo(() => {
+    if (!selectedDay) return quests ?? [];
+    return (quests ?? []).filter((q) => q.dueDate?.split('T')[0] === selectedDay);
+  }, [quests, selectedDay]);
+
   const sections = useMemo(() => {
     const result: Record<Section, Record<string, QuestResponse[]>> = {
       tomorrow: {},
@@ -195,7 +366,7 @@ export function UpcomingPage() {
       nextWeek: {},
       later: {},
     };
-    (quests ?? []).forEach((q) => {
+    visibleQuests.forEach((q) => {
       if (!q.dueDate) return;
       const dateStr = q.dueDate.split('T')[0];
       const date = parseISO(dateStr);
@@ -204,7 +375,7 @@ export function UpcomingPage() {
       result[section][dateStr].push(q);
     });
     return result;
-  }, [quests, today]);
+  }, [visibleQuests, today]);
 
   const stats = useMemo(() => {
     const all = quests ?? [];
@@ -255,14 +426,17 @@ export function UpcomingPage() {
   const subtitle = useMemo(() => {
     const total = quests?.length ?? 0;
     if (total === 0) return t('upcoming.subtitle_empty');
-    const hasNextWeek = Object.keys(sections.nextWeek).length > 0;
-    const hasLater = Object.keys(sections.later).length > 0;
+    const dueSections = (quests ?? [])
+      .filter((q) => q.dueDate)
+      .map((q) => getSection(parseISO(q.dueDate!.split('T')[0]), today));
+    const hasNextWeek = dueSections.includes('nextWeek');
+    const hasLater = dueSections.includes('later');
     const weeks = hasLater ? '2+' : hasNextWeek ? '2' : '1';
     const weeksNum = parseInt(weeks) || 1;
     return weeksNum > 1
       ? t('upcoming.subtitle_plural', { total, weeks })
       : t('upcoming.subtitle', { total, weeks });
-  }, [quests, sections, t]);
+  }, [quests, today, t]);
 
   if (isLoading) {
     return (
@@ -284,12 +458,13 @@ export function UpcomingPage() {
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:gap-8 pb-10">
-      <aside className="hidden lg:block lg:w-56 lg:shrink-0 space-y-6 sticky top-6 self-start">
+      <aside className="hidden lg:block lg:w-56 lg:shrink-0 space-y-6 sticky top-0 self-start">
         <MiniCalendar
           viewMonth={viewMonth}
           onPrev={() => setViewMonth(subMonths(viewMonth, 1))}
           onNext={() => setViewMonth(addMonths(viewMonth, 1))}
           questDates={questDates}
+          questCountByDate={questCountByDate}
         />
 
         <div className="space-y-2.5">
@@ -346,13 +521,23 @@ export function UpcomingPage() {
         )}
       </aside>
 
-      <div className="hidden lg:block w-px bg-border shrink-0 sticky top-6 self-start h-[calc(100svh-4.5rem)]" />
+      <div className="hidden lg:block w-px bg-border shrink-0" />
 
       <div className="flex-1 min-w-0 space-y-8">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('upcoming.title')}</h1>
           <p className="text-sm text-muted-foreground">{subtitle}</p>
         </div>
+
+        {(quests?.length ?? 0) > 0 && (
+          <LoadStrip
+            days={loadDays}
+            selectedDay={selectedDay}
+            onSelectDay={(dateStr) =>
+              setSelectedDay((prev) => (prev === dateStr ? null : dateStr))
+            }
+          />
+        )}
 
         {/* Compact stats strip — visible only below lg */}
         {(quests?.length ?? 0) > 0 && (
@@ -387,53 +572,80 @@ export function UpcomingPage() {
             {t('upcoming.empty')}
           </div>
         ) : (
-          <div className="space-y-8">
-            {SECTION_ORDER.map((section) => {
-              const byDate = sections[section];
-              const sortedDates = Object.keys(byDate).sort();
-              if (sortedDates.length === 0) return null;
+          <div className="space-y-6">
+            {selectedDay && (
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  {t('upcoming.filtered_day', {
+                    date: format(parseISO(selectedDay), 'EEEE d MMMM'),
+                  })}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDay(null)}
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  {t('upcoming.clear_filter')}
+                </button>
+              </div>
+            )}
 
-              return (
-                <div key={section}>
-                  <p className="mb-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    {t('upcoming.sections.' + section)}
-                  </p>
-                  <div className="space-y-5">
-                    {sortedDates.map((dateStr) => {
-                      const date = parseISO(dateStr);
-                      const dayQuests = byDate[dateStr]!;
+            {selectedDay && visibleQuests.length === 0 ? (
+              <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
+                {t('upcoming.no_quests_day')}
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {SECTION_ORDER.map((section) => {
+                  const byDate = sections[section];
+                  const sortedDates = Object.keys(byDate).sort();
+                  if (sortedDates.length === 0) return null;
 
-                      return (
-                        <div key={dateStr} className="flex gap-4">
-                          <div className="w-9 shrink-0 pt-2.5 text-right">
-                            <p className="text-[10px] font-medium uppercase leading-none text-muted-foreground">
-                              {format(date, 'EEE')}
-                            </p>
-                            <p className="mt-1 text-xl font-semibold tabular-nums leading-none">
-                              {format(date, 'd')}
-                            </p>
-                          </div>
-                          <div className="flex-1 space-y-1.5">
-                            {dayQuests.map((quest) => (
-                              <QuestCard
-                                key={quest.id}
-                                quest={quest}
-                                onComplete={handleComplete}
-                                onView={setViewingQuest}
-                                onEdit={setEditingQuest}
-                                onDelete={deleteQuest}
-                                onSkip={(id) => skipQuestMutation.mutate(id)}
-                                isPending={completeQuestMutation.isPending}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
+                  return (
+                    <div key={section}>
+                      <p className="mb-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                        {t('upcoming.sections.' + section)}
+                      </p>
+                      <div className="space-y-5">
+                        {sortedDates.map((dateStr) => {
+                          const date = parseISO(dateStr);
+                          const dayQuests = byDate[dateStr]!;
+
+                          return (
+                            <div key={dateStr} className="flex gap-4">
+                              <div className="w-9 shrink-0 pt-2.5 text-right">
+                                <p className="text-[10px] font-medium uppercase leading-none text-muted-foreground">
+                                  {format(date, 'EEE')}
+                                </p>
+                                <p className="mt-1 text-xl font-semibold tabular-nums leading-none">
+                                  {format(date, 'd')}
+                                </p>
+                              </div>
+                              <div className="flex-1 space-y-1.5">
+                                {dayQuests.map((quest) => (
+                                  <QuestCard
+                                    key={quest.id}
+                                    quest={quest}
+                                    onComplete={handleComplete}
+                                    onView={setViewingQuest}
+                                    onEdit={setEditingQuest}
+                                    onDelete={deleteQuest}
+                                    onSkip={(id) => skipQuestMutation.mutate(id)}
+                                    isPending={completeQuestMutation.isPending}
+                                    showInlineSubquests
+                                    density="comfort"
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
