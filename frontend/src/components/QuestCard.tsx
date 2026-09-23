@@ -13,7 +13,7 @@ import { DifficultyChip } from '@/components/ui/quest-meta-chip';
 import { XpBadge } from '@/components/ui/xp-badge';
 import { InlineSubquests, SubquestProgressToggle } from '@/components/InlineSubquests';
 import { cn } from '@/lib/utils';
-import { RECURRENCE_LABELS } from '@/lib/quest-config';
+import { getRecurrenceLabel } from '@/lib/quest-config';
 import type { QuestResponse } from '@/lib/api';
 import type { Density } from '@/types/inboxTypes';
 
@@ -172,7 +172,7 @@ function QuestCardInner({
           {hasRecurrence && (
             <span
               className={cn('shrink-0 text-muted-foreground', isCompleted && 'opacity-50')}
-              title={RECURRENCE_LABELS[quest.recurrenceInterval]}
+              title={getRecurrenceLabel(t, quest.recurrenceInterval)}
             >
               <Repeat2 className="h-3 w-3" />
             </span>
@@ -258,7 +258,7 @@ function QuestCardInner({
                   )}
                 >
                   <Repeat2 className="h-3 w-3" />
-                  {RECURRENCE_LABELS[quest.recurrenceInterval]}
+                  {getRecurrenceLabel(t, quest.recurrenceInterval)}
                 </span>
               )}
 

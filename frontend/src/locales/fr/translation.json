@@ -384,7 +384,18 @@
       "thisWeek": "Reste de la semaine",
       "nextWeek": "Semaine prochaine",
       "later": "Plus tard"
-    }
+    },
+    "load_legend_normal": "Quêtes + sub-quests restantes dues ce jour",
+    "load_legend_busy": "Jour chargé",
+    "load_legend_over": "Jour surchargé",
+    "day_steps_one": "{{count}} étape due",
+    "day_steps_other": "{{count}} étapes dues",
+    "day_empty": "Rien de prévu",
+    "filtered_day": "Filtré · {{date}}",
+    "clear_filter": "Tout afficher",
+    "no_quests_day": "Aucune quête due ce jour.",
+    "calendar_day_one": "{{count}} quête due",
+    "calendar_day_other": "{{count}} quêtes dues"
   },
   "profile": {
     "by_region": "Par région",
@@ -413,6 +424,7 @@
     "daily": "Quotidien",
     "weekly": "Hebdomadaire",
     "monthly": "Mensuel",
+    "custom": "Personnalisé",
     "inherited": "Hérité du parent",
     "due_date": "Date d'échéance",
     "pick_date": "Choisir une date",
@@ -436,6 +448,20 @@
     "add_subquest": "Ajouter une sous-quête",
     "delete": "Supprimer",
     "subquests": "{{completed}}/{{total}} sous-quêtes"
+  },
+  "difficulty": {
+    "EASY": "Facile",
+    "MEDIUM": "Moyen",
+    "HARD": "Difficile",
+    "EPIC": "Épique"
+  },
+  "activity_graph": {
+    "loading": "Chargement...",
+    "upcoming": "À venir",
+    "no_quests_planned": "Aucune quête prévue",
+    "completed_of_planned": "{{completed}} sur {{planned}} terminées",
+    "quests": "quêtes",
+    "active_days": "jours actifs"
   },
   "quest_view": {
     "completed": "Terminée",

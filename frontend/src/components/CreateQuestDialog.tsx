@@ -26,7 +26,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { CalendarIcon, Loader2, Sparkles } from 'lucide-react';
-import { DIFFICULTY_CONFIG } from '@/lib/quest-config';
+import { DIFFICULTY_CONFIG, getDifficultyLabel, type DifficultyLevel } from '@/lib/quest-config';
 import { WeekdayPicker } from '@/components/ui/weekday-picker';
 
 interface CreateQuestDialogProps {
@@ -230,7 +230,9 @@ export function CreateQuestDialog({
                             className={cn('h-2 w-2 rounded-[2px] flex-shrink-0', config.bgColor)}
                             style={{ background: 'currentColor' }}
                           />
-                          <span className={config.textColor}>{config.label}</span>
+                          <span className={config.textColor}>
+                            {getDifficultyLabel(t, key as DifficultyLevel)}
+                          </span>
                           <span className="ml-auto text-xs text-muted-foreground">
                             +{config.xp} XP
                           </span>

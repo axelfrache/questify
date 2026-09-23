@@ -384,7 +384,18 @@
       "thisWeek": "Rest of this week",
       "nextWeek": "Next week",
       "later": "Later"
-    }
+    },
+    "load_legend_normal": "Remaining quests + subquests due that day",
+    "load_legend_busy": "Busy day",
+    "load_legend_over": "Overloaded day",
+    "day_steps_one": "{{count}} step due",
+    "day_steps_other": "{{count}} steps due",
+    "day_empty": "Nothing due",
+    "filtered_day": "Filtered · {{date}}",
+    "clear_filter": "Show all",
+    "no_quests_day": "No quests due this day.",
+    "calendar_day_one": "{{count}} quest due",
+    "calendar_day_other": "{{count}} quests due"
   },
   "profile": {
     "by_region": "By region",
@@ -413,6 +424,7 @@
     "daily": "Daily",
     "weekly": "Weekly",
     "monthly": "Monthly",
+    "custom": "Custom",
     "inherited": "Inherited from parent",
     "due_date": "Due date",
     "pick_date": "Pick a date",
@@ -436,6 +448,20 @@
     "add_subquest": "Add subquest",
     "delete": "Delete",
     "subquests": "{{completed}}/{{total}} subquests"
+  },
+  "difficulty": {
+    "EASY": "Easy",
+    "MEDIUM": "Medium",
+    "HARD": "Hard",
+    "EPIC": "Epic"
+  },
+  "activity_graph": {
+    "loading": "Loading...",
+    "upcoming": "Upcoming",
+    "no_quests_planned": "No quests planned",
+    "completed_of_planned": "{{completed}} of {{planned}} completed",
+    "quests": "quests",
+    "active_days": "active days"
   },
   "quest_view": {
     "completed": "Completed",

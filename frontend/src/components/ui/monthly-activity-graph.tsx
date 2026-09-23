@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { format, getDay, getDaysInMonth, startOfMonth } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { DailyStatsResponse } from '@/lib/api';
@@ -7,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useDateLocale } from '@/hooks/useDateLocale';
 
 interface MonthlyActivityGraphProps {
   className?: string;
@@ -21,6 +23,8 @@ export function MonthlyActivityGraph({
   completionByDate = {},
   isLoading = false,
 }: MonthlyActivityGraphProps) {
+  const { t } = useTranslation();
+  const dateLocale = useDateLocale();
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
@@ -110,7 +114,7 @@ export function MonthlyActivityGraph({
               <ChevronLeft className="h-3.5 w-3.5" />
             </Button>
             <span className="w-20 text-center font-mono text-xs text-muted-foreground">
-              {format(currentDate, 'MMMM yyyy')}
+              {format(currentDate, 'MMMM yyyy', { locale: dateLocale })}
             </span>
             <Button
               variant="ghost"
@@ -128,7 +132,7 @@ export function MonthlyActivityGraph({
       <CardContent className="px-4 pb-4 pt-0">
         {isLoading ? (
           <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">
-            Loading...
+            {t('activity_graph.loading')}
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -161,16 +165,23 @@ export function MonthlyActivityGraph({
                           />
                         </TooltipTrigger>
                         <TooltipContent side="top" className="text-xs">
-                          <p className="font-medium">{format(dayDate, 'EEE, MMM d')}</p>
+                          <p className="font-medium">
+                            {format(dayDate, 'EEE, MMM d', { locale: dateLocale })}
+                          </p>
                           {isFuture ? (
-                            <p className="text-muted-foreground">Upcoming</p>
+                            <p className="text-muted-foreground">{t('activity_graph.upcoming')}</p>
                           ) : !completion ||
                             (completion.plannedQuests === 0 && completion.completedQuests === 0) ? (
-                            <p className="text-muted-foreground">No quests planned</p>
+                            <p className="text-muted-foreground">
+                              {t('activity_graph.no_quests_planned')}
+                            </p>
                           ) : (
                             <>
                               <p className="text-muted-foreground">
-                                {completion.completedQuests} of {completion.plannedQuests} completed
+                                {t('activity_graph.completed_of_planned', {
+                                  completed: completion.completedQuests,
+                                  planned: completion.plannedQuests,
+                                })}
                               </p>
                               <p className="text-muted-foreground">
                                 {completion.completionRate}% • +
@@ -190,11 +201,11 @@ export function MonthlyActivityGraph({
             <div className="flex items-center gap-4 text-xs">
               <span>
                 <span className="font-mono font-medium text-foreground">{monthQuestCount}</span>
-                <span className="ml-1 text-muted-foreground">quests</span>
+                <span className="ml-1 text-muted-foreground">{t('activity_graph.quests')}</span>
               </span>
               <span>
                 <span className="font-mono font-medium text-foreground">{activeDays}</span>
-                <span className="ml-1 text-muted-foreground">active days</span>
+                <span className="ml-1 text-muted-foreground">{t('activity_graph.active_days')}</span>
               </span>
               <span>
                 <span className="font-mono font-medium text-foreground">+{monthXp}</span>

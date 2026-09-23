@@ -11,6 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { DIFFICULTY_CONFIG } from '@/lib/quest-config';
 import { useSubquests } from '@/hooks/use-api';
+import { useDateLocale } from '@/hooks/useDateLocale';
 import type { QuestResponse } from '@/lib/api';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -135,6 +136,7 @@ interface SubquestRowProps {
 
 function SubquestRow({ subquest, onComplete, onEdit, onDelete, compact = false }: SubquestRowProps) {
   const { t } = useTranslation();
+  const dateLocale = useDateLocale();
   const isCompleted = subquest.status === 'COMPLETED';
 
   const handleComplete = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -144,7 +146,7 @@ function SubquestRow({ subquest, onComplete, onEdit, onDelete, compact = false }
 
   const formatDueDate = (dueDate: string) => {
     try {
-      return formatDistanceToNow(new Date(dueDate), { addSuffix: true });
+      return formatDistanceToNow(new Date(dueDate), { addSuffix: true, locale: dateLocale });
     } catch {
       return '';
     }

@@ -1,11 +1,6 @@
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import { Repeat2 } from 'lucide-react';
-import {
-  DIFFICULTY_CONFIG,
-  RECURRENCE_LABELS,
-  type DifficultyLevel,
-  type RecurrenceType,
-} from '@/lib/quest-config';
+import { DIFFICULTY_CONFIG, getDifficultyLabel, type DifficultyLevel } from '@/lib/quest-config';
 
 interface QuestMetaChipProps {
   children: React.ReactNode;
@@ -35,6 +30,7 @@ export function DifficultyChip({
   difficulty: DifficultyLevel;
   faded?: boolean;
 }) {
+  const { t } = useTranslation();
   const config = DIFFICULTY_CONFIG[difficulty];
 
   return (
@@ -48,24 +44,7 @@ export function DifficultyChip({
       )}
     >
       <span className="h-1.5 w-1.5 rounded-[2px] bg-current opacity-70" />
-      {config.label}
+      {getDifficultyLabel(t, difficulty)}
     </span>
-  );
-}
-
-export function RecurrenceChip({
-  recurrence,
-  faded = false,
-}: {
-  recurrence: RecurrenceType;
-  faded?: boolean;
-}) {
-  if (recurrence === 'NONE') return null;
-
-  return (
-    <QuestMetaChip faded={faded}>
-      <Repeat2 className="h-3 w-3" />
-      {RECURRENCE_LABELS[recurrence]}
-    </QuestMetaChip>
   );
 }

@@ -25,6 +25,7 @@ import {
 } from '@/hooks/use-api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useDateLocale } from '@/hooks/useDateLocale';
 import { cn } from '@/lib/utils';
 import type { QuestResponse, ProjectSummaryResponse } from '@/lib/api';
 import { QuestCard } from '@/components/QuestCard';
@@ -71,6 +72,7 @@ function MiniCalendar({
   questCountByDate: Map<string, number>;
 }) {
   const { t } = useTranslation();
+  const dateLocale = useDateLocale();
   const monthStart = startOfMonth(viewMonth);
   const monthEnd = endOfMonth(viewMonth);
   const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
@@ -80,7 +82,9 @@ function MiniCalendar({
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-semibold">{format(viewMonth, 'MMMM yyyy')}</span>
+        <span className="text-sm font-semibold">
+          {format(viewMonth, 'MMMM yyyy', { locale: dateLocale })}
+        </span>
         <div className="flex gap-0.5">
           <button
             onClick={onPrev}
@@ -98,12 +102,12 @@ function MiniCalendar({
       </div>
 
       <div className="grid grid-cols-7 mb-1">
-        {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
+        {days.slice(0, 7).map((d) => (
           <div
-            key={i}
+            key={d.getDay()}
             className="text-center text-[10px] font-medium text-muted-foreground/60 py-1"
           >
-            {d}
+            {format(d, 'EEEEE', { locale: dateLocale })}
           </div>
         ))}
       </div>
@@ -188,6 +192,7 @@ function LoadStrip({
   onSelectDay: (dateStr: string) => void;
 }) {
   const { t } = useTranslation();
+  const dateLocale = useDateLocale();
   const max = Math.max(4, ...days.map((d) => d.count));
 
   return (
@@ -228,7 +233,7 @@ function LoadStrip({
                     )}
                   >
                     <span className="text-[10px] font-medium uppercase text-muted-foreground">
-                      {format(day.date, 'EEE')}
+                      {format(day.date, 'EEE', { locale: dateLocale })}
                     </span>
                     <span className="text-sm font-semibold tabular-nums">
                       {format(day.date, 'd')}
@@ -247,7 +252,9 @@ function LoadStrip({
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-[220px]">
-                  <p className="font-medium">{format(day.date, 'EEEE d MMMM')}</p>
+                  <p className="font-medium">
+                    {format(day.date, 'EEEE d MMMM', { locale: dateLocale })}
+                  </p>
                   {day.quests.length === 0 ? (
                     <p className="text-background/70">{t('upcoming.day_empty')}</p>
                   ) : (
@@ -289,6 +296,7 @@ function LoadStrip({
 
 export function UpcomingPage() {
   const { t } = useTranslation();
+  const dateLocale = useDateLocale();
   const { data: quests, isLoading } = useQuests(undefined, 'upcoming');
   const { data: projects } = useProjectsList('', 'name', false);
   const completeQuestMutation = useCompleteQuest();
@@ -484,7 +492,9 @@ export function UpcomingPage() {
             />
             <StatRow
               label={t('upcoming.busiest_day')}
-              value={stats.busiestDay ? format(stats.busiestDay, 'EEE MMM d') : '—'}
+              value={
+                stats.busiestDay ? format(stats.busiestDay, 'EEE MMM d', { locale: dateLocale }) : '—'
+              }
             />
             <StatRow label={t('upcoming.free_days')} value={stats.freeDays} />
           </div>
@@ -556,7 +566,7 @@ export function UpcomingPage() {
               <span>
                 <span className="text-muted-foreground">{t('upcoming.busiest_day')} </span>
                 <span className="font-medium tabular-nums">
-                  {format(stats.busiestDay, 'EEE MMM d')}
+                  {format(stats.busiestDay, 'EEE MMM d', { locale: dateLocale })}
                 </span>
               </span>
             )}
@@ -577,7 +587,7 @@ export function UpcomingPage() {
               <div className="flex items-center justify-between">
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                   {t('upcoming.filtered_day', {
-                    date: format(parseISO(selectedDay), 'EEEE d MMMM'),
+                    date: format(parseISO(selectedDay), 'EEEE d MMMM', { locale: dateLocale }),
                   })}
                 </p>
                 <button
@@ -615,7 +625,7 @@ export function UpcomingPage() {
                             <div key={dateStr} className="flex gap-4">
                               <div className="w-9 shrink-0 pt-2.5 text-right">
                                 <p className="text-[10px] font-medium uppercase leading-none text-muted-foreground">
-                                  {format(date, 'EEE')}
+                                  {format(date, 'EEE', { locale: dateLocale })}
                                 </p>
                                 <p className="mt-1 text-xl font-semibold tabular-nums leading-none">
                                   {format(date, 'd')}

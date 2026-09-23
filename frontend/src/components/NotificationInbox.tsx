@@ -20,6 +20,7 @@ import {
   useDeleteNotification,
   useDeleteAllNotifications,
 } from '@/hooks/use-api';
+import { useDateLocale } from '@/hooks/useDateLocale';
 import type { NotificationResponse, NotificationType } from '@/lib/api';
 
 type NotificationConfig = {
@@ -47,7 +48,11 @@ function NotificationItem({
 }) {
   const config = NOTIFICATION_CONFIG[notification.type];
   const Icon = config.icon;
-  const timeAgo = formatDistanceToNow(parseISO(notification.createdAt), { addSuffix: true });
+  const dateLocale = useDateLocale();
+  const timeAgo = formatDistanceToNow(parseISO(notification.createdAt), {
+    addSuffix: true,
+    locale: dateLocale,
+  });
 
   return (
     <div

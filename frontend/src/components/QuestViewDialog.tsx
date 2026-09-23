@@ -12,7 +12,8 @@ import {
 import { DifficultyChip } from '@/components/ui/quest-meta-chip';
 import { XpBadge } from '@/components/ui/xp-badge';
 import { cn } from '@/lib/utils';
-import { RECURRENCE_LABELS } from '@/lib/quest-config';
+import { getRecurrenceLabel } from '@/lib/quest-config';
+import { useDateLocale } from '@/hooks/useDateLocale';
 import type { QuestResponse } from '@/lib/api';
 
 interface QuestViewDialogProps {
@@ -31,6 +32,7 @@ export function QuestViewDialog({
   onComplete,
 }: QuestViewDialogProps) {
   const { t } = useTranslation();
+  const dateLocale = useDateLocale();
   if (!quest) return null;
 
   const isCompleted = quest.status === 'COMPLETED';
@@ -95,13 +97,13 @@ export function QuestViewDialog({
 
           {quest.dueDate && (
             <MetaRow icon={<Calendar className="h-3.5 w-3.5" />}>
-              {format(new Date(quest.dueDate), 'PPP')}
+              {format(new Date(quest.dueDate), 'PPP', { locale: dateLocale })}
             </MetaRow>
           )}
 
           {hasRecurrence && (
             <MetaRow icon={<Repeat2 className="h-3.5 w-3.5" />}>
-              {RECURRENCE_LABELS[quest.recurrenceInterval]}
+              {getRecurrenceLabel(t, quest.recurrenceInterval)}
             </MetaRow>
           )}
 
