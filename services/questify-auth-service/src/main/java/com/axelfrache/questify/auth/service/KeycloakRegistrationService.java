@@ -7,6 +7,7 @@ import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.net.URI;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -17,6 +18,7 @@ import org.springframework.web.client.RestClientResponseException;
 @Service
 @Profile({"prod", "production"})
 @RequiredArgsConstructor
+@Slf4j
 public class KeycloakRegistrationService {
 
   private final FerrisKeyConfig ferrisKeyConfig;
@@ -32,23 +34,29 @@ public class KeycloakRegistrationService {
     }
 
     var token = keycloakAdminClient.getAdminToken();
+    var adminBase = adminRealmBaseUri(issuer);
 
+    URI createdLocation;
     try {
-      restClient
-          .post()
-          .uri(adminUsersUri(issuer))
-          .contentType(MediaType.APPLICATION_JSON)
-          .header("Authorization", "Bearer " + token)
-          .body(
-              new KeycloakUserRepresentation(
-                  request.username(),
-                  request.email(),
-                  request.firstName(),
-                  request.lastName(),
-                  true,
-                  List.of(new CredentialRepresentation("password", request.password(), false))))
-          .retrieve()
-          .toBodilessEntity();
+      var response =
+          restClient
+              .post()
+              .uri(adminBase + "/users")
+              .contentType(MediaType.APPLICATION_JSON)
+              .header("Authorization", "Bearer " + token)
+              .body(
+                  new KeycloakUserRepresentation(
+                      request.username(),
+                      request.email(),
+                      request.firstName(),
+                      request.lastName(),
+                      true,
+                      false,
+                      List.of("VERIFY_EMAIL"),
+                      List.of(new CredentialRepresentation("password", request.password(), false))))
+              .retrieve()
+              .toBodilessEntity();
+      createdLocation = response.getHeaders().getLocation();
       Span.current().setAttribute("questify.auth.result", "success");
     } catch (RestClientResponseException ex) {
       Span.current().setAttribute("questify.auth.result", "failure");
@@ -61,13 +69,38 @@ public class KeycloakRegistrationService {
       }
       throw new IllegalStateException("Keycloak registration failed");
     }
+
+    sendVerificationEmail(adminBase, token, createdLocation);
   }
 
-  private URI adminUsersUri(String issuer) {
+  private void sendVerificationEmail(String adminBase, String token, URI createdLocation) {
+    if (createdLocation == null) {
+      log.warn("Keycloak did not return a Location header for the created user; "
+          + "skipping verification email");
+      return;
+    }
+    var path = createdLocation.getPath();
+    var userId = path.substring(path.lastIndexOf('/') + 1);
+
+    try {
+      restClient
+          .put()
+          .uri(adminBase + "/users/" + userId + "/send-verify-email")
+          .header("Authorization", "Bearer " + token)
+          .retrieve()
+          .toBodilessEntity();
+    } catch (RestClientResponseException ex) {
+      log.warn(
+          "Failed to send Keycloak verification email for user {}: {}",
+          userId,
+          ex.getStatusCode());
+    }
+  }
+
+  private String adminRealmBaseUri(String issuer) {
     // issuer: https://auth.example.com/realms/questify
-    // admin API: https://auth.example.com/admin/realms/questify/users
-    var base = trimTrailingSlash(issuer).replace("/realms/", "/admin/realms/");
-    return URI.create(base + "/users");
+    // admin API: https://auth.example.com/admin/realms/questify
+    return trimTrailingSlash(issuer).replace("/realms/", "/admin/realms/");
   }
 
   private String trimTrailingSlash(String value) {
@@ -80,6 +113,8 @@ public class KeycloakRegistrationService {
       String firstName,
       String lastName,
       boolean enabled,
+      boolean emailVerified,
+      List<String> requiredActions,
       List<CredentialRepresentation> credentials) {}
 
   private record CredentialRepresentation(String type, String value, boolean temporary) {}
