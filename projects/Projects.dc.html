@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body{margin:0;}
+    a{color:oklch(0.56 0.18 275);text-decoration:none;}
+    a:hover{color:oklch(0.48 0.18 275);}
+    .pj-card:hover{border-color:oklch(0.145 0 0 / 0.14);box-shadow:0 1px 2px rgba(15,23,42,0.05);}
+    .pj-menu-btn{opacity:0;}
+    .pj-card:hover .pj-menu-btn{opacity:1;}
+    .pj-row:hover{background:oklch(0.98 0.002 80);}
+    .pj-tab{cursor:pointer;}
+  </style>
+</helmet>
+
+<div style="display:flex;height:100vh;width:100%;font-family:'Geist',ui-sans-serif,system-ui,sans-serif;background:oklch(0.985 0.002 80);color:oklch(0.145 0 0);overflow:hidden;">
+
+  <div style="width:240px;flex-shrink:0;background:oklch(0.97 0.002 80);border-right:1px solid oklch(0.92 0.003 80);display:flex;flex-direction:column;overflow-y:auto;">
+    <div style="padding:12px;border-bottom:1px solid oklch(0.92 0.003 80);flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:10px;padding:4px 6px;border-radius:6px;">
+        <div style="width:24px;height:24px;border-radius:9999px;background:oklch(0.52 0.03 255);flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:500;line-height:1.2;">Axel</div>
+          <div style="font-family:'Geist Mono',monospace;font-size:10px;color:oklch(0.145 0 0 / 0.5);">Lvl 6 · Wanderer</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:12px 8px 4px;">
+      <div style="font-size:11px;font-weight:500;color:oklch(0.45 0.01 80);padding:4px 8px;">Navigation</div>
+      <div style="display:flex;flex-direction:column;gap:1px;">
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;color:oklch(0.145 0 0 / 0.75);">Inbox</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;color:oklch(0.145 0 0 / 0.75);">Today</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;color:oklch(0.145 0 0 / 0.75);">Upcoming</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;color:oklch(0.145 0 0 / 0.75);">Habits</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;color:oklch(0.145 0 0 / 0.75);">Regions</div>
+      </div>
+    </div>
+    <div style="padding:12px 8px 4px;">
+      <div style="font-size:11px;font-weight:500;color:oklch(0.45 0.01 80);padding:4px 8px;">Projects</div>
+      <div style="display:flex;flex-direction:column;gap:1px;">
+        <div onclick="{{ backToList }}" style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;font-size:12.5px;cursor:pointer;{{ viewAllRowStyle }}">View all</div>
+        <sc-for list="{{ sidebarProjects }}" as="sp" hint-placeholder-count="5">
+          <div onclick="{{ sp.open }}" style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;font-size:12.5px;cursor:pointer;color:oklch(0.145 0 0 / 0.75);{{ sp.rowStyle }}"><span>{{ sp.icon }}</span>{{ sp.name }}</div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="padding:12px 8px;">
+      <div style="font-size:11px;font-weight:500;color:oklch(0.45 0.01 80);padding:4px 8px;">Insights</div>
+      <div style="display:flex;flex-direction:column;gap:1px;">
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;color:oklch(0.145 0 0 / 0.75);">Progress</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;color:oklch(0.145 0 0 / 0.75);">Stats</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;color:oklch(0.145 0 0 / 0.75);">History</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0;position:relative;">
+    <div style="height:48px;flex-shrink:0;display:flex;align-items:center;gap:6px;border-bottom:1px solid oklch(0.92 0.003 80);background:#fff;padding:0 16px;">
+      <div style="width:24px;height:24px;border:1px solid oklch(0.92 0.003 80);border-radius:6px;flex-shrink:0;"></div>
+      <div onclick="{{ backToList }}" style="font-size:13px;font-weight:500;cursor:pointer;color:{{ crumbProjectsColor }};">Projects</div>
+      <sc-if value="{{ activeProject }}" hint-placeholder-val="{{ false }}">
+        <span style="font-size:13px;color:oklch(0.45 0.01 80);">/</span>
+        <span style="font-size:13px;font-weight:500;">{{ activeProject.name }}</span>
+      </sc-if>
+      <div style="flex:1;"></div>
+      <div style="display:flex;align-items:center;gap:8px;border:1px solid oklch(0.92 0.003 80);background:oklch(0.97 0.002 80 / 0.6);border-radius:9999px;padding:4px 12px;">
+        <span style="width:8px;height:8px;background:oklch(0.56 0.18 275);border-radius:2px;transform:rotate(45deg);"></span>
+        <span style="font-family:'Geist Mono',monospace;font-size:12px;font-weight:500;">6,200 XP</span>
+        <span style="width:1px;height:12px;background:oklch(0.92 0.003 80);"></span>
+        <span style="font-size:11px;color:oklch(0.45 0.01 80);">Lvl 6</span>
+      </div>
+    </div>
+
+    <div style="flex:1;overflow:auto;padding:24px;">
+      <div style="max-width:1100px;margin:0 auto;">
+
+        <sc-if value="{{ isListView }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div style="display:flex;align-items:start;justify-content:space-between;gap:16px;margin-bottom:20px;">
+              <div>
+                <h1 style="font-size:22px;font-weight:700;letter-spacing:-0.01em;margin:0;">Projects</h1>
+                <p style="font-size:13px;color:oklch(0.45 0.01 80);margin:4px 0 0;">Long-running initiatives</p>
+              </div>
+              <div style="display:flex;gap:8px;flex-shrink:0;">
+                <button onclick="{{ openJoin }}" style="display:flex;align-items:center;gap:6px;border:1px solid oklch(0.92 0.003 80);background:#fff;border-radius:8px;padding:7px 13px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit;">Join with code</button>
+                <button onclick="{{ openImport }}" style="display:flex;align-items:center;gap:6px;border:1px solid oklch(0.92 0.003 80);background:#fff;border-radius:8px;padding:7px 13px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit;">
+                  <span style="font-size:13px;">↓</span>Import
+                </button>
+                <button style="display:flex;align-items:center;gap:6px;background:oklch(0.56 0.18 275);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit;">+ New project</button>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;border:1px solid oklch(0.92 0.003 80);background:#fff;border-radius:8px;overflow:hidden;margin-bottom:16px;">
+              <div style="flex:1;display:flex;align-items:center;gap:8px;padding:9px 12px;">
+                <span style="color:oklch(0.45 0.01 80);font-size:13px;">⌕</span>
+                <input value="{{ search }}" oninput="{{ onSearchInput }}" placeholder="Search projects…" style="flex:1;border:none;outline:none;background:transparent;font-size:13px;font-family:inherit;color:inherit;" />
+              </div>
+              <div style="width:1px;height:22px;background:oklch(0.92 0.003 80);"></div>
+              <div style="display:flex;align-items:center;gap:6px;padding:9px 12px;font-size:13px;color:oklch(0.45 0.01 80);">Recently updated</div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:10px;">
+              <sc-for list="{{ projects }}" as="p" hint-placeholder-count="4">
+                <div class="pj-card" onclick="{{ p.open }}" style="position:relative;display:flex;flex-direction:column;border:1px solid oklch(0.92 0.003 80);background:#fff;border-radius:10px;transition:border-color 150ms;cursor:pointer;">
+                  <div style="display:flex;align-items:center;gap:10px;padding:16px 16px 10px;">
+                    <div style="width:32px;height:32px;flex-shrink:0;border:1px solid oklch(0.92 0.003 80);background:oklch(0.97 0.002 80 / 0.6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;">{{ p.icon }}</div>
+                    <div style="flex:1;min-width:0;">
+                      <div style="font-size:13.5px;font-weight:500;line-height:1.2;">{{ p.name }}</div>
+                      <div style="display:flex;align-items:center;gap:5px;margin-top:2px;">
+                        <span style="font-size:10px;">{{ p.visibilityIcon }}</span>
+                        <span style="font-size:11px;color:oklch(0.45 0.01 80);">{{ p.visibilityLabel }} · {{ p.updated }}</span>
+                      </div>
+                    </div>
+                    <button class="pj-menu-btn" onclick="{{ p.toggleMenu }}" style="flex-shrink:0;width:24px;height:24px;border:none;background:none;color:oklch(0.45 0.01 80);cursor:pointer;font-size:15px;border-radius:6px;">⋯</button>
+
+                    <sc-if value="{{ p.menuOpen }}" hint-placeholder-val="{{ false }}">
+                      <div onclick="{{ p.stop }}" style="position:absolute;top:44px;right:12px;z-index:10;background:#fff;border:1px solid oklch(0.92 0.003 80);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,0.12);min-width:170px;padding:4px;">
+                        <div onclick="{{ p.openMembers }}" style="padding:7px 10px;font-size:12.5px;border-radius:6px;cursor:pointer;">Members…</div>
+                        <div style="padding:7px 10px;font-size:12.5px;border-radius:6px;cursor:pointer;">Pin</div>
+                        <div style="padding:7px 10px;font-size:12.5px;border-radius:6px;cursor:pointer;">Edit</div>
+                        <div onclick="{{ p.exportProject }}" style="padding:7px 10px;font-size:12.5px;border-radius:6px;cursor:pointer;">Export…</div>
+                        <div style="padding:7px 10px;font-size:12.5px;border-radius:6px;cursor:pointer;">Archive</div>
+                        <div style="height:1px;background:oklch(0.92 0.003 80);margin:4px 0;"></div>
+                        <div style="padding:7px 10px;font-size:12.5px;border-radius:6px;cursor:pointer;color:oklch(0.577 0.245 27.325);">Delete</div>
+                      </div>
+                    </sc-if>
+                  </div>
+
+                  <p style="margin:0;padding:0 16px 12px;font-size:12px;line-height:1.5;color:oklch(0.45 0.01 80);min-height:34px;">{{ p.description }}</p>
+
+                  <div style="margin-top:auto;display:flex;align-items:center;justify-content:space-between;border-top:1px solid oklch(0.92 0.003 80);padding:10px 16px;">
+                    <span style="font-family:'Geist Mono',monospace;font-size:11px;color:oklch(0.45 0.01 80);">{{ p.questLabel }}</span>
+                    <div style="display:flex;align-items:center;">
+                      <sc-for list="{{ p.memberAvatars }}" as="m" hint-placeholder-count="1">
+                        <div style="{{ m.style }}">{{ m.initials }}</div>
+                      </sc-for>
+                      <sc-if value="{{ p.extraMemberCount }}" hint-placeholder-val="{{ false }}">
+                        <div style="width:18px;height:18px;border-radius:9999px;background:oklch(0.94 0.003 80);border:1.5px solid #fff;margin-left:-6px;display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:600;color:oklch(0.45 0.01 80);">+{{ p.extraMemberCount }}</div>
+                      </sc-if>
+                    </div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ activeProject }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;align-items:start;justify-content:space-between;gap:16px;margin-bottom:20px;">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:40px;height:40px;flex-shrink:0;border:1px solid oklch(0.92 0.003 80);background:oklch(0.97 0.002 80 / 0.6);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;">{{ activeProject.icon }}</div>
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <h1 style="font-size:20px;font-weight:700;letter-spacing:-0.01em;margin:0;">{{ activeProject.name }}</h1>
+                    <div onclick="{{ toggleSettings }}" style="display:flex;align-items:center;gap:4px;border:1px solid oklch(0.92 0.003 80);border-radius:9999px;padding:2px 9px 2px 7px;cursor:pointer;">
+                      <span style="font-size:10px;">{{ activeProject.visibilityIcon }}</span>
+                      <span style="font-size:11px;color:oklch(0.45 0.01 80);">{{ activeProject.visibilityLabel }}</span>
+                    </div>
+                  </div>
+                  <p style="font-size:13px;color:oklch(0.45 0.01 80);margin:4px 0 0;">{{ activeProject.description }}</p>
+                </div>
+              </div>
+              <button style="flex-shrink:0;display:flex;align-items:center;gap:6px;background:oklch(0.56 0.18 275);color:#fff;border:none;border-radius:8px;padding:8px 15px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit;">+ Add quest</button>
+            </div>
+
+            <sc-if value="{{ settingsOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="border:1px solid oklch(0.88 0.06 275);background:oklch(0.98 0.01 275);border-radius:10px;padding:16px;margin-bottom:16px;">
+                <div style="font-size:13px;font-weight:600;margin-bottom:2px;">Who can see this project?</div>
+                <p style="font-size:12px;color:oklch(0.45 0.01 80);margin:0 0 12px;">This only controls discovery — people still need a role to see quests inside.</p>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <label style="display:flex;align-items:start;gap:9px;cursor:pointer;">
+                    <input type="radio" checked="{{ activeProject.isPrivate }}" onchange="{{ setPrivate }}" style="margin-top:3px;" />
+                    <span><span style="font-size:12.5px;font-weight:500;">🔒 Private</span><br/><span style="font-size:11.5px;color:oklch(0.45 0.01 80);">Only invited members can find or open it.</span></span>
+                  </label>
+                  <label style="display:flex;align-items:start;gap:9px;cursor:pointer;">
+                    <input type="radio" checked="{{ activeProject.isDiscoverable }}" onchange="{{ setDiscoverable }}" style="margin-top:3px;" />
+                    <span><span style="font-size:12.5px;font-weight:500;">🌐 Discoverable</span><br/><span style="font-size:11.5px;color:oklch(0.45 0.01 80);">Workspace members can find it and request to join as Viewer.</span></span>
+                  </label>
+                </div>
+                <div style="display:flex;justify-content:flex-end;margin-top:14px;">
+                  <button onclick="{{ toggleSettings }}" style="border:1px solid oklch(0.88 0.06 275);background:#fff;border-radius:8px;padding:7px 13px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit;">Done</button>
+                </div>
+              </div>
+            </sc-if>
+
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;">
+              <div style="border:1px solid oklch(0.92 0.003 80);background:#fff;border-radius:10px;padding:14px 16px;">
+                <div style="font-size:10.5px;font-weight:600;letter-spacing:0.04em;color:oklch(0.45 0.01 80);text-transform:uppercase;">Total quests</div>
+                <div style="font-size:24px;font-weight:700;margin-top:4px;">{{ activeProject.totalQuests }}</div>
+              </div>
+              <div style="border:1px solid oklch(0.92 0.003 80);background:#fff;border-radius:10px;padding:14px 16px;">
+                <div style="font-size:10.5px;font-weight:600;letter-spacing:0.04em;color:oklch(0.45 0.01 80);text-transform:uppercase;">Completed</div>
+                <div style="font-size:24px;font-weight:700;margin-top:4px;">{{ activeProject.completedCount }}</div>
+              </div>
+              <div style="border:1px solid oklch(0.92 0.003 80);background:#fff;border-radius:10px;padding:14px 16px;">
+                <div style="font-size:10.5px;font-weight:600;letter-spacing:0.04em;color:oklch(0.45 0.01 80);text-transform:uppercase;">XP earned</div>
+                <div style="font-size:24px;font-weight:700;margin-top:4px;color:oklch(0.56 0.18 275);">+{{ activeProject.xpEarned }}</div>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:4px;border-bottom:1px solid oklch(0.92 0.003 80);margin-bottom:16px;">
+              <div class="pj-tab" onclick="{{ setTabQuests }}" style="{{ questsTabStyle }}">Quests</div>
+              <div class="pj-tab" onclick="{{ setTabMembers }}" style="{{ membersTabStyle }}">Members ({{ activeProject.memberCount }})</div>
+            </div>
+
+            <sc-if value="{{ isQuestsTab }}" hint-placeholder-val="{{ true }}">
+              <div>
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:14px;overflow-x:auto;">
+                  <span style="font-size:11.5px;color:oklch(0.45 0.01 80);margin-right:2px;flex-shrink:0;">Assignee:</span>
+                  <sc-for list="{{ assigneeFilters }}" as="f" hint-placeholder-count="3">
+                    <div onclick="{{ f.select }}" style="{{ f.style }}">{{ f.label }}</div>
+                  </sc-for>
+                </div>
+
+                <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Open <span style="font-weight:400;color:oklch(0.45 0.01 80);">({{ activeProject.openFilteredCount }})</span></div>
+                <div style="display:flex;flex-direction:column;border:1px solid oklch(0.92 0.003 80);border-radius:10px;margin-bottom:20px;">
+                  <sc-for list="{{ openQuestsFiltered }}" as="q" hint-placeholder-count="3">
+                    <div class="pj-row" style="position:relative;display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid oklch(0.95 0.002 80);">
+                      <input type="checkbox" style="width:15px;height:15px;flex-shrink:0;" />
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-size:13px;">{{ q.title }}</div>
+                        <span style="{{ q.diffStyle }}">{{ q.difficulty }}</span>
+                      </div>
+                      <div style="position:relative;flex-shrink:0;">
+                        <button onclick="{{ q.toggleAssign }}" title="{{ q.assigneeName }}" style="{{ q.avatarStyle }}">{{ q.assigneeInitials }}</button>
+                        <sc-if value="{{ q.assignOpen }}" hint-placeholder-val="{{ false }}">
+                          <div onclick="{{ q.stop }}" style="position:absolute;top:28px;right:0;z-index:20;background:#fff;border:1px solid oklch(0.92 0.003 80);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,0.12);min-width:160px;padding:4px;">
+                            <sc-for list="{{ q.assignOptions }}" as="opt" hint-placeholder-count="2">
+                              <div onclick="{{ opt.select }}" style="display:flex;align-items:center;gap:8px;padding:6px 8px;font-size:12.5px;border-radius:6px;cursor:pointer;">
+                                <span style="{{ opt.dotStyle }}"></span>{{ opt.label }}
+                              </div>
+                            </sc-for>
+                          </div>
+                        </sc-if>
+                      </div>
+                      <span style="font-family:'Geist Mono',monospace;font-size:11.5px;font-weight:500;color:oklch(0.56 0.18 275);background:oklch(0.96 0.02 275);border-radius:6px;padding:3px 7px;flex-shrink:0;">+{{ q.xp }} XP</span>
+                    </div>
+                  </sc-for>
+                </div>
+
+                <sc-if value="{{ activeProject.completedQuests.length }}" hint-placeholder-val="{{ false }}">
+                  <div>
+                    <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:oklch(0.45 0.01 80);">Completed</div>
+                    <div style="display:flex;flex-direction:column;border:1px solid oklch(0.92 0.003 80);border-radius:10px;overflow:hidden;">
+                      <sc-for list="{{ activeProject.completedQuests }}" as="q" hint-placeholder-count="2">
+                        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid oklch(0.95 0.002 80);opacity:0.5;">
+                          <input type="checkbox" checked disabled style="width:15px;height:15px;flex-shrink:0;" />
+                          <div style="flex:1;min-width:0;">
+                            <div style="font-size:13px;text-decoration:line-through;">{{ q.title }}</div>
+                          </div>
+                          <span style="font-family:'Geist Mono',monospace;font-size:11.5px;color:oklch(0.45 0.01 80);">+{{ q.xp }} XP</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isMembersTab }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                  <div style="font-size:13px;font-weight:600;">Members</div>
+                  <button onclick="{{ openInvite }}" style="display:flex;align-items:center;gap:6px;background:oklch(0.56 0.18 275);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit;">+ Invite</button>
+                </div>
+
+                <div style="display:flex;flex-direction:column;border:1px solid oklch(0.92 0.003 80);border-radius:10px;margin-bottom:20px;">
+                  <sc-for list="{{ activeProject.memberRows }}" as="m" hint-placeholder-count="2">
+                    <div class="pj-row" style="position:relative;display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid oklch(0.95 0.002 80);">
+                      <div style="position:relative;flex-shrink:0;">
+                        <div style="{{ m.avatarStyle }}">{{ m.initials }}</div>
+                        <div style="{{ m.gemStyle }}"></div>
+                      </div>
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-size:13px;font-weight:500;">{{ m.name }} <span style="font-weight:400;color:oklch(0.45 0.01 80);">{{ m.youTag }}</span></div>
+                        <div style="font-size:11.5px;color:oklch(0.45 0.01 80);">Lvl {{ m.level }} · {{ m.rankName }} · {{ m.questsLabel }}</div>
+                      </div>
+                      <div style="position:relative;flex-shrink:0;">
+                        <div onclick="{{ m.toggleRoleMenu }}" style="{{ m.roleStyle }}cursor:{{ m.roleCursor }};">{{ m.role }} <span style="{{ m.roleCaretStyle }}">▾</span></div>
+                        <sc-if value="{{ m.roleMenuOpen }}" hint-placeholder-val="{{ false }}">
+                          <div onclick="{{ m.stop }}" style="position:absolute;top:28px;right:0;z-index:20;background:#fff;border:1px solid oklch(0.92 0.003 80);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,0.12);min-width:150px;padding:4px;">
+                            <sc-for list="{{ m.roleOptions }}" as="ro" hint-placeholder-count="3">
+                              <div onclick="{{ ro.select }}" style="padding:6px 9px;font-size:12.5px;border-radius:6px;cursor:pointer;">{{ ro.label }}</div>
+                            </sc-for>
+                            <div style="height:1px;background:oklch(0.92 0.003 80);margin:4px 0;"></div>
+                            <div onclick="{{ m.remove }}" style="padding:6px 9px;font-size:12.5px;border-radius:6px;cursor:pointer;color:oklch(0.577 0.245 27.325);">Remove from project</div>
+                          </div>
+                        </sc-if>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+
+                <sc-if value="{{ activeProject.pendingInvites.length }}" hint-placeholder-val="{{ false }}">
+                  <div>
+                    <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:oklch(0.45 0.01 80);">Pending invites</div>
+                    <div style="display:flex;flex-direction:column;border:1px solid oklch(0.92 0.003 80);border-radius:10px;overflow:hidden;">
+                      <sc-for list="{{ pendingRows }}" as="inv" hint-placeholder-count="1">
+                        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid oklch(0.95 0.002 80);">
+                          <div style="width:28px;height:28px;border-radius:9999px;background:oklch(0.95 0.002 80);border:1px dashed oklch(0.85 0.003 80);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">✉</div>
+                          <div style="flex:1;min-width:0;">
+                            <div style="font-size:13px;">{{ inv.email }}</div>
+                            <div style="font-size:11.5px;color:oklch(0.45 0.01 80);">Invited as {{ inv.role }} · Pending</div>
+                          </div>
+                          <div onclick="{{ inv.resend }}" style="font-size:12px;color:oklch(0.56 0.18 275);cursor:pointer;padding:5px 8px;">Resend</div>
+                          <div onclick="{{ inv.cancel }}" style="font-size:12px;color:oklch(0.45 0.01 80);cursor:pointer;padding:5px 8px;">Cancel</div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+      </div>
+    </div>
+
+    <sc-if value="{{ importOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:50;">
+        <div style="width:100%;max-width:460px;background:#fff;border-radius:12px;padding:24px;box-shadow:0 24px 64px rgba(15,23,42,0.25);">
+          <h2 style="font-size:17px;font-weight:600;margin:0;">Import project</h2>
+          <p style="font-size:13px;color:oklch(0.45 0.01 80);margin:4px 0 16px;">Paste an exported Questify project file, or drop it below.</p>
+
+          <div style="border:1px dashed oklch(0.92 0.003 80);border-radius:10px;padding:18px;text-align:center;font-size:12.5px;color:oklch(0.45 0.01 80);margin-bottom:12px;">
+            Drop a <span style="font-family:'Geist Mono',monospace;">.questify.json</span> file here
+          </div>
+
+          <textarea value="{{ importText }}" oninput="{{ onImportInput }}" placeholder='{ "name": "…", "quests": [ … ] }' rows="5" style="width:100%;box-sizing:border-box;border:1px solid oklch(0.92 0.003 80);border-radius:8px;padding:10px 12px;font-size:12.5px;font-family:'Geist Mono',monospace;resize:vertical;outline:none;"></textarea>
+
+          <sc-if value="{{ importPreviewName }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:12px;display:flex;align-items:center;gap:8px;background:oklch(0.96 0.02 275);border:1px solid oklch(0.88 0.06 275);border-radius:8px;padding:9px 12px;font-size:12.5px;color:oklch(0.56 0.18 275);">
+              Ready to import "<strong>{{ importPreviewName }}</strong>"
+            </div>
+          </sc-if>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
+            <button onclick="{{ closeImport }}" style="background:none;border:none;font-size:13px;color:oklch(0.45 0.01 80);cursor:pointer;padding:9px 10px;font-family:inherit;">Cancel</button>
+            <button onclick="{{ confirmImport }}" disabled="{{ importDisabled }}" style="{{ importBtnStyle }}">Import project</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ exportTarget }}" hint-placeholder-val="{{ false }}">
+      <div style="position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:50;">
+        <div style="width:100%;max-width:460px;background:#fff;border-radius:12px;padding:24px;box-shadow:0 24px 64px rgba(15,23,42,0.25);">
+          <h2 style="font-size:17px;font-weight:600;margin:0;">Export "{{ exportTarget.name }}"</h2>
+          <p style="font-size:13px;color:oklch(0.45 0.01 80);margin:4px 0 16px;">A portable file with this project's quests, regions and settings.</p>
+
+          <textarea readonly value="{{ exportJson }}" rows="8" style="width:100%;box-sizing:border-box;border:1px solid oklch(0.92 0.003 80);border-radius:8px;padding:10px 12px;font-size:11.5px;font-family:'Geist Mono',monospace;background:oklch(0.97 0.002 80 / 0.5);color:oklch(0.145 0 0 / 0.8);resize:vertical;"></textarea>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+            <button onclick="{{ closeExport }}" style="background:none;border:none;font-size:13px;color:oklch(0.45 0.01 80);cursor:pointer;padding:9px 10px;font-family:inherit;">Close</button>
+            <button onclick="{{ copyExport }}" style="border:1px solid oklch(0.92 0.003 80);background:#fff;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;">{{ copyLabel }}</button>
+            <button onclick="{{ downloadExport }}" style="background:oklch(0.56 0.18 275);color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;">Download .json</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ joinOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:50;">
+        <div style="width:100%;max-width:420px;background:#fff;border-radius:12px;padding:24px;box-shadow:0 24px 64px rgba(15,23,42,0.25);">
+          <h2 style="font-size:17px;font-weight:600;margin:0;">Join a project</h2>
+          <p style="font-size:13px;color:oklch(0.45 0.01 80);margin:4px 0 16px;">Paste an invite code or link someone shared with you. Public browsing isn't available — most projects are private.</p>
+          <input value="{{ joinCode }}" oninput="{{ onJoinCodeInput }}" placeholder="e.g. QSTF-8K2P-LINK" style="width:100%;box-sizing:border-box;border:1px solid oklch(0.92 0.003 80);border-radius:8px;padding:10px 12px;font-size:13px;font-family:'Geist Mono',monospace;outline:none;" />
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px;">
+            <button onclick="{{ closeJoin }}" style="background:none;border:none;font-size:13px;color:oklch(0.45 0.01 80);cursor:pointer;padding:9px 10px;font-family:inherit;">Cancel</button>
+            <button disabled="{{ joinDisabled }}" style="{{ joinBtnStyle }}">Request to join</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ inviteOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:50;">
+        <div style="width:100%;max-width:480px;background:#fff;border-radius:12px;padding:24px;box-shadow:0 24px 64px rgba(15,23,42,0.25);">
+          <h2 style="font-size:17px;font-weight:600;margin:0;">Invite to "{{ activeProject.name }}"</h2>
+          <p style="font-size:13px;color:oklch(0.45 0.01 80);margin:4px 0 16px;">Invite by email, or share a link that grants a fixed role.</p>
+
+          <div style="display:flex;gap:4px;background:oklch(0.96 0.002 80);border-radius:8px;padding:3px;margin-bottom:16px;width:fit-content;">
+            <div onclick="{{ setInviteModeEmail }}" style="{{ inviteModeEmailStyle }}">Email</div>
+            <div onclick="{{ setInviteModeLink }}" style="{{ inviteModeLinkStyle }}">Link</div>
+          </div>
+
+          <sc-if value="{{ isInviteEmail }}" hint-placeholder-val="{{ true }}">
+            <div>
+              <div style="display:flex;gap:8px;">
+                <input value="{{ inviteEmail }}" oninput="{{ onInviteEmailInput }}" placeholder="name@example.com" style="flex:1;border:1px solid oklch(0.92 0.003 80);border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;" />
+                <select value="{{ inviteRole }}" onchange="{{ onInviteRoleChange }}" style="border:1px solid oklch(0.92 0.003 80);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;background:#fff;">
+                  <option value="Admin">Admin</option>
+                  <option value="Member">Member</option>
+                  <option value="Viewer">Viewer</option>
+                </select>
+              </div>
+              <div style="display:flex;justify-content:flex-end;margin-top:14px;">
+                <button onclick="{{ sendInvite }}" disabled="{{ inviteEmailDisabled }}" style="{{ sendInviteBtnStyle }}">Send invite</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isInviteLink }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <span style="font-size:12.5px;">Link is {{ linkEnabledLabel }}</span>
+                <div onclick="{{ toggleLinkEnabled }}" style="{{ linkToggleStyle }}"><div style="{{ linkToggleKnobStyle }}"></div></div>
+              </div>
+              <sc-if value="{{ activeProject.inviteLinkEnabled }}" hint-placeholder-val="{{ false }}">
+                <div>
+                  <div style="display:flex;gap:8px;">
+                    <input readonly value="{{ inviteLinkUrl }}" style="flex:1;border:1px solid oklch(0.92 0.003 80);border-radius:8px;padding:9px 12px;font-size:12px;font-family:'Geist Mono',monospace;background:oklch(0.97 0.002 80 / 0.5);outline:none;" />
+                    <button onclick="{{ copyInviteLink }}" style="border:1px solid oklch(0.92 0.003 80);background:#fff;border-radius:8px;padding:9px 13px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit;flex-shrink:0;">{{ copyLinkLabel }}</button>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-top:12px;">
+                    <span style="font-size:12px;color:oklch(0.45 0.01 80);">Grants role:</span>
+                    <select value="{{ activeProject.inviteLinkRole }}" onchange="{{ onLinkRoleChange }}" style="border:1px solid oklch(0.92 0.003 80);border-radius:8px;padding:6px 9px;font-size:12.5px;font-family:inherit;background:#fff;">
+                      <option value="Member">Member</option>
+                      <option value="Viewer">Viewer</option>
+                    </select>
+                    <div style="flex:1;"></div>
+                    <div onclick="{{ resetInviteLink }}" style="font-size:12px;color:oklch(0.45 0.01 80);cursor:pointer;">Reset link</div>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+            <button onclick="{{ closeInvite }}" style="background:none;border:none;font-size:13px;color:oklch(0.45 0.01 80);cursor:pointer;padding:9px 10px;font-family:inherit;">Done</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const GRADES = [
+  { name: 'Initiate',   from: 1,  to: 5,   color: 'oklch(0.55 0.035 80)' },
+  { name: 'Wanderer',   from: 6,  to: 10,  color: 'oklch(0.58 0.08 200)' },
+  { name: 'Adventurer', from: 11, to: 20,  color: 'oklch(0.62 0.13 145)' },
+  { name: 'Vanguard',   from: 21, to: 35,  color: 'oklch(0.6 0.17 255)' },
+  { name: 'Luminary',   from: 36, to: 50,  color: 'oklch(0.62 0.2 300)' },
+  { name: 'Legend',     from: 51, to: Infinity, color: 'oklch(0.75 0.19 70)' },
+];
+const AVATAR_COLORS = ['oklch(0.6 0.14 25)', 'oklch(0.58 0.13 145)', 'oklch(0.58 0.14 230)', 'oklch(0.58 0.15 300)', 'oklch(0.62 0.14 70)'];
+const DIFF_STYLES = {
+  Easy:   'background:oklch(0.95 0.05 145);color:oklch(0.42 0.13 145);',
+  Medium: 'background:oklch(0.95 0.04 230);color:oklch(0.45 0.13 230);',
+  Hard:   'background:oklch(0.95 0.06 40);color:oklch(0.5 0.15 40);',
+  Epic:   'background:oklch(0.95 0.06 300);color:oklch(0.48 0.16 300);',
+};
+const ROLE_STYLES = {
+  Owner:  'background:oklch(0.94 0.05 275);color:oklch(0.48 0.17 275);',
+  Admin:  'background:oklch(0.94 0.04 230);color:oklch(0.45 0.13 230);',
+  Member: 'background:oklch(0.95 0.003 80);color:oklch(0.45 0.01 80);',
+  Viewer: 'background:transparent;border:1px solid oklch(0.9 0.003 80);color:oklch(0.5 0.01 80);',
+};
+const ROLE_PILL = 'display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:500;border-radius:9999px;padding:4px 9px;';
+
+function gradeFor(level) {
+  return GRADES.find((g) => level >= g.from && level <= g.to) || GRADES[0];
+}
+function initialsOf(name) {
+  return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+}
+function colorFor(name) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[h];
+}
+
+class Component extends DCLogic {
+  state = {
+    search: '',
+    view: 'list',
+    selectedId: null,
+    activeTab: 'quests',
+    settingsOpen: false,
+    assigneeFilter: 'all',
+    inviteOpen: false,
+    inviteMode: 'email',
+    inviteEmail: '',
+    inviteRole: 'Member',
+    joinOpen: false,
+    joinCode: '',
+    importOpen: false,
+    importText: '',
+    exportTargetId: null,
+    copyLabel: 'Copy',
+    copyLinkLabel: 'Copy',
+    openAssignFor: null,
+    openRoleMenuFor: null,
+    projects: [
+      {
+        id: 'polytech', icon: '📚', name: 'Polytech', description: 'Personal homelab.', updated: '3mo ago', menuOpen: false,
+        visibility: 'private',
+        members: [{ id: 'axel', name: 'Axel', level: 6, role: 'Owner', self: true }],
+        pendingInvites: [],
+        inviteLinkEnabled: false, inviteLinkRole: 'Member',
+        quests: [
+          { id: 'pt1', title: 'Set up reverse proxy for internal services', difficulty: 'Medium', xp: 75, assigneeId: 'axel', completed: false },
+          { id: 'pt2', title: 'Document network topology', difficulty: 'Easy', xp: 50, assigneeId: null, completed: false },
+          { id: 'pt3', title: 'Automate NAS backups', difficulty: 'Hard', xp: 100, assigneeId: 'axel', completed: false },
+          { id: 'pt4', title: 'Harden SSH access', difficulty: 'Medium', xp: 75, assigneeId: null, completed: false },
+          { id: 'pt5', title: 'Label rack cabling', difficulty: 'Easy', xp: 50, assigneeId: 'axel', completed: true },
+        ],
+      },
+      {
+        id: 'firelink', icon: '🔥', name: 'Firelink', description: 'Personal homelab.', updated: '3mo ago', menuOpen: false,
+        visibility: 'private',
+        members: [{ id: 'axel', name: 'Axel', level: 6, role: 'Owner', self: true }],
+        pendingInvites: [],
+        inviteLinkEnabled: false, inviteLinkRole: 'Member',
+        quests: [
+          { id: 'fl1', title: 'Migrate cluster to Talos', difficulty: 'Epic', xp: 150, assigneeId: 'axel', completed: false },
+          { id: 'fl2', title: 'Wire up Prometheus alerts', difficulty: 'Medium', xp: 75, assigneeId: null, completed: false },
+          { id: 'fl3', title: 'Rotate TLS certs', difficulty: 'Easy', xp: 50, assigneeId: 'axel', completed: false },
+          { id: 'fl4', title: 'Clean up unused volumes', difficulty: 'Easy', xp: 50, assigneeId: null, completed: true },
+        ],
+      },
+      {
+        id: 'cka', icon: '⚓', name: 'CKA', description: 'Certified Kubernetes Administrator.', updated: '3mo ago', menuOpen: false,
+        visibility: 'private',
+        members: [{ id: 'axel', name: 'Axel', level: 6, role: 'Owner', self: true }],
+        pendingInvites: [],
+        inviteLinkEnabled: false, inviteLinkRole: 'Member',
+        quests: [
+          { id: 'cka1', title: 'Practice RBAC scenarios', difficulty: 'Hard', xp: 100, assigneeId: 'axel', completed: false },
+        ],
+      },
+      {
+        id: 'questify', icon: '💠', name: 'Questify', description: 'Gamified task manager focused on progression.', updated: '3mo ago', menuOpen: false,
+        visibility: 'discoverable',
+        members: [
+          { id: 'axel', name: 'Axel', level: 6, role: 'Owner', self: true },
+          { id: 'lea', name: 'Léa Fontaine', level: 14, role: 'Admin', self: false },
+        ],
+        pendingInvites: [{ email: 'sam@getquestify.com', role: 'Member' }],
+        inviteLinkEnabled: true, inviteLinkRole: 'Member',
+        quests: [
+          { id: 'q1', title: "Bug visuel : description d'une quest qui déborde de la card", difficulty: 'Easy', xp: 50, assigneeId: null, completed: false },
+          { id: 'q2', title: 'Migrations DB avec Flyway', difficulty: 'Hard', xp: 100, assigneeId: 'lea', completed: false },
+          { id: 'q3', title: 'Ajout collaboration dans un projet (backend + frontend)', difficulty: 'Epic', xp: 150, assigneeId: 'axel', completed: false },
+          { id: 'q4', title: "Ajouter la possibilité d'assigner une personne à une quest", difficulty: 'Medium', xp: 75, assigneeId: 'axel', completed: false },
+          { id: 'q5', title: 'Fix affichage collaboration par projet', difficulty: 'Easy', xp: 50, assigneeId: 'lea', completed: false },
+          { id: 'q6', title: 'Bug : quest est réalisée à sa due date au lieu de la date de complétion', difficulty: 'Medium', xp: 75, assigneeId: null, completed: false },
+          { id: 'q7', title: 'Liaison FerrisKey', difficulty: 'Hard', xp: 100, assigneeId: 'axel', completed: true },
+          { id: 'q8', title: 'Fix bug Inbox: projects filter display', difficulty: 'Easy', xp: 50, assigneeId: 'lea', completed: true },
+        ],
+      },
+      {
+        id: 'meowsik', icon: '🐱', name: 'Meowsik', description: 'Application to publish and listen to music.', updated: '3mo ago', menuOpen: false,
+        visibility: 'private',
+        members: [{ id: 'axel', name: 'Axel', level: 6, role: 'Owner', self: true }],
+        pendingInvites: [],
+        inviteLinkEnabled: false, inviteLinkRole: 'Member',
+        quests: [
+          { id: 'mk1', title: 'Waveform preview on upload', difficulty: 'Medium', xp: 75, assigneeId: 'axel', completed: false },
+          { id: 'mk2', title: 'Playlist drag reorder', difficulty: 'Easy', xp: 50, assigneeId: null, completed: false },
+          { id: 'mk3', title: 'Audio transcoding pipeline', difficulty: 'Epic', xp: 150, assigneeId: null, completed: false },
+        ],
+      },
+    ],
+  };
+
+  onSearchInput = (e) => this.setState({ search: e.target.value });
+  goTo = (id) => this.setState({ view: 'detail', selectedId: id, activeTab: 'quests', settingsOpen: false, assigneeFilter: 'all', openAssignFor: null, openRoleMenuFor: null });
+  backToList = () => this.setState({ view: 'list', selectedId: null, projects: this.state.projects.map((p) => ({ ...p, menuOpen: false })) });
+  stop = (e) => e && e.stopPropagation && e.stopPropagation();
+
+  toggleMenu(id, e) {
+    e && e.stopPropagation();
+    this.setState((s) => ({ projects: s.projects.map((p) => (p.id === id ? { ...p, menuOpen: !p.menuOpen } : { ...p, menuOpen: false })) }));
+  }
+
+  toggleSettings = () => this.setState((s) => ({ settingsOpen: !s.settingsOpen }));
+  setVisibility(id, vis) {
+    this.setState((s) => ({ projects: s.projects.map((p) => (p.id === id ? { ...p, visibility: vis } : p)) }));
+  }
+  setPrivate = () => this.setVisibility(this.state.selectedId, 'private');
+  setDiscoverable = () => this.setVisibility(this.state.selectedId, 'discoverable');
+
+  setTabQuests = () => this.setState({ activeTab: 'quests', openAssignFor: null });
+  setTabMembers = () => this.setState({ activeTab: 'members', openRoleMenuFor: null });
+
+  setAssigneeFilter(id) {
+    this.setState({ assigneeFilter: id });
+  }
+
+  toggleAssignFor(questId, e) {
+    e && e.stopPropagation();
+    this.setState((s) => ({ openAssignFor: s.openAssignFor === questId ? null : questId }));
+  }
+  assignQuest(projectId, questId, memberId) {
+    this.setState((s) => ({
+      openAssignFor: null,
+      projects: s.projects.map((p) => (p.id !== projectId ? p : { ...p, quests: p.quests.map((q) => (q.id === questId ? { ...q, assigneeId: memberId } : q)) })),
+    }));
+  }
+
+  toggleRoleMenu(memberId, e) {
+    e && e.stopPropagation();
+    this.setState((s) => ({ openRoleMenuFor: s.openRoleMenuFor === memberId ? null : memberId }));
+  }
+  setRole(projectId, memberId, role) {
+    this.setState((s) => ({
+      openRoleMenuFor: null,
+      projects: s.projects.map((p) => (p.id !== projectId ? p : { ...p, members: p.members.map((m) => (m.id === memberId ? { ...m, role } : m)) })),
+    }));
+  }
+  removeMember(projectId, memberId) {
+    this.setState((s) => ({
+      openRoleMenuFor: null,
+      projects: s.projects.map((p) => (p.id !== projectId ? p : { ...p, members: p.members.filter((m) => m.id !== memberId), quests: p.quests.map((q) => (q.assigneeId === memberId ? { ...q, assigneeId: null } : q)) })),
+    }));
+  }
+
+  openInvite = () => this.setState({ inviteOpen: true, inviteMode: 'email', inviteEmail: '', inviteRole: 'Member' });
+  closeInvite = () => this.setState({ inviteOpen: false });
+  setInviteModeEmail = () => this.setState({ inviteMode: 'email' });
+  setInviteModeLink = () => this.setState({ inviteMode: 'link', copyLinkLabel: 'Copy' });
+  onInviteEmailInput = (e) => this.setState({ inviteEmail: e.target.value });
+  onInviteRoleChange = (e) => this.setState({ inviteRole: e.target.value });
+  sendInvite = () => {
+    const email = this.state.inviteEmail.trim();
+    if (!email) return;
+    this.setState((s) => ({
+      inviteEmail: '',
+      projects: s.projects.map((p) => (p.id !== s.selectedId ? p : { ...p, pendingInvites: [...p.pendingInvites, { email, role: s.inviteRole }] })),
+    }));
+  };
+  resendInvite = (email) => {};
+  cancelInvite = (email) => {
+    this.setState((s) => ({
+      projects: s.projects.map((p) => (p.id !== s.selectedId ? p : { ...p, pendingInvites: p.pendingInvites.filter((i) => i.email !== email) })),
+    }));
+  };
+
+  toggleLinkEnabled = () => {
+    this.setState((s) => ({
+      projects: s.projects.map((p) => (p.id !== s.selectedId ? p : { ...p, inviteLinkEnabled: !p.inviteLinkEnabled })),
+    }));
+  };
+  onLinkRoleChange = (e) => {
+    const role = e.target.value;
+    this.setState((s) => ({ projects: s.projects.map((p) => (p.id !== s.selectedId ? p : { ...p, inviteLinkRole: role })) }));
+  };
+  resetInviteLink = () => this.setState({ copyLinkLabel: 'Copy' });
+  copyInviteLink = () => {
+    const url = `https://app.getquestify.com/join/${this.state.selectedId}-xk29`;
+    if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => {});
+    this.setState({ copyLinkLabel: 'Copied ✓' });
+    setTimeout(() => this.setState({ copyLinkLabel: 'Copy' }), 1500);
+  };
+
+  openJoin = () => this.setState({ joinOpen: true, joinCode: '' });
+  closeJoin = () => this.setState({ joinOpen: false });
+  onJoinCodeInput = (e) => this.setState({ joinCode: e.target.value });
+
+  openImport = () => this.setState({ importOpen: true, importText: '' });
+  closeImport = () => this.setState({ importOpen: false });
+  onImportInput = (e) => this.setState({ importText: e.target.value });
+  confirmImport = () => {
+    let name = 'Imported project';
+    try {
+      const parsed = JSON.parse(this.state.importText);
+      if (parsed && parsed.name) name = parsed.name;
+    } catch (err) {}
+    this.setState((s) => ({
+      importOpen: false, importText: '',
+      projects: [{ id: 'imported-' + Date.now(), icon: '📥', name, description: 'Imported project.', updated: 'now', menuOpen: false, visibility: 'private', members: [{ id: 'axel', name: 'Axel', level: 6, role: 'Owner', self: true }], pendingInvites: [], inviteLinkEnabled: false, inviteLinkRole: 'Member', quests: [] }, ...s.projects],
+    }));
+  };
+
+  openExport(id, e) {
+    e && e.stopPropagation();
+    this.setState((s) => ({ exportTargetId: id, projects: s.projects.map((p) => ({ ...p, menuOpen: false })), copyLabel: 'Copy' }));
+  }
+  closeExport = () => this.setState({ exportTargetId: null });
+  buildExportJson(project) {
+    return JSON.stringify({ name: project.name, icon: project.icon, description: project.description, questCount: project.quests.length, exportedAt: new Date().toISOString(), format: 'questify.project.v1' }, null, 2);
+  }
+  copyExport = () => {
+    const project = this.state.projects.find((p) => p.id === this.state.exportTargetId);
+    if (!project) return;
+    const json = this.buildExportJson(project);
+    if (navigator.clipboard) navigator.clipboard.writeText(json).catch(() => {});
+    this.setState({ copyLabel: 'Copied ✓' });
+    setTimeout(() => this.setState({ copyLabel: 'Copy' }), 1500);
+  };
+  downloadExport = () => {
+    const project = this.state.projects.find((p) => p.id === this.state.exportTargetId);
+    if (!project) return;
+    const json = this.buildExportJson(project);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${project.name.toLowerCase().replace(/\s+/g, '-')}.questify.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  renderVals() {
+    const s = this.state;
+    const findProject = (id) => s.projects.find((p) => p.id === id);
+
+    const decorate = (p) => {
+      const memberById = {};
+      p.members.forEach((m) => (memberById[m.id] = m));
+      const openQuests = p.quests.filter((q) => !q.completed);
+      const completedQuests = p.quests.filter((q) => q.completed);
+      const xpEarned = completedQuests.reduce((sum, q) => sum + q.xp, 0);
+
+      const memberAvatars = p.members.slice(0, 3).map((m) => ({
+        initials: initialsOf(m.name),
+        style: `width:18px;height:18px;border-radius:9999px;background:${colorFor(m.name)};border:1.5px solid #fff;margin-left:-6px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:#fff;`,
+      }));
+
+      return {
+        ...p,
+        visibilityIcon: p.visibility === 'private' ? '🔒' : '🌐',
+        visibilityLabel: p.visibility === 'private' ? 'Private' : 'Discoverable',
+        isPrivate: p.visibility === 'private',
+        isDiscoverable: p.visibility === 'discoverable',
+        questLabel: `${p.quests.length} ${p.quests.length === 1 ? 'quest' : 'quests'}`,
+        totalQuests: p.quests.length,
+        completedCount: completedQuests.length,
+        xpEarned,
+        memberCount: p.members.length,
+        completedQuests,
+        openQuests,
+        pendingInvites: p.pendingInvites,
+        inviteLinkEnabled: p.inviteLinkEnabled,
+        inviteLinkRole: p.inviteLinkRole,
+        memberAvatars: memberAvatars.slice(0, 3).map((m, i) => ({ ...m, style: m.style + (i === 0 ? 'margin-left:0;' : '') })),
+        extraMemberCount: p.members.length > 3 ? p.members.length - 3 : 0,
+        memberById,
+      };
+    };
+
+    const filteredProjects = s.projects.filter((p) => p.name.toLowerCase().includes(s.search.trim().toLowerCase()));
+    const projects = filteredProjects.map((p) => {
+      const d = decorate(p);
+      return { ...d, open: () => this.goTo(p.id), stop: this.stop, toggleMenu: (e) => this.toggleMenu(p.id, e), exportProject: (e) => this.openExport(p.id, e), openMembers: () => { this.goTo(p.id); this.setState({ activeTab: 'members' }); } };
+    });
+
+    const sidebarProjects = s.projects.map((p) => ({
+      icon: p.icon, name: p.name, open: () => this.goTo(p.id),
+      rowStyle: s.view === 'detail' && s.selectedId === p.id ? 'background:oklch(0.94 0.003 80);font-weight:500;color:oklch(0.145 0 0);' : '',
+    }));
+
+    const rawProject = findProject(s.selectedId);
+    let activeProject = null;
+    let openQuestsFiltered = [];
+    let assigneeFilters = [];
+    let pendingRows = [];
+
+    if (rawProject) {
+      const d = decorate(rawProject);
+      activeProject = d;
+
+      assigneeFilters = [
+        { id: 'all', label: 'All' },
+        ...rawProject.members.map((m) => ({ id: m.id, label: m.self ? 'You' : m.name.split(' ')[0] })),
+        { id: 'unassigned', label: 'Unassigned' },
+      ].map((f) => ({
+        ...f,
+        select: () => this.setAssigneeFilter(f.id),
+        style: `font-size:12px;padding:5px 10px;border-radius:9999px;cursor:pointer;flex-shrink:0;${s.assigneeFilter === f.id ? 'background:oklch(0.56 0.18 275);color:#fff;font-weight:500;' : 'background:oklch(0.96 0.002 80);color:oklch(0.45 0.01 80);'}`,
+      }));
+
+      const filtered = d.openQuests.filter((q) => {
+        if (s.assigneeFilter === 'all') return true;
+        if (s.assigneeFilter === 'unassigned') return !q.assigneeId;
+        return q.assigneeId === s.assigneeFilter;
+      });
+
+      openQuestsFiltered = filtered.map((q) => {
+        const assignee = q.assigneeId ? d.memberById[q.assigneeId] : null;
+        const assignOpen = s.openAssignFor === q.id;
+        return {
+          ...q,
+          diffStyle: `${ROLE_PILL}${DIFF_STYLES[q.difficulty]}`,
+          assigneeName: assignee ? assignee.name : 'Unassigned',
+          assigneeInitials: assignee ? initialsOf(assignee.name) : '+',
+          avatarStyle: `width:26px;height:26px;border-radius:9999px;border:none;cursor:pointer;font-family:inherit;font-size:10.5px;font-weight:600;display:flex;align-items:center;justify-content:center;${assignee ? `background:${colorFor(assignee.name)};color:#fff;` : 'background:oklch(0.97 0.002 80);color:oklch(0.55 0.01 80);border:1.5px dashed oklch(0.85 0.003 80);'}`,
+          toggleAssign: (e) => this.toggleAssignFor(q.id, e),
+          assignOpen,
+          stop: this.stop,
+          assignOptions: [{ id: null, label: 'Unassigned' }, ...rawProject.members.map((m) => ({ id: m.id, label: m.self ? `${m.name} (You)` : m.name }))].map((opt) => ({
+            ...opt,
+            select: () => this.assignQuest(rawProject.id, q.id, opt.id),
+            dotStyle: `width:7px;height:7px;border-radius:9999px;flex-shrink:0;background:${opt.id ? colorFor(rawProject.members.find((m) => m.id === opt.id).name) : 'transparent'};border:${opt.id ? 'none' : '1.5px dashed oklch(0.8 0.003 80)'};`,
+          })),
+        };
+      });
+
+      activeProject.memberRows = rawProject.members.map((m) => {
+        const grade = gradeFor(m.level);
+        const openCount = rawProject.quests.filter((q) => q.assigneeId === m.id && !q.completed).length;
+        const doneCount = rawProject.quests.filter((q) => q.assigneeId === m.id && q.completed).length;
+        const canManage = !m.self;
+        return {
+          ...m,
+          initials: initialsOf(m.name),
+          avatarStyle: `width:30px;height:30px;border-radius:9999px;background:${colorFor(m.name)};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;`,
+          gemStyle: `position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;background:linear-gradient(135deg, ${grade.color} 0%, ${grade.color} 100%);clip-path:polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);border:1.5px solid #fff;`,
+          rankName: grade.name,
+          youTag: m.self ? '(You)' : '',
+          questsLabel: `${openCount} open · ${doneCount} done`,
+          role: m.role,
+          roleStyle: `${ROLE_PILL}${ROLE_STYLES[m.role]}`,
+          roleCursor: canManage ? 'pointer' : 'default',
+          roleCaretStyle: canManage ? '' : 'display:none;',
+          toggleRoleMenu: canManage ? (e) => this.toggleRoleMenu(m.id, e) : () => {},
+          roleMenuOpen: s.openRoleMenuFor === m.id,
+          stop: this.stop,
+          remove: () => this.removeMember(rawProject.id, m.id),
+          roleOptions: ['Owner', 'Admin', 'Member', 'Viewer'].filter((r) => r !== m.role).map((r) => ({ label: r, select: () => this.setRole(rawProject.id, m.id, r) })),
+        };
+      });
+
+      pendingRows = rawProject.pendingInvites.map((inv) => ({ ...inv, resend: () => this.resendInvite(inv.email), cancel: () => this.cancelInvite(inv.email) }));
+    }
+
+    let importPreviewName = '';
+    if (s.importText.trim()) {
+      try {
+        const parsed = JSON.parse(s.importText);
+        importPreviewName = parsed && parsed.name ? parsed.name : '';
+      } catch (err) {}
+    }
+    const exportTarget = s.projects.find((p) => p.id === s.exportTargetId) || null;
+
+    return {
+      search: s.search, onSearchInput: this.onSearchInput,
+      isListView: s.view === 'list',
+      backToList: this.backToList,
+      viewAllRowStyle: s.view === 'list' ? 'background:oklch(0.94 0.003 80);font-weight:500;color:oklch(0.145 0 0);' : 'color:oklch(0.145 0 0 / 0.75);',
+      crumbProjectsColor: s.view === 'list' ? 'oklch(0.145 0 0)' : 'oklch(0.45 0.01 80)',
+      sidebarProjects,
+      projects,
+      openJoin: this.openJoin, openImport: this.openImport,
+
+      activeProject,
+      toggleSettings: this.toggleSettings, settingsOpen: s.settingsOpen,
+      setPrivate: this.setPrivate, setDiscoverable: this.setDiscoverable,
+      isQuestsTab: s.activeTab === 'quests', isMembersTab: s.activeTab === 'members',
+      setTabQuests: this.setTabQuests, setTabMembers: this.setTabMembers,
+      questsTabStyle: `padding:9px 4px;font-size:13px;font-weight:500;border-bottom:2px solid ${s.activeTab === 'quests' ? 'oklch(0.56 0.18 275)' : 'transparent'};color:${s.activeTab === 'quests' ? 'oklch(0.145 0 0)' : 'oklch(0.45 0.01 80)'};margin-right:16px;`,
+      membersTabStyle: `padding:9px 4px;font-size:13px;font-weight:500;border-bottom:2px solid ${s.activeTab === 'members' ? 'oklch(0.56 0.18 275)' : 'transparent'};color:${s.activeTab === 'members' ? 'oklch(0.145 0 0)' : 'oklch(0.45 0.01 80)'};`,
+      assigneeFilters, openQuestsFiltered, pendingRows,
+
+      inviteOpen: s.inviteOpen, openInvite: this.openInvite, closeInvite: this.closeInvite,
+      isInviteEmail: s.inviteMode === 'email', isInviteLink: s.inviteMode === 'link',
+      setInviteModeEmail: this.setInviteModeEmail, setInviteModeLink: this.setInviteModeLink,
+      inviteModeEmailStyle: `padding:6px 12px;font-size:12.5px;font-weight:500;border-radius:6px;cursor:pointer;${s.inviteMode === 'email' ? 'background:#fff;box-shadow:0 1px 2px rgba(15,23,42,0.08);' : 'color:oklch(0.45 0.01 80);'}`,
+      inviteModeLinkStyle: `padding:6px 12px;font-size:12.5px;font-weight:500;border-radius:6px;cursor:pointer;${s.inviteMode === 'link' ? 'background:#fff;box-shadow:0 1px 2px rgba(15,23,42,0.08);' : 'color:oklch(0.45 0.01 80);'}`,
+      inviteEmail: s.inviteEmail, onInviteEmailInput: this.onInviteEmailInput,
+      inviteRole: s.inviteRole, onInviteRoleChange: this.onInviteRoleChange,
+      inviteEmailDisabled: !s.inviteEmail.trim(),
+      sendInviteBtnStyle: `background:${s.inviteEmail.trim() ? 'oklch(0.56 0.18 275)' : 'oklch(0.56 0.18 275 / 0.4)'};color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:500;cursor:${s.inviteEmail.trim() ? 'pointer' : 'not-allowed'};font-family:inherit;`,
+      sendInvite: this.sendInvite,
+      linkEnabledLabel: activeProject && activeProject.inviteLinkEnabled ? 'on' : 'off',
+      toggleLinkEnabled: this.toggleLinkEnabled,
+      linkToggleStyle: `width:34px;height:20px;border-radius:9999px;cursor:pointer;position:relative;transition:background 150ms;background:${activeProject && activeProject.inviteLinkEnabled ? 'oklch(0.56 0.18 275)' : 'oklch(0.9 0.003 80)'};`,
+      linkToggleKnobStyle: `width:16px;height:16px;border-radius:9999px;background:#fff;position:absolute;top:2px;left:${activeProject && activeProject.inviteLinkEnabled ? '16px' : '2px'};transition:left 150ms;box-shadow:0 1px 2px rgba(0,0,0,0.2);`,
+      inviteLinkUrl: `app.getquestify.com/join/${s.selectedId}-xk29`,
+      copyInviteLink: this.copyInviteLink, copyLinkLabel: s.copyLinkLabel,
+      onLinkRoleChange: this.onLinkRoleChange, resetInviteLink: this.resetInviteLink,
+
+      joinOpen: s.joinOpen, closeJoin: this.closeJoin, joinCode: s.joinCode, onJoinCodeInput: this.onJoinCodeInput,
+      joinDisabled: !s.joinCode.trim(),
+      joinBtnStyle: `background:${s.joinCode.trim() ? 'oklch(0.56 0.18 275)' : 'oklch(0.56 0.18 275 / 0.4)'};color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:500;cursor:${s.joinCode.trim() ? 'pointer' : 'not-allowed'};font-family:inherit;`,
+
+      importOpen: s.importOpen, closeImport: this.closeImport, importText: s.importText, onImportInput: this.onImportInput,
+      importPreviewName, importDisabled: !s.importText.trim(),
+      importBtnStyle: `background:${s.importText.trim() ? 'oklch(0.56 0.18 275)' : 'oklch(0.56 0.18 275 / 0.4)'};color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:500;cursor:${s.importText.trim() ? 'pointer' : 'not-allowed'};font-family:inherit;`,
+      confirmImport: this.confirmImport,
+      exportTarget, exportJson: exportTarget ? this.buildExportJson(exportTarget) : '',
+      closeExport: this.closeExport, copyExport: this.copyExport, downloadExport: this.downloadExport, copyLabel: s.copyLabel,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

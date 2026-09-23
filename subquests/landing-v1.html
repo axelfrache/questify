@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Questify — Turn your to-do list into a journey</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#fafaf9; --bg-elev:#ffffff; --bg-subtle:#f4f4f5;
+    --border:#e7e5e4; --border-strong:#d6d3d1;
+    --text:#18181b; --text-dim:#52525b; --text-faint:#a1a1aa;
+    --accent:oklch(0.56 0.18 275); --accent-fg:#fff;
+    --accent-subtle:oklch(0.96 0.02 275); --accent-border:oklch(0.88 0.06 275);
+    --quest-easy:oklch(0.78 0.10 150); --quest-medium:oklch(0.75 0.12 230);
+    --quest-hard:oklch(0.72 0.14 45); --quest-epic:oklch(0.62 0.18 290);
+    --radius:8px; --radius-lg:12px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Geist',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased;letter-spacing:-0.005em;line-height:1.5}
+  a{color:inherit;text-decoration:none}
+  .mono{font-family:'Geist Mono',ui-monospace,monospace}
+  ::selection{background:color-mix(in oklch,var(--accent) 25%,transparent)}
+  .container{max-width:1100px;margin:0 auto;padding:0 24px}
+
+  /* NAV */
+  nav{position:sticky;top:0;z-index:50;background:color-mix(in oklch,var(--bg) 82%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+  nav .row{display:flex;align-items:center;gap:24px;padding:13px 0}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:500;letter-spacing:-0.01em}
+  .logo-mark{width:26px;height:26px;background:var(--text);color:var(--bg-elev);border-radius:7px;display:grid;place-items:center}
+  nav .links{display:flex;gap:22px;font-size:13px;color:var(--text-dim)}
+  nav .links a:hover{color:var(--text)}
+  nav .right{margin-left:auto;display:flex;gap:6px;align-items:center}
+  @media (max-width:760px){nav .links{display:none}}
+
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 13px;font-size:13px;font-weight:500;border-radius:var(--radius);cursor:pointer;border:1px solid transparent;transition:all 120ms ease;font-family:inherit;letter-spacing:-0.005em;white-space:nowrap}
+  .btn-primary{background:var(--accent);color:var(--accent-fg)}
+  .btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  .btn-secondary{background:var(--bg-elev);color:var(--text);border-color:var(--border)}
+  .btn-secondary:hover{background:var(--bg-subtle)}
+  .btn-ghost{color:var(--text-dim)}
+  .btn-ghost:hover{background:var(--bg-subtle);color:var(--text)}
+  .btn-lg{padding:11px 18px;font-size:14px}
+
+  /* HERO */
+  .hero{padding:80px 0 50px;text-align:center;position:relative;overflow:hidden}
+  .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 50% 40% at 50% 0,color-mix(in oklch,var(--accent) 10%,transparent),transparent 65%);pointer-events:none}
+  .chip{display:inline-flex;align-items:center;gap:7px;padding:4px 11px;font-size:12px;color:var(--text-dim);background:var(--bg-elev);border:1px solid var(--border);border-radius:999px;font-family:'Geist Mono';position:relative}
+  .chip .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px color-mix(in oklch,var(--accent) 20%,transparent)}
+  h1{font-size:clamp(40px,6.2vw,64px);font-weight:600;letter-spacing:-0.035em;line-height:1.03;margin:20px auto 18px;max-width:900px;position:relative}
+  h1 .em{color:var(--accent);font-style:italic;font-weight:500;font-family:'Instrument Serif',serif;letter-spacing:-0.02em}
+  .sub{font-size:17px;color:var(--text-dim);max-width:620px;margin:0 auto;line-height:1.55;position:relative}
+  .cta-row{display:flex;gap:10px;justify-content:center;margin-top:28px;position:relative;flex-wrap:wrap}
+  .hero-meta{margin-top:20px;display:flex;gap:18px;justify-content:center;font-size:12px;color:var(--text-faint);position:relative;flex-wrap:wrap;font-family:'Geist Mono'}
+  .hero-meta span{display:inline-flex;align-items:center;gap:5px}
+
+  /* PRODUCT SHOT */
+  .preview{position:relative;margin:54px auto 0;max-width:1000px;border-radius:14px;border:1px solid var(--border);background:var(--bg-elev);box-shadow:0 30px 80px -20px rgba(0,0,0,0.15),0 10px 30px -10px rgba(0,0,0,0.06);overflow:hidden}
+  .pchrome{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg-subtle)}
+  .pchrome .dots{display:flex;gap:5px}
+  .pchrome .dots span{width:10px;height:10px;border-radius:50%;opacity:0.7}
+  .pchrome .url{flex:1;text-align:center;padding:3px 10px;background:#fff;border:1px solid var(--border);border-radius:5px;font-family:'Geist Mono';font-size:11px;color:var(--text-faint)}
+  .mock{display:grid;grid-template-columns:220px 1fr;min-height:480px}
+  @media(max-width:720px){.mock{grid-template-columns:1fr}.mock-side{display:none}}
+  .mock-side{background:var(--bg-subtle);border-right:1px solid var(--border);padding:14px 10px}
+  .mside-label{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-faint);font-family:'Geist Mono';padding:10px 10px 4px}
+  .mside-item{display:flex;align-items:center;gap:9px;padding:7px 10px;font-size:13px;color:var(--text-dim);border-radius:5px;margin-bottom:1px}
+  .mside-item.active{background:#ecebe9;color:var(--text);font-weight:500;position:relative}
+  .mside-item.active::before{content:'';position:absolute;left:0;top:7px;bottom:7px;width:2px;background:var(--accent);border-radius:999px}
+  .mmain{padding:22px 26px;overflow:hidden}
+  .mhead{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px}
+  .mhead h2{margin:0;font-size:22px;letter-spacing:-0.02em;font-weight:600}
+  .mhead p{margin:3px 0 0;font-size:13px;color:var(--text-dim)}
+  .streak{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:oklch(0.96 0.04 50);color:oklch(0.55 0.15 40);border:1px solid oklch(0.88 0.08 50);font-size:12px;font-weight:500}
+  .focus{padding:16px;border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:14px;position:relative;overflow:hidden}
+  .focus::after{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:radial-gradient(circle,var(--accent-subtle) 0%,transparent 65%)}
+  .focus-row{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1}
+  .focus-label{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);font-family:'Geist Mono'}
+  .focus-big{font-family:'Geist Mono';font-size:32px;font-weight:500;letter-spacing:-0.03em;line-height:1;margin-top:5px;display:flex;align-items:baseline;gap:8px}
+  .focus-big small{font-size:14px;color:var(--text-dim);font-weight:400;font-family:'Geist'}
+  .focus-sub{font-size:11px;color:var(--text-dim);margin-top:4px;font-family:'Geist Mono'}
+  .bar{height:5px;background:var(--bg-subtle);border-radius:999px;margin-top:12px;overflow:hidden}
+  .bfill{height:100%;width:43%;background:var(--accent);border-radius:999px}
+  .quest{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;background:var(--bg-elev)}
+  .check{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border-strong);display:inline-block;flex-shrink:0}
+  .check.done{background:var(--accent);border-color:var(--accent);display:grid;place-items:center}
+  .qt{font-size:13px;font-weight:500}
+  .qt.done{text-decoration:line-through;opacity:0.5}
+  .qmeta{display:flex;gap:7px;margin-top:3px;align-items:center;font-size:11px;color:var(--text-faint)}
+  .pill{display:inline-flex;align-items:center;font-size:10px;font-weight:500;padding:1.5px 6px;border-radius:3px;letter-spacing:-0.005em}
+  .pill-e{background:color-mix(in oklch,var(--quest-easy) 14%,transparent);color:var(--quest-easy);border:1px solid color-mix(in oklch,var(--quest-easy) 22%,transparent)}
+  .pill-m{background:color-mix(in oklch,var(--quest-medium) 14%,transparent);color:var(--quest-medium);border:1px solid color-mix(in oklch,var(--quest-medium) 22%,transparent)}
+  .pill-h{background:color-mix(in oklch,var(--quest-hard) 14%,transparent);color:var(--quest-hard);border:1px solid color-mix(in oklch,var(--quest-hard) 22%,transparent)}
+  .pill-ep{background:color-mix(in oklch,var(--quest-epic) 14%,transparent);color:var(--quest-epic);border:1px solid color-mix(in oklch,var(--quest-epic) 22%,transparent)}
+  .xp{display:inline-flex;align-items:center;gap:2px;padding:2px 8px;border-radius:999px;background:var(--accent-subtle);color:var(--accent);border:1px solid var(--accent-border);font-family:'Geist Mono';font-size:11px;font-weight:500}
+  .xp small{font-size:9px;opacity:0.7;margin-left:1px}
+
+  /* SECTIONS */
+  section{padding:84px 0}
+  .section-head{max-width:680px;margin-bottom:48px}
+  .s-eyebrow{font-family:'Geist Mono';font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:0.1em;font-weight:500;margin-bottom:12px}
+  .section-head h2{margin:0 0 12px;font-size:clamp(28px,3.6vw,40px);letter-spacing:-0.025em;line-height:1.1;font-weight:600}
+  .section-head h2 .em{color:var(--accent);font-style:italic;font-weight:500;font-family:'Instrument Serif',serif}
+  .section-head p{margin:0;font-size:16px;color:var(--text-dim)}
+
+  /* LOGOS ROW */
+  .trust{padding:44px 0 0;text-align:center}
+  .trust-label{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.1em;font-family:'Geist Mono';margin-bottom:18px}
+  .trust-row{display:flex;gap:36px;justify-content:center;align-items:center;flex-wrap:wrap;opacity:0.5}
+  .trust-row span{font-size:15px;font-weight:600;letter-spacing:-0.01em;color:var(--text-dim)}
+
+  /* FEATURES GRID */
+  .fgrid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+  .feat{padding:22px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-elev);transition:all 200ms}
+  .feat:hover{border-color:var(--border-strong);transform:translateY(-2px)}
+  .feat-icon{width:32px;height:32px;border-radius:var(--radius);background:var(--bg-subtle);border:1px solid var(--border);display:grid;place-items:center;color:var(--accent);margin-bottom:12px}
+  .feat h3{margin:0 0 6px;font-size:16px;letter-spacing:-0.01em;font-weight:600}
+  .feat p{margin:0;font-size:13px;color:var(--text-dim);line-height:1.55}
+  .feat.wide{grid-column:span 8}
+  .feat.narrow{grid-column:span 4}
+  .feat.half{grid-column:span 6}
+  @media(max-width:860px){.feat.wide,.feat.narrow,.feat.half{grid-column:span 12}}
+  .feat-visual{margin-top:18px;padding:14px;border-radius:var(--radius);background:var(--bg);border:1px solid var(--border)}
+
+  /* Grade journey */
+  .grades{display:flex;align-items:center;gap:4px}
+  .gs{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+  .gs-dot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-family:'Geist Mono';font-size:10px;font-weight:500;background:var(--bg-subtle);color:var(--text-faint);border:2px solid var(--border)}
+  .gs-dot.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-subtle)}
+  .gs-label{font-size:10px;color:var(--text-dim);margin-top:5px;font-family:'Geist Mono';white-space:nowrap}
+  .gs-line{flex:1;height:2px;background:var(--border);min-width:8px;margin-top:-17px}
+  .gs-line.on{background:var(--accent)}
+
+  /* heatmap */
+  .hmap{display:grid;grid-template-columns:repeat(14,1fr);gap:3px}
+  .hcell{aspect-ratio:1;border-radius:2px;background:var(--bg-subtle)}
+  .hcell.l1{background:color-mix(in oklch,var(--accent) 20%,var(--bg-subtle))}
+  .hcell.l2{background:color-mix(in oklch,var(--accent) 45%,var(--bg-subtle))}
+  .hcell.l3{background:var(--accent)}
+
+  /* ticker */
+  .ticker{display:flex;flex-direction:column;gap:5px}
+  .trow{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--bg-elev);border-radius:5px;font-size:12px;border:1px solid var(--border)}
+  .trow b{color:var(--accent);font-family:'Geist Mono';font-weight:500}
+
+  /* regions */
+  .regs{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .reg{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;background:var(--bg-elev);border:1px solid var(--border);font-size:12px}
+  .reg .mono{margin-left:auto;color:var(--text-faint);font-size:11px}
+
+  /* STEPS */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:860px){.steps{grid-template-columns:1fr}}
+  .step{padding:22px;border-radius:var(--radius-lg);background:var(--bg-elev);border:1px solid var(--border);position:relative}
+  .step-n{font-family:'Geist Mono';font-size:11px;color:var(--accent);font-weight:500;margin-bottom:10px;display:inline-flex;align-items:center;gap:6px}
+  .step-n::before{content:'';width:18px;height:1px;background:var(--accent)}
+  .step h4{margin:0 0 6px;font-size:15px;letter-spacing:-0.01em;font-weight:600}
+  .step p{margin:0;font-size:13px;color:var(--text-dim);line-height:1.55}
+
+  /* STATS */
+  .stats{background:var(--bg-elev);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:56px 0}
+  .stats-g{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;max-width:960px;margin:0 auto;padding:0 24px}
+  @media(max-width:760px){.stats-g{grid-template-columns:repeat(2,1fr)}}
+  .stat{text-align:center}
+  .stat-v{font-family:'Geist Mono';font-size:38px;font-weight:500;letter-spacing:-0.03em;line-height:1}
+  .stat-l{font-size:12px;color:var(--text-dim);margin-top:6px}
+
+  /* OPEN SOURCE */
+  .os{display:grid;grid-template-columns:1.1fr 1fr;gap:36px;align-items:center;padding:36px;background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius-lg)}
+  @media(max-width:860px){.os{grid-template-columns:1fr}}
+  .os h2{margin:0 0 12px;font-size:28px;letter-spacing:-0.025em;line-height:1.1;font-weight:600}
+  .os p{margin:0 0 20px;color:var(--text-dim);font-size:15px}
+  .os-ctas{display:flex;gap:8px;flex-wrap:wrap}
+  .os-code{background:#0a0a0a;color:#e5e5e5;border-radius:var(--radius);padding:18px;font-family:'Geist Mono';font-size:12px;line-height:1.75;overflow-x:auto}
+  .os-code .c{color:#71717a}
+  .os-code .p{color:oklch(0.70 0.16 275)}
+  .os-code .s{color:oklch(0.75 0.14 140)}
+
+  /* PRICING */
+  .prig{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:760px;margin:0 auto}
+  @media(max-width:760px){.prig{grid-template-columns:1fr}}
+  .plan{padding:28px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-elev);display:flex;flex-direction:column;position:relative}
+  .plan.feat{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-subtle)}
+  .plan-tag{position:absolute;top:-10px;right:16px;padding:3px 10px;border-radius:999px;background:var(--accent);color:var(--accent-fg);font-size:11px;font-weight:500;font-family:'Geist Mono'}
+  .p-name{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;font-family:'Geist Mono'}
+  .p-price{font-family:'Geist Mono';font-size:34px;font-weight:500;letter-spacing:-0.03em;margin:10px 0 4px}
+  .p-price small{font-size:14px;color:var(--text-dim);font-weight:400}
+  .p-desc{font-size:13px;color:var(--text-dim);margin-bottom:18px}
+  .p-list{list-style:none;padding:0;margin:0 0 22px;display:flex;flex-direction:column;gap:9px;flex:1}
+  .p-list li{display:flex;gap:8px;font-size:13px}
+  .p-list svg{color:var(--accent);flex-shrink:0;margin-top:2px}
+
+  /* FAQ */
+  .faq{max-width:720px;margin:0 auto}
+  .fitem{border-bottom:1px solid var(--border)}
+  .fq{display:flex;justify-content:space-between;align-items:center;padding:18px 0;font-size:15px;font-weight:500;cursor:pointer;letter-spacing:-0.01em;list-style:none}
+  .fq::-webkit-details-marker{display:none}
+  .fq svg{color:var(--text-faint);transition:transform 200ms}
+  details[open] .fq svg{transform:rotate(45deg);color:var(--accent)}
+  .fa{padding:0 0 18px;font-size:14px;color:var(--text-dim);line-height:1.6}
+
+  /* TESTIMONIAL */
+  .testi{max-width:760px;margin:0 auto;text-align:center}
+  .testi blockquote{font-size:24px;font-weight:500;letter-spacing:-0.02em;line-height:1.35;margin:0 0 20px;color:var(--text)}
+  .testi blockquote .em{color:var(--accent);font-style:italic;font-family:'Instrument Serif',serif;font-weight:500}
+  .testi-author{display:inline-flex;align-items:center;gap:10px;font-size:13px}
+  .testi-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,oklch(0.70 0.16 275),oklch(0.65 0.18 40));display:grid;place-items:center;color:#fff;font-weight:500;font-size:13px}
+
+  /* CTA BLOCK */
+  .cta-block{text-align:center;padding:72px 32px;background:var(--text);color:var(--bg);border-radius:var(--radius-lg);position:relative;overflow:hidden}
+  .cta-block::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 100%,color-mix(in oklch,var(--accent) 50%,transparent) 0%,transparent 70%)}
+  .cta-block h2{position:relative;margin:0 0 14px;font-size:clamp(30px,4vw,44px);letter-spacing:-0.03em;line-height:1.05;font-weight:600}
+  .cta-block h2 .em{color:color-mix(in oklch,var(--accent) 70%,#fff);font-style:italic;font-family:'Instrument Serif',serif;font-weight:500}
+  .cta-block p{position:relative;margin:0 0 26px;color:color-mix(in oklch,#fff 70%,transparent);font-size:16px}
+  .cta-block .btn-primary{background:#fff;color:var(--text);position:relative}
+  .cta-block .btn-primary:hover{background:var(--bg-subtle)}
+  .cta-block .btn-secondary{background:transparent;color:#fff;border-color:rgba(255,255,255,0.2);position:relative}
+  .cta-block .btn-secondary:hover{background:rgba(255,255,255,0.1)}
+
+  /* FOOTER */
+  footer{padding:48px 0 30px;border-top:1px solid var(--border);margin-top:80px}
+  .foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:32px}
+  @media(max-width:760px){.foot-grid{grid-template-columns:1fr 1fr}}
+  .foot-col h5{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.1em;margin:0 0 12px;font-family:'Geist Mono';font-weight:500}
+  .foot-col ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:9px}
+  .foot-col a{font-size:13px;color:var(--text-dim)}
+  .foot-col a:hover{color:var(--text)}
+  .foot-brand{max-width:280px}
+  .foot-brand p{margin:10px 0 0;font-size:13px;color:var(--text-dim)}
+  .foot-bot{padding-top:22px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-faint);font-family:'Geist Mono'}
+  @media(max-width:560px){.foot-bot{flex-direction:column;gap:10px;text-align:center}}
+
+  /* Instrument Serif fallback */
+  @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="container row">
+    <a class="logo" href="#">
+      <span class="logo-mark">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 14 L10 10 L10 18 L14 14"/>
+          <rect x="14" y="5" width="5" height="5" rx="1" fill="currentColor" stroke="none"/>
+        </svg>
+      </span>
+      Questify
+    </a>
+    <div class="links">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#opensource">Open source</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="right">
+      <a class="btn btn-ghost" href="#">Sign in</a>
+      <a class="btn btn-primary" href="#pricing">Start free</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="container">
+    <span class="chip"><span class="dot"></span> v1.0 · now with habits, regions & grades</span>
+    <h1>Your to-do list, reframed as a <span class="em">journey</span>.</h1>
+    <p class="sub">Questify turns the tasks you'd do anyway into quests — with XP, levels, grades and regions that make progress actually feel like progress. Not gimmicks. A clean tool with a story you get to write.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary btn-lg" href="#pricing">
+        Start the journey — free
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+      <a class="btn btn-secondary btn-lg" href="#opensource">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        Self-host it
+      </a>
+    </div>
+    <div class="hero-meta">
+      <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Free forever plan</span>
+      <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> MIT licensed</span>
+      <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> No credit card</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="preview">
+      <div class="pchrome">
+        <div class="dots"><span style="background:#ef4444"></span><span style="background:#eab308"></span><span style="background:#22c55e"></span></div>
+        <div class="url">questify.app/today</div>
+        <div style="width:38px"></div>
+      </div>
+      <div class="mock">
+        <aside class="mock-side">
+          <div class="mside-label">Navigate</div>
+          <div class="mside-item">📥&nbsp;&nbsp;Inbox</div>
+          <div class="mside-item active">☀️&nbsp;&nbsp;Today</div>
+          <div class="mside-item">📅&nbsp;&nbsp;Upcoming</div>
+          <div class="mside-item">🔁&nbsp;&nbsp;Habits</div>
+          <div class="mside-label">Insights</div>
+          <div class="mside-item">📈&nbsp;&nbsp;Progress</div>
+          <div class="mside-item">📊&nbsp;&nbsp;Stats</div>
+        </aside>
+        <main class="mmain">
+          <div class="mhead">
+            <div>
+              <h2>Today</h2>
+              <p>Good morning, Axel · Sunday, April 19</p>
+            </div>
+            <span class="streak">🔥 7 day streak</span>
+          </div>
+          <div class="focus">
+            <div class="focus-row">
+              <div>
+                <div class="focus-label">Daily progress</div>
+                <div class="focus-big">3<small>/ 7 quests</small></div>
+                <div class="focus-sub">43% · +120 XP earned · +380 available</div>
+              </div>
+              <span class="xp" style="font-size:13px;padding:4px 11px">+120<small>XP</small></span>
+            </div>
+            <div class="bar"><div class="bfill"></div></div>
+          </div>
+          <div class="quest">
+            <span class="check done"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <div><div class="qt done">Morning run — 5k</div><div class="qmeta"><span class="pill pill-m">Medium</span> Sport · Daily</div></div>
+            <span class="xp">+80<small>XP</small></span>
+          </div>
+          <div class="quest">
+            <span class="check"></span>
+            <div><div class="qt">Refactor auth service</div><div class="qmeta"><span class="pill pill-ep">Epic</span> Work · One-time</div></div>
+            <span class="xp">+150<small>XP</small></span>
+          </div>
+          <div class="quest">
+            <span class="check"></span>
+            <div><div class="qt">Plan Q2 OKRs with team</div><div class="qmeta"><span class="pill pill-h">Hard</span> Work · One-time</div></div>
+            <span class="xp">+120<small>XP</small></span>
+          </div>
+          <div class="quest">
+            <span class="check"></span>
+            <div><div class="qt">Read 20 pages — Deep Work</div><div class="qmeta"><span class="pill pill-e">Easy</span> Learn · Daily</div></div>
+            <span class="xp">+30<small>XP</small></span>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- TRUST -->
+<section class="trust">
+  <div class="container">
+    <div class="trust-label">Featured on</div>
+    <div class="trust-row">
+      <span>Product Hunt</span>
+      <span>HackerNews</span>
+      <span>Indie Hackers</span>
+      <span>GitHub Trending</span>
+      <span>r/selfhosted</span>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="container">
+    <div class="section-head">
+      <div class="s-eyebrow">Features</div>
+      <h2>Tasks are the boring part.<br/><span class="em">Progress</span> is the point.</h2>
+      <p>Questify sits on top of a simple task-tracking core and adds an RPG-inspired progression system that rewards consistency — without turning your life into a slot machine.</p>
+    </div>
+
+    <div class="fgrid">
+      <!-- Progression — big -->
+      <div class="feat wide">
+        <div class="feat-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9 17 14 18 21 12 17 6 21 7 14 2 9 9 9 12 2"/></svg>
+        </div>
+        <h3>Six grades, not infinite levels</h3>
+        <p>Initiate → Traveler → Explorer → Adventurer → Hero → Legend. Each grade has real requirements, not just bigger XP bars. You know what you're walking toward.</p>
+        <div class="feat-visual">
+          <div class="grades">
+            <div class="gs"><div class="gs-dot on">✓</div><div class="gs-label" style="color:var(--text)">Initiate</div></div>
+            <div class="gs-line on"></div>
+            <div class="gs"><div class="gs-dot">6</div><div class="gs-label">Traveler</div></div>
+            <div class="gs-line"></div>
+            <div class="gs"><div class="gs-dot">11</div><div class="gs-label">Explorer</div></div>
+            <div class="gs-line"></div>
+            <div class="gs"><div class="gs-dot">21</div><div class="gs-label">Adventurer</div></div>
+            <div class="gs-line"></div>
+            <div class="gs"><div class="gs-dot">36</div><div class="gs-label">Hero</div></div>
+            <div class="gs-line"></div>
+            <div class="gs"><div class="gs-dot">51</div><div class="gs-label">Legend</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- XP ticker -->
+      <div class="feat narrow">
+        <div class="feat-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <h3>XP where it matters</h3>
+        <p>Difficulty decides the reward. Easy = cozy, Epic = stretch.</p>
+        <div class="feat-visual">
+          <div class="ticker">
+            <div class="trow"><span>Weekly review</span><b>+80</b></div>
+            <div class="trow"><span>Ship PR #482</span><b>+120</b></div>
+            <div class="trow"><span>Gym — upper body</span><b>+100</b></div>
+            <div class="trow"><span>Read 20 pages</span><b>+30</b></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Habits -->
+      <div class="feat half">
+        <div class="feat-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+        </div>
+        <h3>Habits that draw themselves</h3>
+        <p>Recurring quests build a heatmap you can actually read. See the shape of your week, not a lonely counter.</p>
+        <div class="feat-visual">
+          <div class="hmap" id="heatmap"></div>
+        </div>
+      </div>
+
+      <!-- Regions -->
+      <div class="feat half">
+        <div class="feat-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/><path d="M8 2v16M16 6v16"/></svg>
+        </div>
+        <h3>Regions instead of tags</h3>
+        <p>Work · Life · Sport · Learn. The parts of your life become places on a map. Balance becomes something you can see, not just feel.</p>
+        <div class="feat-visual">
+          <div class="regs">
+            <div class="reg"><span style="color:oklch(0.58 0.14 270)">◆</span> Work <span class="mono">14</span></div>
+            <div class="reg"><span style="color:oklch(0.68 0.13 145)">●</span> Life <span class="mono">9</span></div>
+            <div class="reg"><span style="color:oklch(0.72 0.14 45)">▲</span> Sport <span class="mono">6</span></div>
+            <div class="reg"><span style="color:oklch(0.65 0.14 220)">◉</span> Learn <span class="mono">4</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today focus -->
+      <div class="feat narrow">
+        <div class="feat-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        </div>
+        <h3>Today, focused</h3>
+        <p>One clean view each morning. Just what you committed to — not a 47-item Inbox.</p>
+      </div>
+
+      <!-- Achievements -->
+      <div class="feat narrow">
+        <div class="feat-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12"/></svg>
+        </div>
+        <h3>Achievements worth earning</h3>
+        <p>Meaningful milestones, not confetti for brushing your teeth.</p>
+      </div>
+
+      <!-- Keyboard first -->
+      <div class="feat narrow">
+        <div class="feat-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h12"/></svg>
+        </div>
+        <h3>Keyboard-first</h3>
+        <p>Every action has a shortcut. <span class="mono" style="font-size:10.5px;padding:1px 5px;border:1px solid var(--border);border-radius:3px;background:var(--bg)">⌘K</span> opens everything.</p>
+      </div>
+
+      <!-- Yours forever -->
+      <div class="feat narrow">
+        <div class="feat-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L3 7v6c0 5 4 8 9 9 5-1 9-4 9-9V7l-9-5z"/></svg>
+        </div>
+        <h3>Your data, yours</h3>
+        <p>Full JSON export. Self-host in one command. No lock-in, ever.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how" style="padding-top:0">
+  <div class="container">
+    <div class="section-head">
+      <div class="s-eyebrow">How it works</div>
+      <h2>Three habits. <span class="em">That's it.</span></h2>
+      <p>No deep configuration, no "inbox zero" purity test. Questify works even if you only show up three minutes a day.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">Step 01</div>
+        <h4>Capture what's on your mind</h4>
+        <p>Dump anything into the Inbox — a sentence is enough. Set a difficulty when you're ready, or leave it for later. Nothing is lost.</p>
+      </div>
+      <div class="step">
+        <div class="step-n">Step 02</div>
+        <h4>Plan a short Today</h4>
+        <p>Each morning, pull 3–7 quests into Today. The focus card tells you exactly what a good day looks like — then gets out of the way.</p>
+      </div>
+      <div class="step">
+        <div class="step-n">Step 03</div>
+        <h4>Finish. Earn. Walk the path</h4>
+        <p>Check things off, earn XP tied to difficulty, watch regions fill in. Grades come when the work comes — no rush, no guilt.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats">
+  <div class="stats-g">
+    <div class="stat"><div class="stat-v" style="color:var(--accent)">12.4k</div><div class="stat-l">Quests completed today</div></div>
+    <div class="stat"><div class="stat-v">37</div><div class="stat-l">Day average streak</div></div>
+    <div class="stat"><div class="stat-v">6</div><div class="stat-l">Grades to walk through</div></div>
+    <div class="stat"><div class="stat-v">MIT</div><div class="stat-l">Licensed, forever</div></div>
+  </div>
+</section>
+
+<!-- TESTIMONIAL -->
+<section>
+  <div class="container testi">
+    <div class="s-eyebrow" style="margin-bottom:18px">Why people stick around</div>
+    <blockquote>“I'd bounced off five task apps. Questify is the first one where I actually want to <span class="em">open it tomorrow</span>. Turns out seeing your week as a map does something checkboxes never did.”</blockquote>
+    <div class="testi-author">
+      <div class="testi-avatar">LR</div>
+      <div><b>Lena R.</b> · freelance illustrator · 94 day streak</div>
+    </div>
+  </div>
+</section>
+
+<!-- OPEN SOURCE -->
+<section id="opensource">
+  <div class="container">
+    <div class="section-head">
+      <div class="s-eyebrow">Open source</div>
+      <h2>Yours to run, <span class="em">fork, bend.</span></h2>
+      <p>Questify is MIT-licensed and self-hostable by design. You own your data. Your persona never leaves your server — unless you want it to.</p>
+    </div>
+    <div class="os">
+      <div>
+        <h2 style="font-size:22px;margin-bottom:8px">One command. Your own instance.</h2>
+        <p>Docker, SQLite, a single binary. No vendor lock-in, no telemetry by default, no paywalled features gated behind the cloud.</p>
+        <div class="os-ctas">
+          <a class="btn btn-primary" href="#">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 0a12 12 0 0 0-3.79 23.4c.6.11.82-.26.82-.58v-2.04c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.5.99.1-.78.42-1.3.76-1.6-2.67-.3-5.47-1.34-5.47-5.95 0-1.31.47-2.39 1.24-3.23-.13-.3-.54-1.53.12-3.19 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.89.12 3.19.78.84 1.24 1.92 1.24 3.23 0 4.62-2.8 5.64-5.48 5.94.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 0z"/></svg>
+            Star on GitHub
+          </a>
+          <a class="btn btn-secondary" href="#">Read the docs</a>
+        </div>
+      </div>
+      <pre class="os-code"><span class="c"># Clone & run with docker compose</span>
+<span class="p">$</span> <span class="s">git clone</span> https://github.com/questify/app
+<span class="p">$</span> <span class="s">cd</span> questify
+<span class="p">$</span> <span class="s">docker compose up</span> -d
+
+<span class="c"># Or use the single binary</span>
+<span class="p">$</span> <span class="s">curl -fsSL</span> install.questify.app | sh
+<span class="p">$</span> <span class="s">questify</span> serve --port 8080
+
+<span class="c"># Your journey starts at http://localhost:8080</span></pre>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="container">
+    <div class="section-head" style="text-align:center;margin:0 auto 40px">
+      <div class="s-eyebrow">Pricing</div>
+      <h2>Free forever. <span class="em">Or support the journey.</span></h2>
+      <p>Questify is free to use and self-host. Cloud is for people who'd rather not run a server — and who want a few extra powers.</p>
+    </div>
+
+    <div class="prig">
+      <div class="plan">
+        <div class="p-name">Self-host · Free</div>
+        <div class="p-price">€0<small> / forever</small></div>
+        <div class="p-desc">Run Questify on your machine, your server, your NAS. No strings.</div>
+        <ul class="p-list">
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> All features included</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Unlimited quests, habits, regions</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> JSON export, full data ownership</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Community support on Discord</li>
+        </ul>
+        <a class="btn btn-secondary btn-lg" href="#" style="justify-content:center">Get the source</a>
+      </div>
+
+      <div class="plan feat">
+        <div class="plan-tag">Cloud beta</div>
+        <div class="p-name">Hosted · Voyager</div>
+        <div class="p-price">€4<small> / month</small></div>
+        <div class="p-desc">Zero setup. Sync everywhere. We take care of the servers so you can take care of the quests.</div>
+        <ul class="p-list">
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Everything in Self-host</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Sync across devices · iOS & web</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Nightly encrypted backups</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Early access to new features</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Priority support</li>
+        </ul>
+        <a class="btn btn-primary btn-lg" href="#" style="justify-content:center">Join the cloud beta</a>
+      </div>
+    </div>
+    <p style="text-align:center;margin-top:20px;font-size:12px;color:var(--text-faint);font-family:'Geist Mono'">30-day free trial on cloud · Cancel anytime · Students free via GitHub Student Pack</p>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="container">
+    <div class="section-head" style="text-align:center;margin:0 auto 36px">
+      <div class="s-eyebrow">FAQ</div>
+      <h2>Questions, before the quest.</h2>
+    </div>
+    <div class="faq">
+      <details class="fitem" open>
+        <summary class="fq">Will gamification make me resent my to-do list in 3 weeks? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></summary>
+        <div class="fa">That's the risk of most gamified apps — streaks that shame you, numbers that only go up. We designed Questify the opposite way: no streak-breaking, optional XP, no leaderboards, and grades that unlock at your pace. You can turn any of it off. The tasks still work without the RPG on top.</div>
+      </details>
+      <details class="fitem">
+        <summary class="fq">Do I need to like RPGs to use it? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></summary>
+        <div class="fa">Not at all. If you strip the XP and grades away, Questify is a very clean task manager with habits, regions and a focused Today view. The game layer is a bonus — not a tax.</div>
+      </details>
+      <details class="fitem">
+        <summary class="fq">Is self-hosting really one command? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></summary>
+        <div class="fa">For the common setup, yes. <span class="mono">docker compose up</span> gets you a working instance with SQLite. There's also a single binary for Linux/macOS and a one-click deploy for Railway, Fly.io and Render.</div>
+      </details>
+      <details class="fitem">
+        <summary class="fq">What's the difference between the free self-host and the cloud plan? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></summary>
+        <div class="fa">Same features, same code. The cloud plan is just us running the server for you, plus encrypted backups, multi-device sync, and a mobile app. You can move from cloud to self-host (or back) with a JSON export at any time.</div>
+      </details>
+      <details class="fitem">
+        <summary class="fq">Mobile app? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></summary>
+        <div class="fa">iOS PWA today — native iOS and Android apps land this summer for cloud users. The web app is fully responsive in the meantime.</div>
+      </details>
+      <details class="fitem">
+        <summary class="fq">Who's building this? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></summary>
+        <div class="fa">Two people, a handful of contributors, and a growing community on Discord. We ship in public — every feature has a design thread and a GitHub issue. You're welcome to join.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section style="padding-top:40px">
+  <div class="container">
+    <div class="cta-block">
+      <h2>Start small. <span class="em">Walk far.</span></h2>
+      <p>Free forever. MIT licensed. Takes 30 seconds to sign up, and you can leave with all your data any time.</p>
+      <div class="cta-row" style="position:relative">
+        <a class="btn btn-primary btn-lg" href="#">Start the journey</a>
+        <a class="btn btn-secondary btn-lg" href="#opensource">Or self-host it</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div class="foot-col foot-brand">
+        <a class="logo" href="#">
+          <span class="logo-mark">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14 L10 10 L10 18 L14 14"/><rect x="14" y="5" width="5" height="5" rx="1" fill="currentColor" stroke="none"/></svg>
+          </span>
+          Questify
+        </a>
+        <p>A task manager that treats your days like chapters. Open source, self-hostable, made for people who want progress — not pressure.</p>
+      </div>
+      <div class="foot-col">
+        <h5>Product</h5>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#">Changelog</a></li>
+          <li><a href="#">Roadmap</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Open source</h5>
+        <ul>
+          <li><a href="#">GitHub</a></li>
+          <li><a href="#">Documentation</a></li>
+          <li><a href="#">Self-host guide</a></li>
+          <li><a href="#">Contributing</a></li>
+          <li><a href="#">Discord</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Privacy</a></li>
+          <li><a href="#">Terms</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bot">
+      <span>© 2026 Questify · MIT licensed</span>
+      <span>Built by two humans, with tea</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Generate a plausible 14-day heatmap
+  (function(){
+    const el = document.getElementById('heatmap');
+    if (!el) return;
+    const pattern = [1,2,3,2,1,0,0, 1,2,3,3,2,1,0];
+    pattern.forEach(v => {
+      const d = document.createElement('div');
+      d.className = 'hcell' + (v ? ' l' + v : '');
+      el.appendChild(d);
+    });
+  })();
+</script>
+</body>
+</html>

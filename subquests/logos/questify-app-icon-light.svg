@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>Questify — App icon (light)</title>
+  <rect width="1024" height="1024" rx="230" ry="230" fill="#FAFAF9"></rect>
+  <path d="M512 220 L820 512 L512 804 L204 512 Z" fill="oklch(0.56 0.18 275)"></path>
+</svg>

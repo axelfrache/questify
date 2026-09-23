@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body{margin:0;}
+    a{color:oklch(0.56 0.18 275);text-decoration:none;}
+    a:hover{color:oklch(0.48 0.18 275);}
+  </style>
+</helmet>
+
+<div style="min-height:100vh;font-family:'Geist',ui-sans-serif,system-ui,sans-serif;background:oklch(0.985 0.002 80);color:oklch(0.145 0 0);padding:44px 24px;box-sizing:border-box;">
+  <div style="max-width:760px;margin:0 auto;">
+
+    <div style="margin-bottom:6px;font-size:11px;font-weight:500;color:oklch(0.45 0.01 80);text-transform:uppercase;letter-spacing:0.06em;">Progression · new grade names</div>
+    <h1 style="font-size:22px;font-weight:700;letter-spacing:-0.01em;margin:0 0 6px;">The Journey</h1>
+    <p style="font-size:13.5px;color:oklch(0.45 0.01 80);margin:0 0 6px;max-width:520px;">Six narrative grades replacing the generic mineral tiers — matching Questify's own framing of progression as a journey, not a ranking.</p>
+    <p style="font-size:12px;color:oklch(0.45 0.01 80);margin:0 0 28px;max-width:520px;">Color isn't decorative: saturation and brightness both climb with rank, so each gem visibly outshines the last.</p>
+
+    <div style="background:#fff;border:1px solid oklch(0.92 0.003 80);border-radius:14px;padding:24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;">
+        <sc-for list="{{ grades }}" as="g" hint-placeholder-count="6">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px;flex:1;">
+            <div style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <div style="{{ g.gemWrapStyle }}">
+                <div style="{{ g.gemBaseStyle }}"></div>
+                <div style="{{ g.facetTLStyle }}"></div>
+                <div style="{{ g.facetTRStyle }}"></div>
+                <div style="{{ g.facetBRStyle }}"></div>
+                <div style="{{ g.facetBLStyle }}"></div>
+              </div>
+            </div>
+            <div style="font-size:12px;font-weight:600;">{{ g.name }}</div>
+            <div style="font-family:'Geist Mono',monospace;font-size:10px;color:oklch(0.45 0.01 80);">Lvl {{ g.levelFrom }}+</div>
+          </div>
+          <sc-if value="{{ g.hasConnector }}" hint-placeholder-val="{{ true }}">
+            <div style="height:1px;flex:0.6;background:oklch(0.92 0.003 80);margin:0 -4px 30px;"></div>
+          </sc-if>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <sc-for list="{{ grades }}" as="g" hint-placeholder-count="6">
+        <div style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid oklch(0.92 0.003 80);border-radius:10px;padding:14px 16px;">
+          <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <div style="{{ g.badgeWrapStyle }}">
+              <div style="{{ g.badgeBaseStyle }}"></div>
+              <div style="{{ g.badgeFacetTLStyle }}"></div>
+              <div style="{{ g.badgeFacetTRStyle }}"></div>
+              <div style="{{ g.badgeFacetBRStyle }}"></div>
+              <div style="{{ g.badgeFacetBLStyle }}"></div>
+            </div>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13.5px;font-weight:600;">{{ g.name }}</div>
+            <div style="font-size:12px;color:oklch(0.45 0.01 80);margin-top:1px;">{{ g.tagline }}</div>
+          </div>
+          <div style="font-family:'Geist Mono',monospace;font-size:11.5px;color:oklch(0.45 0.01 80);flex-shrink:0;">Level {{ g.levelFrom }}{{ g.levelToLabel }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  GRADES = [
+    { name: 'Initiate',   levelFrom: 1,  levelTo: 5,  color: 'oklch(0.55 0.035 80)',  tagline: 'First steps — every quest still teaches something.' },
+    { name: 'Wanderer',   levelFrom: 6,  levelTo: 10, color: 'oklch(0.58 0.08 200)',  tagline: 'Momentum builds. The habit of showing up sets in.' },
+    { name: 'Adventurer', levelFrom: 11, levelTo: 20, color: 'oklch(0.62 0.13 145)',  tagline: 'Bigger quests, real streaks — you\u2019re in it now.' },
+    { name: 'Vanguard',   levelFrom: 21, levelTo: 35, color: 'oklch(0.6 0.17 255)',   tagline: 'Leading your own progress, not just following it.' },
+    { name: 'Luminary',   levelFrom: 36, levelTo: 50, color: 'oklch(0.62 0.2 300)',   tagline: 'A model of consistency — others notice the streak.' },
+    { name: 'Legend',     levelFrom: 51, levelTo: null, color: 'oklch(0.75 0.19 70)', tagline: 'The journey itself becomes the reward.' },
+  ];
+  // Deliberate progression: chroma 0.035→0.20 and lightness 0.55→0.75 both rise with rank,
+  // hue arcs earth → water → nature → sky → royal → radiant gold — each step reads as more "precious".
+  currentLevel = 6;
+
+  parseOklch(str) {
+    const m = str.match(/oklch\(([\d.]+)\s+([\d.]+)\s+([\d.]+)\)/);
+    return { l: parseFloat(m[1]), c: parseFloat(m[2]), h: parseFloat(m[3]) };
+  }
+
+  // Faceted vector gem via CSS clip-path polygons — mirrors the cut-gem reference
+  // (diamond outline split into 4 flat triangular facets, shaded with white/black overlays).
+  gemParts(color, size, tierIndex) {
+    const { l, c, h } = this.parseOklch(color);
+    const top = `oklch(${Math.min(0.85, l + 0.12)} ${c} ${h})`;
+    const bottom = `oklch(${Math.max(0.15, l - 0.12)} ${c} ${h})`;
+    const diamond = 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)';
+    return {
+      wrapStyle: `position:relative;width:${size}px;height:${size}px;flex-shrink:0;`,
+      baseStyle: `position:absolute;inset:0;clip-path:${diamond};background:linear-gradient(135deg, ${top} 0%, ${bottom} 100%);`,
+      facetTLStyle: `position:absolute;inset:0;clip-path:polygon(50% 0%, 50% 31.25%, 10.4% 50%);background:#fff;opacity:0.28;`,
+      facetTRStyle: `position:absolute;inset:0;clip-path:polygon(50% 0%, 89.6% 50%, 50% 31.25%);background:#fff;opacity:0.14;`,
+      facetBRStyle: `position:absolute;inset:0;clip-path:polygon(50% 31.25%, 89.6% 50%, 50% 100%);background:#000;opacity:0.1;`,
+      facetBLStyle: `position:absolute;inset:0;clip-path:polygon(50% 31.25%, 10.4% 50%, 50% 100%);background:#000;opacity:0.04;`,
+    };
+  }
+
+  renderVals() {
+    const grades = this.GRADES.map((g, i) => {
+      const isCurrent = this.currentLevel >= g.levelFrom && (g.levelTo === null || this.currentLevel <= g.levelTo);
+      const gem = this.gemParts(g.color, 28 + i * 3, i);
+      const badgeGem = this.gemParts(g.color, 20 + i * 1.5, i);
+      return {
+        name: g.name,
+        tagline: g.tagline,
+        levelFrom: g.levelFrom,
+        levelToLabel: g.levelTo ? ` \u2013 ${g.levelTo}` : '+',
+        current: isCurrent,
+        hasConnector: i < this.GRADES.length - 1,
+        gemWrapStyle: gem.wrapStyle,
+        gemBaseStyle: gem.baseStyle,
+        facetTLStyle: gem.facetTLStyle,
+        facetTRStyle: gem.facetTRStyle,
+        facetBRStyle: gem.facetBRStyle,
+        facetBLStyle: gem.facetBLStyle,
+        badgeWrapStyle: badgeGem.wrapStyle,
+        badgeBaseStyle: badgeGem.baseStyle,
+        badgeFacetTLStyle: badgeGem.facetTLStyle,
+        badgeFacetTRStyle: badgeGem.facetTRStyle,
+        badgeFacetBRStyle: badgeGem.facetBRStyle,
+        badgeFacetBLStyle: badgeGem.facetBLStyle,
+      };
+    });
+    return { grades };
+  }
+}
+</script>
+</body>
+</html>

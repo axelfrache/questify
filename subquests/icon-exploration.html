@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Questify — Icon exploration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fafaf9;
+    --panel: #ffffff;
+    --border: #e7e5e4;
+    --border-strong: #d6d3d1;
+    --text: #18181b;
+    --dim: #52525b;
+    --faint: #a1a1aa;
+    --accent: oklch(0.56 0.18 275);
+    --accent-subtle: oklch(0.96 0.02 275);
+    --accent-border: oklch(0.88 0.06 275);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    -webkit-font-smoothing: antialiased; line-height: 1.5;
+  }
+  .mono { font-family: 'Geist Mono', ui-monospace, monospace; }
+
+  .page { max-width: 1200px; margin: 0 auto; padding: 56px 32px 96px; }
+  .header { margin-bottom: 48px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 11px; border-radius: 999px;
+    background: var(--accent-subtle); color: var(--accent);
+    border: 1px solid var(--accent-border);
+    font-family: 'Geist Mono'; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.06em; font-weight: 500;
+    margin-bottom: 18px;
+  }
+  h1 {
+    margin: 0 0 12px; font-size: 38px; font-weight: 600;
+    letter-spacing: -0.03em; line-height: 1.05;
+  }
+  .lede {
+    max-width: 680px; font-size: 16px; color: var(--dim); line-height: 1.55; margin: 0;
+  }
+
+  .section-title {
+    font-size: 13px; font-weight: 600; letter-spacing: -0.005em;
+    margin: 56px 0 18px; display: flex; align-items: center; gap: 10px;
+    color: var(--text);
+  }
+  .section-title::before {
+    content: ''; width: 3px; height: 14px;
+    background: var(--accent); border-radius: 2px;
+  }
+  .section-title .count {
+    font-family: 'Geist Mono'; font-size: 11px; color: var(--faint);
+    margin-left: auto; text-transform: uppercase; letter-spacing: 0.08em;
+  }
+
+  /* CONCEPT GRID */
+  .grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+  }
+  @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+
+  .concept {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    transition: border-color 200ms, transform 200ms;
+  }
+  .concept:hover { border-color: var(--border-strong); }
+  .concept .canvas {
+    aspect-ratio: 1.2 / 1;
+    display: grid; place-items: center;
+    background:
+      linear-gradient(var(--bg) 1px, transparent 1px) 0 0 / 100% 24px,
+      linear-gradient(90deg, var(--bg) 1px, transparent 1px) 0 0 / 24px 100%,
+      var(--panel);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .concept .canvas svg { width: 96px; height: 96px; }
+  .concept .body { padding: 18px 20px; display: flex; flex-direction: column; gap: 6px; }
+  .concept .num {
+    font-family: 'Geist Mono'; font-size: 11px; color: var(--faint);
+    text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500;
+  }
+  .concept h3 {
+    margin: 0; font-size: 16px; font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+  .concept p {
+    margin: 0; font-size: 13px; color: var(--dim); line-height: 1.5;
+  }
+  .concept .tags {
+    display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;
+  }
+  .concept .tags span {
+    font-family: 'Geist Mono'; font-size: 10px;
+    padding: 2px 7px; border-radius: 3px;
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--dim);
+  }
+
+  /* APPLICATION SHOWCASE — pick a favorite and show contexts */
+  .showcase {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+    margin-top: 16px;
+  }
+  .showcase-head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 24px; margin-bottom: 28px; flex-wrap: wrap;
+  }
+  .showcase-head h3 {
+    margin: 0 0 4px; font-size: 22px; letter-spacing: -0.02em; font-weight: 600;
+  }
+  .showcase-head p { margin: 0; font-size: 14px; color: var(--dim); max-width: 520px; }
+  .showcase-head .pick {
+    font-family: 'Geist Mono'; font-size: 11px; color: var(--accent);
+    background: var(--accent-subtle); border: 1px solid var(--accent-border);
+    padding: 4px 10px; border-radius: 999px;
+  }
+
+  .ctx-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+  }
+  @media (max-width: 900px) { .ctx-grid { grid-template-columns: repeat(2, 1fr); } }
+  .ctx {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px; background: var(--bg);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .ctx .label {
+    font-family: 'Geist Mono'; font-size: 10px; color: var(--faint);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .ctx .demo { display: flex; align-items: center; gap: 10px; }
+
+  /* Favicon ctx */
+  .browser-tab {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 8px 8px 0 0;
+    font-size: 12px; max-width: 180px;
+  }
+  .browser-tab .x { margin-left: auto; color: var(--faint); font-size: 14px; }
+
+  /* App icon ctx */
+  .app-icon {
+    width: 72px; height: 72px; border-radius: 18px;
+    background: var(--text); color: var(--panel);
+    display: grid; place-items: center;
+    box-shadow: 0 6px 20px rgba(24,24,27,0.18);
+  }
+  .app-icon.accent { background: var(--accent); color: white; }
+  .app-icon.light { background: var(--panel); border: 1px solid var(--border); color: var(--text); }
+
+  /* Sidebar logo ctx */
+  .sidebar-logo {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 8px;
+    width: 100%;
+  }
+  .sidebar-logo .mark {
+    width: 26px; height: 26px; border-radius: 7px;
+    background: var(--text); color: var(--panel);
+    display: grid; place-items: center;
+  }
+  .sidebar-logo .name { font-weight: 500; font-size: 14px; letter-spacing: -0.01em; }
+
+  /* Wordmark ctx */
+  .wordmark {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 10px;
+  }
+  .wordmark .mark {
+    width: 32px; height: 32px;
+    color: var(--text);
+  }
+  .wordmark .name { font-size: 22px; font-weight: 600; letter-spacing: -0.025em; }
+
+  /* SCALE TEST */
+  .scale-row {
+    display: flex; align-items: flex-end; gap: 28px;
+    padding: 24px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 10px;
+    margin-top: 14px; flex-wrap: wrap;
+  }
+  .scale-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .scale-item .label {
+    font-family: 'Geist Mono'; font-size: 10px; color: var(--faint);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .scale-mark {
+    background: var(--text); color: var(--panel);
+    display: grid; place-items: center;
+    border-radius: 4px;
+  }
+  .scale-mark.s16 { width: 16px; height: 16px; border-radius: 3px; }
+  .scale-mark.s24 { width: 24px; height: 24px; border-radius: 5px; }
+  .scale-mark.s32 { width: 32px; height: 32px; border-radius: 7px; }
+  .scale-mark.s48 { width: 48px; height: 48px; border-radius: 11px; }
+  .scale-mark.s64 { width: 64px; height: 64px; border-radius: 14px; }
+  .scale-mark.s96 { width: 96px; height: 96px; border-radius: 22px; }
+
+  /* COLOR ROW */
+  .color-row {
+    display: flex; gap: 14px; padding: 24px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 10px; margin-top: 14px; flex-wrap: wrap;
+  }
+  .color-card {
+    flex: 1; min-width: 140px;
+    display: flex; flex-direction: column; gap: 10px;
+    align-items: center; padding: 18px;
+    border-radius: 10px;
+  }
+  .color-card.dark { background: #0a0a0a; color: white; }
+  .color-card.light { background: white; border: 1px solid var(--border); }
+  .color-card.accent { background: var(--accent); color: white; }
+  .color-card.cream { background: oklch(0.96 0.02 80); }
+  .color-card .label { font-family: 'Geist Mono'; font-size: 10px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.08em; }
+
+  /* RECOMMENDATION */
+  .reco {
+    background: var(--text); color: var(--bg);
+    border-radius: 14px; padding: 32px;
+    margin-top: 24px; position: relative; overflow: hidden;
+  }
+  .reco::before {
+    content: ''; position: absolute; right: -80px; top: -80px;
+    width: 320px; height: 320px; border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in oklch, var(--accent) 50%, transparent) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .reco h3 { margin: 0 0 10px; font-size: 20px; letter-spacing: -0.02em; font-weight: 600; position: relative; }
+  .reco p { margin: 0 0 6px; color: color-mix(in oklch, var(--bg) 70%, transparent); font-size: 14px; line-height: 1.6; max-width: 720px; position: relative; }
+  .reco ul { margin: 14px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; position: relative; }
+  .reco ul li { font-size: 13px; color: color-mix(in oklch, var(--bg) 80%, transparent); padding-left: 18px; position: relative; }
+  .reco ul li::before {
+    content: ''; position: absolute; left: 0; top: 7px;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="header">
+    <span class="eyebrow">● Icon · 6 concepts</span>
+    <h1>A new mark for Questify.</h1>
+    <p class="lede">
+      The current compass + mountain reads as outdoor / hiking app — too literal, too
+      crowded a metaphor space (Strava, AllTrails, Komoot). These six concepts keep
+      the spirit of <em>direction</em> and <em>progress</em> but speak the language
+      of a modern productivity tool: geometric, monochrome, scalable to 16px.
+    </p>
+  </header>
+
+  <!-- ============ CONCEPTS ============ -->
+  <div class="section-title">Concepts <span class="count">01 → 06</span></div>
+
+  <div class="grid">
+
+    <!-- 01 — Stepped Q -->
+    <article class="concept">
+      <div class="canvas">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="square" stroke-linejoin="miter">
+          <!-- letterform Q built as a path of ascending steps -->
+          <path d="M16 76 L16 56 L36 56 L36 36 L56 36 L56 16 L80 16" />
+          <!-- the "tail" of the Q — anchor mark -->
+          <rect x="60" y="60" width="20" height="20" fill="currentColor" stroke="none"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num">Concept 01</div>
+        <h3>Path</h3>
+        <p>A staircase climbing from base to summit, sealed by a solid block — the journey's last step.
+        The cleanest expression of "progress" without a single literal element.</p>
+        <div class="tags"><span>Path</span><span>Progress</span><span>Geometric</span></div>
+      </div>
+    </article>
+
+    <!-- 02 — Pin / Quest marker -->
+    <article class="concept">
+      <div class="canvas">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+          <!-- shield-meets-pin: rounded top, pointed bottom -->
+          <path d="M48 14 C66 14, 78 26, 78 44 C78 60, 66 74, 48 86 C30 74, 18 60, 18 44 C18 26, 30 14, 48 14 Z"/>
+          <!-- inner rune: stylized Q dot -->
+          <circle cx="48" cy="42" r="10" fill="currentColor" stroke="none"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num">Concept 02</div>
+        <h3>Marker</h3>
+        <p>A quest marker — half RPG waypoint, half map pin. Calm and centered. Reads instantly as "place to reach"
+        and is the most playful of the six without slipping into game-tropes.</p>
+        <div class="tags"><span>RPG</span><span>Map pin</span><span>Soft</span></div>
+      </div>
+    </article>
+
+    <!-- 03 — Chevron stack -->
+    <article class="concept">
+      <div class="canvas">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+          <!-- three chevrons stacked, gaining color/weight -->
+          <path d="M22 70 L48 50 L74 70" opacity="0.35"/>
+          <path d="M22 50 L48 30 L74 50" opacity="0.7"/>
+          <path d="M22 30 L48 10 L74 30"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num">Concept 03</div>
+        <h3>Ascent</h3>
+        <p>Three stacked chevrons gaining weight as they rise — XP gained, level reached. Echoes the rank
+        insignia metaphor that gamers already understand.</p>
+        <div class="tags"><span>Levels</span><span>XP</span><span>Insignia</span></div>
+      </div>
+    </article>
+
+    <!-- 04 — Diamond + dot orbit -->
+    <article class="concept">
+      <div class="canvas">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+          <!-- diamond gem (RPG loot) -->
+          <path d="M48 14 L78 48 L48 82 L18 48 Z"/>
+          <!-- inner facets -->
+          <path d="M18 48 L48 32 L78 48" stroke-width="4"/>
+          <path d="M48 32 L48 14" stroke-width="4"/>
+          <!-- single spark -->
+          <circle cx="80" cy="20" r="3" fill="currentColor" stroke="none"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num">Concept 04</div>
+        <h3>Gem</h3>
+        <p>A faceted gem — the reward at the end of a quest. Most ornamental of the set, leans into the RPG
+        side. Works beautifully at 64px+, less so at 16.</p>
+        <div class="tags"><span>Reward</span><span>RPG</span><span>Ornamental</span></div>
+      </div>
+    </article>
+
+    <!-- 05 — North Star -->
+    <article class="concept">
+      <div class="canvas">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+          <!-- 4-point compass star, cleaner than the old compass -->
+          <path d="M48 8 L54 42 L88 48 L54 54 L48 88 L42 54 L8 48 L42 42 Z" fill="currentColor"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num">Concept 05</div>
+        <h3>North Star</h3>
+        <p>A four-point star — the metaphor of <em>guidance</em> stripped of any compass-rose decoration.
+        The closest replacement for the current logo while shedding the literal hiking association.</p>
+        <div class="tags"><span>Guidance</span><span>Goal</span><span>Bold</span></div>
+      </div>
+    </article>
+
+    <!-- 06 — Threshold (RECOMMENDED) -->
+    <article class="concept" style="border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-subtle);">
+      <div class="canvas" style="background:
+          linear-gradient(var(--accent-subtle) 1px, transparent 1px) 0 0 / 100% 24px,
+          linear-gradient(90deg, var(--accent-subtle) 1px, transparent 1px) 0 0 / 24px 100%,
+          var(--panel);">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);">
+          <!-- arch / portal — a threshold to step through -->
+          <path d="M16 80 L16 44 C16 26, 30 14, 48 14 C66 14, 80 26, 80 44 L80 80"/>
+          <!-- horizon line -->
+          <line x1="8" y1="80" x2="88" y2="80"/>
+          <!-- traveler dot, mid-stride into the arch -->
+          <circle cx="48" cy="80" r="6" fill="currentColor" stroke="none"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num" style="color: var(--accent);">● Concept 06 · Recommended</div>
+        <h3>Threshold</h3>
+        <p>An arch over a horizon, with a single dot stepping through. Reads as a doorway, a portal,
+        a level gate — the moment of crossing into the next chapter. It carries the same emotion
+        as "summit" but is architectural, not outdoorsy.</p>
+        <div class="tags"><span>Journey</span><span>Threshold</span><span>Architectural</span></div>
+      </div>
+    </article>
+
+  </div>
+
+  <!-- ============ WHY 06 ============ -->
+  <div class="reco">
+    <h3>Why "Threshold" wins</h3>
+    <p>It's the only concept that says <strong>"crossing into something new"</strong> instead of
+      <strong>"climbing toward something far away"</strong> — which matches Questify better. You're not
+      asking users to reach a distant peak; you're asking them to step through one quest at a time.</p>
+    <ul>
+      <li>Reads as a single shape at 16×16 — the dot survives, the arch survives, no lost detail.</li>
+      <li>The dot is a built-in "progress marker" you can animate (slide left → right when XP is earned).</li>
+      <li>Geometric primitives only (arc + line + circle) — easy to redraw in any tool, any weight.</li>
+      <li>Doesn't conflict with Strava's chevron, AllTrails' tree, or Notion's letter mark.</li>
+    </ul>
+  </div>
+
+  <!-- ============ THRESHOLD IN CONTEXT ============ -->
+  <div class="section-title">Threshold in context <span class="count">Recommended</span></div>
+
+  <div class="showcase">
+    <div class="showcase-head">
+      <div>
+        <h3>Same mark, every surface</h3>
+        <p>The Threshold mark scales from a 16px favicon up to a 1024px app icon without losing its identity.</p>
+      </div>
+      <span class="pick">Concept 06</span>
+    </div>
+
+    <div class="ctx-grid">
+
+      <div class="ctx">
+        <span class="label">Browser tab · 16px</span>
+        <div class="browser-tab">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round">
+            <path d="M4 20 L4 11 C4 7, 7 4, 12 4 C17 4, 20 7, 20 11 L20 20"/>
+            <line x1="2" y1="20" x2="22" y2="20"/>
+            <circle cx="12" cy="20" r="1.6" fill="var(--accent)" stroke="none"/>
+          </svg>
+          <span>Questify · Today</span>
+          <span class="x">×</span>
+        </div>
+      </div>
+
+      <div class="ctx">
+        <span class="label">Sidebar mark · 24px</span>
+        <div class="sidebar-logo">
+          <span class="mark">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M4 20 L4 11 C4 7, 7 4, 12 4 C17 4, 20 7, 20 11 L20 20"/>
+              <line x1="2" y1="20" x2="22" y2="20"/>
+              <circle cx="12" cy="20" r="1.4" fill="currentColor" stroke="none"/>
+            </svg>
+          </span>
+          <span class="name">Questify</span>
+        </div>
+      </div>
+
+      <div class="ctx">
+        <span class="label">App icon · iOS</span>
+        <div class="app-icon">
+          <svg viewBox="0 0 96 96" width="44" height="44" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round">
+            <path d="M16 80 L16 44 C16 26, 30 14, 48 14 C66 14, 80 26, 80 44 L80 80"/>
+            <line x1="8" y1="80" x2="88" y2="80"/>
+            <circle cx="48" cy="80" r="5" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="ctx">
+        <span class="label">Wordmark · header</span>
+        <div class="wordmark" style="padding: 10px 14px;">
+          <svg class="mark" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M4 20 L4 11 C4 7, 7 4, 12 4 C17 4, 20 7, 20 11 L20 20"/>
+            <line x1="2" y1="20" x2="22" y2="20"/>
+            <circle cx="12" cy="20" r="1.6" fill="currentColor" stroke="none"/>
+          </svg>
+          <span class="name">Questify</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Scale test -->
+    <div class="section-title" style="margin-top: 32px; font-size: 12px;">Scale test</div>
+    <div class="scale-row">
+      <div class="scale-item">
+        <div class="scale-mark s16">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+            <path d="M4 20 L4 11 C4 7, 7 4, 12 4 C17 4, 20 7, 20 11 L20 20"/>
+            <line x1="2" y1="20" x2="22" y2="20"/>
+            <circle cx="12" cy="20" r="1.6" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+        <span class="label">16px</span>
+      </div>
+      <div class="scale-item">
+        <div class="scale-mark s24">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <path d="M4 20 L4 11 C4 7, 7 4, 12 4 C17 4, 20 7, 20 11 L20 20"/>
+            <line x1="2" y1="20" x2="22" y2="20"/>
+            <circle cx="12" cy="20" r="1.5" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+        <span class="label">24px</span>
+      </div>
+      <div class="scale-item">
+        <div class="scale-mark s32">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M4 20 L4 11 C4 7, 7 4, 12 4 C17 4, 20 7, 20 11 L20 20"/>
+            <line x1="2" y1="20" x2="22" y2="20"/>
+            <circle cx="12" cy="20" r="1.5" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+        <span class="label">32px</span>
+      </div>
+      <div class="scale-item">
+        <div class="scale-mark s48">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <path d="M4 20 L4 11 C4 7, 7 4, 12 4 C17 4, 20 7, 20 11 L20 20"/>
+            <line x1="2" y1="20" x2="22" y2="20"/>
+            <circle cx="12" cy="20" r="1.6" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+        <span class="label">48px</span>
+      </div>
+      <div class="scale-item">
+        <div class="scale-mark s64">
+          <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <path d="M4 20 L4 11 C4 7, 7 4, 12 4 C17 4, 20 7, 20 11 L20 20"/>
+            <line x1="2" y1="20" x2="22" y2="20"/>
+            <circle cx="12" cy="20" r="1.6" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+        <span class="label">64px</span>
+      </div>
+      <div class="scale-item">
+        <div class="scale-mark s96">
+          <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+            <path d="M4 20 L4 11 C4 7, 7 4, 12 4 C17 4, 20 7, 20 11 L20 20"/>
+            <line x1="2" y1="20" x2="22" y2="20"/>
+            <circle cx="12" cy="20" r="1.6" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+        <span class="label">96px</span>
+      </div>
+    </div>
+
+    <!-- Color test -->
+    <div class="section-title" style="margin-top: 32px; font-size: 12px;">Color treatments</div>
+    <div class="color-row">
+      <div class="color-card light">
+        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="M4 20 L4 11 C4 7, 7 4, 12 4 C17 4, 20 7, 20 11 L20 20"/>
+          <line x1="2" y1="20" x2="22" y2="20"/>
+          <circle cx="12" cy="20" r="1.6" fill="currentColor" stroke="none"/>
+        </svg>
+        <span class="label">Mono · light</span>
+      </div>
+      <div class="color-card dark">
+        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="M4 20 L4 11 C4 7, 7 4, 12 4 C17 4, 20 7, 20 11 L20 20"/>
+          <line x1="2" y1="20" x2="22" y2="20"/>
+          <circle cx="12" cy="20" r="1.6" fill="currentColor" stroke="none"/>
+        </svg>
+        <span class="label">Mono · dark</span>
+      </div>
+      <div class="color-card accent">
+        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="M4 20 L4 11 C4 7, 7 4, 12 4 C17 4, 20 7, 20 11 L20 20"/>
+          <line x1="2" y1="20" x2="22" y2="20"/>
+          <circle cx="12" cy="20" r="1.6" fill="currentColor" stroke="none"/>
+        </svg>
+        <span class="label">Accent fill</span>
+      </div>
+      <div class="color-card cream">
+        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="oklch(0.30 0.05 80)" stroke-width="1.8" stroke-linecap="round">
+          <path d="M4 20 L4 11 C4 7, 7 4, 12 4 C17 4, 20 7, 20 11 L20 20"/>
+          <line x1="2" y1="20" x2="22" y2="20"/>
+          <circle cx="12" cy="20" r="1.6" fill="oklch(0.30 0.05 80)" stroke="none"/>
+        </svg>
+        <span class="label">Warm · cream bg</span>
+      </div>
+    </div>
+  </div>
+
+  <p style="font-size: 12px; color: var(--faint); font-family: 'Geist Mono'; text-align: center; margin-top: 48px;">
+    Questify · Identity exploration · April 2026
+  </p>
+
+</div>
+</body>
+</html>

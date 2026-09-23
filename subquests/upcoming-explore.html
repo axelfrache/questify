@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Questify — Upcoming view exploration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif&display=swap" rel="stylesheet" />
+  <style>
+    html, body { margin: 0; padding: 0; font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; background: #0a0a0a; color: #fafafa; }
+    * { box-sizing: border-box; }
+    button { font-family: inherit; color: inherit; }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-presets="react" src="design-canvas.jsx"></script>
+  <script type="text/babel" data-presets="react" src="upcoming-variants.jsx"></script>
+  <script type="text/babel" data-presets="react">
+    const Canvas = window.DesignCanvas;
+    const Section = window.DCSection;
+    const Artboard = window.DCArtboard;
+    const V = window.UpcomingVariants;
+
+    const App = () => (
+      <Canvas
+        title="Questify — Upcoming view explorations"
+        subtitle="From the current list to calendar grids, agenda splits, project lanes, and a quest road."
+      >
+        <Section id="current" title="Where we are today">
+          <Artboard id="cur" label="Current — chronological list, no spatial sense of time" width={1100} height={820}>
+            <V.Current />
+          </Artboard>
+        </Section>
+
+        <Section id="calendar" title="Calendar-shaped">
+          <Artboard id="v1" label="① Week grid — 7 days side-by-side, load bar per day" width={1100} height={820}>
+            <V.WeekGrid />
+          </Artboard>
+          <Artboard id="v2" label="② Month heatmap — load density + clickable drawer" width={1100} height={820}>
+            <V.MonthHeatmap />
+          </Artboard>
+        </Section>
+
+        <Section id="hybrid" title="Hybrid — mini calendar + smart agenda">
+          <Artboard id="v3" label="③ Agenda + mini-cal split — Sunsama / Fantastical pattern" width={1100} height={820}>
+            <V.AgendaSplit />
+          </Artboard>
+        </Section>
+
+        <Section id="novel" title="Novel angles">
+          <Artboard id="v4" label="④ Project swimlanes — answer “what's coming up for X?”" width={1180} height={620}>
+            <V.Swimlanes />
+          </Artboard>
+          <Artboard id="v5" label="⑤ Quest road — the game metaphor, on-brand" width={1100} height={1200}>
+            <V.QuestRoad />
+          </Artboard>
+        </Section>
+      </Canvas>
+    );
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

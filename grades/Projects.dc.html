@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body{margin:0;}
+    a{color:oklch(0.56 0.18 275);text-decoration:none;}
+    a:hover{color:oklch(0.48 0.18 275);}
+    .pj-card:hover{border-color:oklch(0.145 0 0 / 0.14);box-shadow:0 1px 2px rgba(15,23,42,0.05);}
+    .pj-menu-btn{opacity:0;}
+    .pj-card:hover .pj-menu-btn{opacity:1;}
+  </style>
+</helmet>
+
+<div style="display:flex;height:100vh;width:100%;font-family:'Geist',ui-sans-serif,system-ui,sans-serif;background:oklch(0.985 0.002 80);color:oklch(0.145 0 0);overflow:hidden;">
+
+  <div style="width:240px;flex-shrink:0;background:oklch(0.97 0.002 80);border-right:1px solid oklch(0.92 0.003 80);display:flex;flex-direction:column;overflow-y:auto;">
+    <div style="padding:12px;border-bottom:1px solid oklch(0.92 0.003 80);flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:10px;padding:4px 6px;border-radius:6px;">
+        <div style="width:24px;height:24px;border-radius:9999px;background:oklch(0.52 0.03 255);flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:500;line-height:1.2;">Axel</div>
+          <div style="font-family:'Geist Mono',monospace;font-size:10px;color:oklch(0.145 0 0 / 0.5);">Lvl 6 · Wanderer</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:12px 8px 4px;">
+      <div style="font-size:11px;font-weight:500;color:oklch(0.45 0.01 80);padding:4px 8px;">Navigation</div>
+      <div style="display:flex;flex-direction:column;gap:1px;">
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;color:oklch(0.145 0 0 / 0.75);">Inbox</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;color:oklch(0.145 0 0 / 0.75);">Today</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;color:oklch(0.145 0 0 / 0.75);">Upcoming</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;color:oklch(0.145 0 0 / 0.75);">Habits</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;color:oklch(0.145 0 0 / 0.75);">Regions</div>
+      </div>
+    </div>
+    <div style="padding:12px 8px 4px;">
+      <div style="font-size:11px;font-weight:500;color:oklch(0.45 0.01 80);padding:4px 8px;">Projects</div>
+      <div style="display:flex;flex-direction:column;gap:1px;">
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;font-size:12.5px;background:oklch(0.94 0.003 80);font-weight:500;">View all</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;font-size:12.5px;color:oklch(0.145 0 0 / 0.75);"><span>📚</span>Polytech</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;font-size:12.5px;color:oklch(0.145 0 0 / 0.75);"><span>🔥</span>Firelink</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;font-size:12.5px;color:oklch(0.145 0 0 / 0.75);"><span>⚓</span>CKA</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;font-size:12.5px;color:oklch(0.145 0 0 / 0.75);"><span>💠</span>Questify</div>
+      </div>
+    </div>
+    <div style="padding:12px 8px;">
+      <div style="font-size:11px;font-weight:500;color:oklch(0.45 0.01 80);padding:4px 8px;">Insights</div>
+      <div style="display:flex;flex-direction:column;gap:1px;">
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;color:oklch(0.145 0 0 / 0.75);">Progress</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;color:oklch(0.145 0 0 / 0.75);">Stats</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;color:oklch(0.145 0 0 / 0.75);">History</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0;position:relative;">
+    <div style="height:48px;flex-shrink:0;display:flex;align-items:center;gap:10px;border-bottom:1px solid oklch(0.92 0.003 80);background:#fff;padding:0 16px;">
+      <div style="width:24px;height:24px;border:1px solid oklch(0.92 0.003 80);border-radius:6px;flex-shrink:0;"></div>
+      <div style="font-size:13px;font-weight:500;">Projects</div>
+      <div style="flex:1;"></div>
+      <div style="display:flex;align-items:center;gap:8px;border:1px solid oklch(0.92 0.003 80);background:oklch(0.97 0.002 80 / 0.6);border-radius:9999px;padding:4px 12px;">
+        <span style="width:8px;height:8px;background:oklch(0.56 0.18 275);border-radius:2px;transform:rotate(45deg);"></span>
+        <span style="font-family:'Geist Mono',monospace;font-size:12px;font-weight:500;">6,200 XP</span>
+        <span style="width:1px;height:12px;background:oklch(0.92 0.003 80);"></span>
+        <span style="font-size:11px;color:oklch(0.45 0.01 80);">Lvl 6</span>
+      </div>
+    </div>
+
+    <div style="flex:1;overflow:auto;padding:24px;">
+      <div style="max-width:1100px;margin:0 auto;">
+
+        <div style="display:flex;align-items:start;justify-content:space-between;gap:16px;margin-bottom:20px;">
+          <div>
+            <h1 style="font-size:22px;font-weight:700;letter-spacing:-0.01em;margin:0;">Projects</h1>
+            <p style="font-size:13px;color:oklch(0.45 0.01 80);margin:4px 0 0;">Long-running initiatives</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;">
+            <button style="display:flex;align-items:center;gap:6px;border:1px solid oklch(0.92 0.003 80);background:#fff;border-radius:8px;padding:7px 13px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit;">Join</button>
+            <button onclick="{{ openImport }}" style="display:flex;align-items:center;gap:6px;border:1px solid oklch(0.92 0.003 80);background:#fff;border-radius:8px;padding:7px 13px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit;">
+              <span style="font-size:13px;">↓</span>Import
+            </button>
+            <button style="display:flex;align-items:center;gap:6px;background:oklch(0.56 0.18 275);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit;">+ New project</button>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;border:1px solid oklch(0.92 0.003 80);background:#fff;border-radius:8px;overflow:hidden;margin-bottom:16px;">
+          <div style="flex:1;display:flex;align-items:center;gap:8px;padding:9px 12px;">
+            <span style="color:oklch(0.45 0.01 80);font-size:13px;">⌕</span>
+            <input value="{{ search }}" oninput="{{ onSearchInput }}" placeholder="Search projects…" style="flex:1;border:none;outline:none;background:transparent;font-size:13px;font-family:inherit;color:inherit;" />
+          </div>
+          <div style="width:1px;height:22px;background:oklch(0.92 0.003 80);"></div>
+          <div style="display:flex;align-items:center;gap:6px;padding:9px 12px;font-size:13px;color:oklch(0.45 0.01 80);">Recently updated</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:10px;">
+          <sc-for list="{{ projects }}" as="p" hint-placeholder-count="4">
+            <div class="pj-card" style="position:relative;display:flex;flex-direction:column;border:1px solid oklch(0.92 0.003 80);background:#fff;border-radius:10px;transition:border-color 150ms;">
+              <div style="display:flex;align-items:center;gap:10px;padding:16px 16px 10px;">
+                <div style="width:32px;height:32px;flex-shrink:0;border:1px solid oklch(0.92 0.003 80);background:oklch(0.97 0.002 80 / 0.6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;">{{ p.icon }}</div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:13.5px;font-weight:500;line-height:1.2;">{{ p.name }}</div>
+                  <div style="font-size:11px;color:oklch(0.45 0.01 80);">{{ p.updated }}</div>
+                </div>
+                <button class="pj-menu-btn" onclick="{{ p.toggleMenu }}" style="flex-shrink:0;width:24px;height:24px;border:none;background:none;color:oklch(0.45 0.01 80);cursor:pointer;font-size:15px;border-radius:6px;">⋯</button>
+
+                <sc-if value="{{ p.menuOpen }}" hint-placeholder-val="{{ false }}">
+                  <div style="position:absolute;top:44px;right:12px;z-index:10;background:#fff;border:1px solid oklch(0.92 0.003 80);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,0.12);min-width:160px;padding:4px;">
+                    <div style="padding:7px 10px;font-size:12.5px;border-radius:6px;cursor:pointer;">Pin</div>
+                    <div style="padding:7px 10px;font-size:12.5px;border-radius:6px;cursor:pointer;">Edit</div>
+                    <div onclick="{{ p.exportProject }}" style="padding:7px 10px;font-size:12.5px;border-radius:6px;cursor:pointer;">Export…</div>
+                    <div style="padding:7px 10px;font-size:12.5px;border-radius:6px;cursor:pointer;">Archive</div>
+                    <div style="height:1px;background:oklch(0.92 0.003 80);margin:4px 0;"></div>
+                    <div style="padding:7px 10px;font-size:12.5px;border-radius:6px;cursor:pointer;color:oklch(0.577 0.245 27.325);">Delete</div>
+                  </div>
+                </sc-if>
+              </div>
+
+              <p style="margin:0;padding:0 16px 12px;font-size:12px;line-height:1.5;color:oklch(0.45 0.01 80);min-height:34px;">{{ p.description }}</p>
+
+              <div style="margin-top:auto;display:flex;align-items:center;justify-content:space-between;border-top:1px solid oklch(0.92 0.003 80);padding:10px 16px;">
+                <span style="font-family:'Geist Mono',monospace;font-size:11px;color:oklch(0.45 0.01 80);">{{ p.questLabel }}</span>
+                <span style="color:oklch(0.45 0.01 80);font-size:12px;">→</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+      </div>
+    </div>
+
+    <sc-if value="{{ importOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:50;">
+        <div style="width:100%;max-width:460px;background:#fff;border-radius:12px;padding:24px;box-shadow:0 24px 64px rgba(15,23,42,0.25);">
+          <h2 style="font-size:17px;font-weight:600;margin:0;">Import project</h2>
+          <p style="font-size:13px;color:oklch(0.45 0.01 80);margin:4px 0 16px;">Paste an exported Questify project file, or drop it below.</p>
+
+          <div style="border:1px dashed oklch(0.92 0.003 80);border-radius:10px;padding:18px;text-align:center;font-size:12.5px;color:oklch(0.45 0.01 80);margin-bottom:12px;">
+            Drop a <span style="font-family:'Geist Mono',monospace;">.questify.json</span> file here
+          </div>
+
+          <textarea value="{{ importText }}" oninput="{{ onImportInput }}" placeholder='{ "name": "…", "quests": [ … ] }' rows="5" style="width:100%;box-sizing:border-box;border:1px solid oklch(0.92 0.003 80);border-radius:8px;padding:10px 12px;font-size:12.5px;font-family:'Geist Mono',monospace;resize:vertical;outline:none;"></textarea>
+
+          <sc-if value="{{ importPreviewName }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:12px;display:flex;align-items:center;gap:8px;background:oklch(0.96 0.02 275);border:1px solid oklch(0.88 0.06 275);border-radius:8px;padding:9px 12px;font-size:12.5px;color:oklch(0.56 0.18 275);">
+              Ready to import "<strong>{{ importPreviewName }}</strong>"
+            </div>
+          </sc-if>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
+            <button onclick="{{ closeImport }}" style="background:none;border:none;font-size:13px;color:oklch(0.45 0.01 80);cursor:pointer;padding:9px 10px;font-family:inherit;">Cancel</button>
+            <button onclick="{{ confirmImport }}" disabled="{{ importDisabled }}" style="{{ importBtnStyle }}">Import project</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ exportTarget }}" hint-placeholder-val="{{ false }}">
+      <div style="position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:50;">
+        <div style="width:100%;max-width:460px;background:#fff;border-radius:12px;padding:24px;box-shadow:0 24px 64px rgba(15,23,42,0.25);">
+          <h2 style="font-size:17px;font-weight:600;margin:0;">Export "{{ exportTarget.name }}"</h2>
+          <p style="font-size:13px;color:oklch(0.45 0.01 80);margin:4px 0 16px;">A portable file with this project's quests, regions and settings.</p>
+
+          <textarea readonly value="{{ exportJson }}" rows="8" style="width:100%;box-sizing:border-box;border:1px solid oklch(0.92 0.003 80);border-radius:8px;padding:10px 12px;font-size:11.5px;font-family:'Geist Mono',monospace;background:oklch(0.97 0.002 80 / 0.5);color:oklch(0.145 0 0 / 0.8);resize:vertical;"></textarea>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+            <button onclick="{{ closeExport }}" style="background:none;border:none;font-size:13px;color:oklch(0.45 0.01 80);cursor:pointer;padding:9px 10px;font-family:inherit;">Close</button>
+            <button onclick="{{ copyExport }}" style="border:1px solid oklch(0.92 0.003 80);background:#fff;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;">{{ copyLabel }}</button>
+            <button onclick="{{ downloadExport }}" style="background:oklch(0.56 0.18 275);color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;">Download .json</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    search: '',
+    projects: [
+      { id: 'polytech', icon: '📚', name: 'Polytech', description: 'Personal homelab.', questCount: 5, updated: '3mo ago', menuOpen: false },
+      { id: 'firelink', icon: '🔥', name: 'Firelink', description: 'Personal homelab.', questCount: 10, updated: '3mo ago', menuOpen: false },
+      { id: 'cka', icon: '⚓', name: 'CKA', description: 'Certified Kubernetes Administrator.', questCount: 1, updated: '3mo ago', menuOpen: false },
+      { id: 'questify', icon: '💠', name: 'Questify', description: 'Gamified task manager focused on progression.', questCount: 18, updated: '3mo ago', menuOpen: false },
+      { id: 'meowsik', icon: '🐱', name: 'Meowsik', description: 'Application to publish and listen to music.', questCount: 11, updated: '3mo ago', menuOpen: false },
+    ],
+    importOpen: false,
+    importText: '',
+    exportTargetId: null,
+    copyLabel: 'Copy',
+  };
+
+  onSearchInput = (e) => this.setState({ search: e.target.value });
+
+  toggleMenu(id) {
+    this.setState((s) => ({
+      projects: s.projects.map((p) => (p.id === id ? { ...p, menuOpen: !p.menuOpen } : { ...p, menuOpen: false })),
+    }));
+  }
+
+  openImport = () => this.setState({ importOpen: true, importText: '' });
+  closeImport = () => this.setState({ importOpen: false });
+  onImportInput = (e) => this.setState({ importText: e.target.value });
+  confirmImport = () => {
+    let name = 'Imported project';
+    try {
+      const parsed = JSON.parse(this.state.importText);
+      if (parsed && parsed.name) name = parsed.name;
+    } catch (err) {}
+    this.setState((s) => ({
+      importOpen: false,
+      importText: '',
+      projects: [
+        { id: 'imported-' + Date.now(), icon: '📥', name, description: 'Imported project.', questCount: 0, updated: 'now', menuOpen: false },
+        ...s.projects,
+      ],
+    }));
+  };
+
+  openExport(id) {
+    this.setState((s) => ({ exportTargetId: id, projects: s.projects.map((p) => ({ ...p, menuOpen: false })), copyLabel: 'Copy' }));
+  }
+  closeExport = () => this.setState({ exportTargetId: null });
+
+  buildExportJson(project) {
+    return JSON.stringify(
+      { name: project.name, icon: project.icon, description: project.description, questCount: project.questCount, exportedAt: new Date().toISOString(), format: 'questify.project.v1' },
+      null,
+      2
+    );
+  }
+
+  copyExport = () => {
+    const project = this.state.projects.find((p) => p.id === this.state.exportTargetId);
+    if (!project) return;
+    const json = this.buildExportJson(project);
+    if (navigator.clipboard) navigator.clipboard.writeText(json).catch(() => {});
+    this.setState({ copyLabel: 'Copied ✓' });
+    setTimeout(() => this.setState({ copyLabel: 'Copy' }), 1500);
+  };
+
+  downloadExport = () => {
+    const project = this.state.projects.find((p) => p.id === this.state.exportTargetId);
+    if (!project) return;
+    const json = this.buildExportJson(project);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${project.name.toLowerCase().replace(/\s+/g, '-')}.questify.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  renderVals() {
+    const s = this.state;
+    const filtered = s.projects.filter((p) => p.name.toLowerCase().includes(s.search.trim().toLowerCase()));
+    const projects = filtered.map((p) => ({
+      ...p,
+      toggleMenu: () => this.toggleMenu(p.id),
+      exportProject: () => this.openExport(p.id),
+      questLabel: `${p.questCount} ${p.questCount === 1 ? 'quest' : 'quests'}`,
+    }));
+
+    let importPreviewName = '';
+    if (s.importText.trim()) {
+      try {
+        const parsed = JSON.parse(s.importText);
+        importPreviewName = parsed && parsed.name ? parsed.name : '';
+      } catch (err) {
+        importPreviewName = '';
+      }
+    }
+
+    const exportTarget = s.projects.find((p) => p.id === s.exportTargetId) || null;
+
+    return {
+      search: s.search,
+      onSearchInput: this.onSearchInput,
+      projects,
+      importOpen: s.importOpen,
+      openImport: this.openImport,
+      closeImport: this.closeImport,
+      importText: s.importText,
+      onImportInput: this.onImportInput,
+      importPreviewName,
+      importDisabled: !s.importText.trim(),
+      importBtnStyle: `background:${s.importText.trim() ? 'oklch(0.56 0.18 275)' : 'oklch(0.56 0.18 275 / 0.4)'};color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:500;cursor:${s.importText.trim() ? 'pointer' : 'not-allowed'};font-family:inherit;`,
+      confirmImport: this.confirmImport,
+      exportTarget,
+      exportJson: exportTarget ? this.buildExportJson(exportTarget) : '',
+      closeExport: this.closeExport,
+      copyExport: this.copyExport,
+      downloadExport: this.downloadExport,
+      copyLabel: s.copyLabel,
+    };
+  }
+}
+</script>
+</body>
+</html>

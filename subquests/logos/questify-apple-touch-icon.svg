@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <title>Questify — apple-touch-icon</title>
+  <rect width="180" height="180" rx="40" fill="#FAFAF9"></rect>
+  <g transform="translate(42 42) scale(1)">
+    <path d="M48 30 L86 48 L48 86 Z" fill="#3D2F8C"></path>
+    <path d="M10 48 L48 30 L48 86 Z" fill="#5240B8"></path>
+    <path d="M48 10 L86 48 L48 30 Z" fill="#6E5BD9"></path>
+    <path d="M48 10 L48 30 L10 48 Z" fill="#8B7BE8"></path>
+  </g>
+</svg>

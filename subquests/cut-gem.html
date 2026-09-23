@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Questify — Cut Gem · Final</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fafaf9; --panel: #ffffff; --border: #e7e5e4; --border-strong: #d6d3d1;
+    --text: #18181b; --dim: #52525b; --faint: #a1a1aa;
+    --accent: oklch(0.56 0.18 275); --accent-subtle: oklch(0.96 0.02 275);
+    --accent-border: oklch(0.88 0.06 275);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
+    background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased;
+    line-height: 1.5; letter-spacing: -0.005em;
+  }
+  .mono { font-family: 'Geist Mono', monospace; }
+  .page { max-width: 1100px; margin: 0 auto; padding: 56px 32px 96px; }
+
+  .header { margin-bottom: 40px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 11px; border-radius: 999px;
+    background: var(--accent-subtle); color: var(--accent);
+    border: 1px solid var(--accent-border);
+    font-family: 'Geist Mono'; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.06em; font-weight: 500; margin-bottom: 16px;
+  }
+  h1 { margin: 0 0 12px; font-size: 36px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; }
+  .lede { max-width: 720px; font-size: 15px; color: var(--dim); margin: 0; }
+
+  .section-title {
+    font-size: 13px; font-weight: 600; margin: 48px 0 16px;
+    display: flex; align-items: center; gap: 10px; letter-spacing: -0.005em;
+  }
+  .section-title::before { content: ''; width: 3px; height: 14px; background: var(--accent); border-radius: 2px; }
+  .section-title .meta { font-family: 'Geist Mono'; font-size: 11px; color: var(--faint); margin-left: auto; text-transform: uppercase; letter-spacing: 0.08em; }
+
+  /* Two giant cards: light + dark */
+  .pair {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+  }
+  @media (max-width: 800px) { .pair { grid-template-columns: 1fr; } }
+  .gem-card {
+    border-radius: 18px; padding: 56px 40px 32px;
+    display: flex; flex-direction: column; align-items: center; gap: 24px;
+    position: relative; overflow: hidden;
+  }
+  .gem-card.light { background: var(--bg); border: 1px solid var(--border); }
+  .gem-card.dark  { background: #0a0a0a; color: #fafafa; }
+  .gem-card .label-row {
+    display: flex; justify-content: space-between; width: 100%;
+    font-family: 'Geist Mono'; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .gem-card.light .label-row { color: var(--faint); }
+  .gem-card.dark .label-row { color: #71717a; }
+  .gem-card .name { font-size: 13px; font-weight: 500; }
+  .gem-card.dark .name { color: #fafafa; }
+  .gem-card .gem-wrap { padding: 36px; }
+  .gem-card .gem { width: 200px; height: 200px; display: block; }
+  .gem-card .download {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 6px;
+    font-size: 12px; font-weight: 500;
+    text-decoration: none; font-family: inherit;
+    transition: all 120ms;
+  }
+  .gem-card.light .download { background: var(--text); color: var(--bg); }
+  .gem-card.light .download:hover { filter: brightness(1.1); }
+  .gem-card.dark .download { background: var(--bg); color: var(--text); }
+  .gem-card.dark .download:hover { filter: brightness(1.05); }
+
+  /* Variant grid */
+  .variants {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+  }
+  @media (max-width: 900px) { .variants { grid-template-columns: repeat(2, 1fr); } }
+  .variant {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+  }
+  .variant .canvas {
+    aspect-ratio: 1 / 1;
+    display: grid; place-items: center;
+    background:
+      linear-gradient(var(--bg) 1px, transparent 1px) 0 0 / 100% 20px,
+      linear-gradient(90deg, var(--bg) 1px, transparent 1px) 0 0 / 20px 100%,
+      var(--panel);
+    border-bottom: 1px solid var(--border);
+  }
+  .variant .canvas.dark {
+    background:
+      linear-gradient(#1a1a1a 1px, transparent 1px) 0 0 / 100% 20px,
+      linear-gradient(90deg, #1a1a1a 1px, transparent 1px) 0 0 / 20px 100%,
+      #0a0a0a;
+  }
+  .variant .canvas svg { width: 96px; height: 96px; }
+  .variant .body { padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+  .variant .num { font-family: 'Geist Mono'; font-size: 10px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.08em; }
+  .variant h3 { margin: 0; font-size: 13px; font-weight: 600; }
+  .variant a {
+    margin-top: 4px; font-family: 'Geist Mono'; font-size: 11px;
+    color: var(--accent); text-decoration: none;
+  }
+  .variant a:hover { text-decoration: underline; }
+
+  /* Scale row */
+  .scale-row {
+    display: flex; align-items: flex-end; gap: 24px;
+    padding: 28px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; flex-wrap: wrap; justify-content: center;
+  }
+  .scale-row.dark { background: #0a0a0a; border-color: #262626; }
+  .scale-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .scale-item .label {
+    font-family: 'Geist Mono'; font-size: 10px; color: var(--faint);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .scale-row.dark .scale-item .label { color: #71717a; }
+
+  /* Spec block */
+  .spec {
+    background: #0a0a0a; color: #e5e5e5;
+    border-radius: 12px; padding: 24px;
+    font-family: 'Geist Mono'; font-size: 12px; line-height: 1.7;
+    overflow-x: auto;
+  }
+  .spec .c { color: #71717a; }
+  .spec .k { color: oklch(0.78 0.10 150); }
+  .spec .v { color: oklch(0.75 0.12 230); }
+  .spec .s { color: oklch(0.72 0.14 45); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="header">
+    <span class="eyebrow">● Final · Cut Gem</span>
+    <h1>Cut Gem — refined.</h1>
+    <p class="lede">
+      Cleaner geometry, sharper facets, balanced negative space. Two primary variants
+      (light + dark), an accent fill, a line version for favicons, and downloadable SVGs.
+    </p>
+  </header>
+
+  <!-- ============ HERO PAIR ============ -->
+  <div class="section-title">Primary marks <span class="meta">Light · Dark</span></div>
+  <div class="pair">
+    <div class="gem-card light">
+      <div class="label-row">
+        <span class="name">Cut Gem · Light</span>
+        <span>oklch(0.18 0 0) on cream</span>
+      </div>
+      <div class="gem-wrap">
+        <svg class="gem" viewBox="0 0 96 96" fill="none">
+          <path d="M48 10 L86 48 L48 86 L10 48 Z" fill="#18181B"/>
+          <path d="M48 10 L48 30 L10 48 Z" fill="#FFFFFF" fill-opacity="0.18"/>
+          <path d="M48 10 L86 48 L48 30 Z" fill="#FFFFFF" fill-opacity="0.10"/>
+          <path d="M48 30 L86 48 L48 86 Z" fill="#FFFFFF" fill-opacity="0.04"/>
+        </svg>
+      </div>
+      <a class="download" href="logos/questify-gem-light.svg" download>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download SVG
+      </a>
+    </div>
+    <div class="gem-card dark">
+      <div class="label-row">
+        <span class="name">Cut Gem · Dark</span>
+        <span>cream on oklch(0.05 0 0)</span>
+      </div>
+      <div class="gem-wrap">
+        <svg class="gem" viewBox="0 0 96 96" fill="none">
+          <path d="M48 10 L86 48 L48 86 L10 48 Z" fill="#FAFAF9"/>
+          <path d="M48 10 L48 30 L10 48 Z" fill="#000000" fill-opacity="0.16"/>
+          <path d="M48 10 L86 48 L48 30 Z" fill="#000000" fill-opacity="0.08"/>
+          <path d="M48 30 L86 48 L48 86 Z" fill="#000000" fill-opacity="0.03"/>
+        </svg>
+      </div>
+      <a class="download" href="logos/questify-gem-dark.svg" download>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download SVG
+      </a>
+    </div>
+  </div>
+
+  <!-- ============ EXTRA VARIANTS ============ -->
+  <div class="section-title">Variants <span class="meta">Accent · Line · Favicon</span></div>
+  <div class="variants">
+
+    <article class="variant">
+      <div class="canvas">
+        <svg viewBox="0 0 96 96" fill="none">
+          <path d="M48 10 L86 48 L48 86 L10 48 Z" fill="oklch(0.56 0.18 275)"/>
+          <path d="M48 10 L48 30 L10 48 Z" fill="#FFFFFF" fill-opacity="0.22"/>
+          <path d="M48 10 L86 48 L48 30 Z" fill="#FFFFFF" fill-opacity="0.12"/>
+          <path d="M48 30 L86 48 L48 86 Z" fill="#000000" fill-opacity="0.08"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num">Accent</div>
+        <h3>Indigo fill</h3>
+        <a href="logos/questify-gem-accent.svg" download>↓ download</a>
+      </div>
+    </article>
+
+    <article class="variant">
+      <div class="canvas">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round">
+          <path d="M48 10 L86 48 L48 86 L10 48 Z"/>
+          <path d="M10 48 L48 30 L86 48" stroke-width="4"/>
+          <path d="M48 30 L48 10" stroke-width="4"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num">Line</div>
+        <h3>Mono outline</h3>
+        <a href="logos/questify-gem-mono-line.svg" download>↓ download</a>
+      </div>
+    </article>
+
+    <article class="variant">
+      <div class="canvas">
+        <svg viewBox="0 0 32 32" width="32" height="32" fill="none">
+          <path d="M16 3 L29 16 L16 29 L3 16 Z" fill="#18181B"/>
+          <path d="M16 3 L16 11 L3 16 Z" fill="#FFFFFF" fill-opacity="0.18"/>
+          <path d="M16 3 L29 16 L16 11 Z" fill="#FFFFFF" fill-opacity="0.10"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num">Favicon · light</div>
+        <h3>32 × 32</h3>
+        <a href="logos/questify-favicon-dark.svg" download>↓ download</a>
+      </div>
+    </article>
+
+    <article class="variant">
+      <div class="canvas dark">
+        <svg viewBox="0 0 32 32" width="32" height="32" fill="none">
+          <path d="M16 3 L29 16 L16 29 L3 16 Z" fill="#FAFAF9"/>
+          <path d="M16 3 L16 11 L3 16 Z" fill="#000000" fill-opacity="0.16"/>
+          <path d="M16 3 L29 16 L16 11 Z" fill="#000000" fill-opacity="0.08"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num">Favicon · dark</div>
+        <h3>32 × 32</h3>
+        <a href="logos/questify-favicon-light.svg" download>↓ download</a>
+      </div>
+    </article>
+
+  </div>
+
+  <!-- ============ SCALE TEST ============ -->
+  <div class="section-title">Scale test · light <span class="meta">16 → 96px</span></div>
+  <div class="scale-row">
+    <div class="scale-item">
+      <svg viewBox="0 0 96 96" width="16" height="16" fill="none">
+        <path d="M48 10 L86 48 L48 86 L10 48 Z" fill="#18181B"/>
+        <path d="M48 10 L48 30 L10 48 Z" fill="#FFFFFF" fill-opacity="0.18"/>
+        <path d="M48 10 L86 48 L48 30 Z" fill="#FFFFFF" fill-opacity="0.10"/>
+      </svg>
+      <span class="label">16</span>
+    </div>
+    <div class="scale-item">
+      <svg viewBox="0 0 96 96" width="24" height="24" fill="none">
+        <path d="M48 10 L86 48 L48 86 L10 48 Z" fill="#18181B"/>
+        <path d="M48 10 L48 30 L10 48 Z" fill="#FFFFFF" fill-opacity="0.18"/>
+        <path d="M48 10 L86 48 L48 30 Z" fill="#FFFFFF" fill-opacity="0.10"/>
+      </svg>
+      <span class="label">24</span>
+    </div>
+    <div class="scale-item">
+      <svg viewBox="0 0 96 96" width="32" height="32" fill="none">
+        <path d="M48 10 L86 48 L48 86 L10 48 Z" fill="#18181B"/>
+        <path d="M48 10 L48 30 L10 48 Z" fill="#FFFFFF" fill-opacity="0.18"/>
+        <path d="M48 10 L86 48 L48 30 Z" fill="#FFFFFF" fill-opacity="0.10"/>
+        <path d="M48 30 L86 48 L48 86 Z" fill="#FFFFFF" fill-opacity="0.04"/>
+      </svg>
+      <span class="label">32</span>
+    </div>
+    <div class="scale-item">
+      <svg viewBox="0 0 96 96" width="48" height="48" fill="none">
+        <path d="M48 10 L86 48 L48 86 L10 48 Z" fill="#18181B"/>
+        <path d="M48 10 L48 30 L10 48 Z" fill="#FFFFFF" fill-opacity="0.18"/>
+        <path d="M48 10 L86 48 L48 30 Z" fill="#FFFFFF" fill-opacity="0.10"/>
+        <path d="M48 30 L86 48 L48 86 Z" fill="#FFFFFF" fill-opacity="0.04"/>
+      </svg>
+      <span class="label">48</span>
+    </div>
+    <div class="scale-item">
+      <svg viewBox="0 0 96 96" width="64" height="64" fill="none">
+        <path d="M48 10 L86 48 L48 86 L10 48 Z" fill="#18181B"/>
+        <path d="M48 10 L48 30 L10 48 Z" fill="#FFFFFF" fill-opacity="0.18"/>
+        <path d="M48 10 L86 48 L48 30 Z" fill="#FFFFFF" fill-opacity="0.10"/>
+        <path d="M48 30 L86 48 L48 86 Z" fill="#FFFFFF" fill-opacity="0.04"/>
+      </svg>
+      <span class="label">64</span>
+    </div>
+    <div class="scale-item">
+      <svg viewBox="0 0 96 96" width="96" height="96" fill="none">
+        <path d="M48 10 L86 48 L48 86 L10 48 Z" fill="#18181B"/>
+        <path d="M48 10 L48 30 L10 48 Z" fill="#FFFFFF" fill-opacity="0.18"/>
+        <path d="M48 10 L86 48 L48 30 Z" fill="#FFFFFF" fill-opacity="0.10"/>
+        <path d="M48 30 L86 48 L48 86 Z" fill="#FFFFFF" fill-opacity="0.04"/>
+      </svg>
+      <span class="label">96</span>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top: 32px;">Scale test · dark <span class="meta">16 → 96px</span></div>
+  <div class="scale-row dark">
+    <div class="scale-item">
+      <svg viewBox="0 0 96 96" width="16" height="16" fill="none">
+        <path d="M48 10 L86 48 L48 86 L10 48 Z" fill="#FAFAF9"/>
+        <path d="M48 10 L48 30 L10 48 Z" fill="#000" fill-opacity="0.16"/>
+        <path d="M48 10 L86 48 L48 30 Z" fill="#000" fill-opacity="0.08"/>
+      </svg>
+      <span class="label">16</span>
+    </div>
+    <div class="scale-item">
+      <svg viewBox="0 0 96 96" width="24" height="24" fill="none">
+        <path d="M48 10 L86 48 L48 86 L10 48 Z" fill="#FAFAF9"/>
+        <path d="M48 10 L48 30 L10 48 Z" fill="#000" fill-opacity="0.16"/>
+        <path d="M48 10 L86 48 L48 30 Z" fill="#000" fill-opacity="0.08"/>
+      </svg>
+      <span class="label">24</span>
+    </div>
+    <div class="scale-item">
+      <svg viewBox="0 0 96 96" width="32" height="32" fill="none">
+        <path d="M48 10 L86 48 L48 86 L10 48 Z" fill="#FAFAF9"/>
+        <path d="M48 10 L48 30 L10 48 Z" fill="#000" fill-opacity="0.16"/>
+        <path d="M48 10 L86 48 L48 30 Z" fill="#000" fill-opacity="0.08"/>
+        <path d="M48 30 L86 48 L48 86 Z" fill="#000" fill-opacity="0.03"/>
+      </svg>
+      <span class="label">32</span>
+    </div>
+    <div class="scale-item">
+      <svg viewBox="0 0 96 96" width="48" height="48" fill="none">
+        <path d="M48 10 L86 48 L48 86 L10 48 Z" fill="#FAFAF9"/>
+        <path d="M48 10 L48 30 L10 48 Z" fill="#000" fill-opacity="0.16"/>
+        <path d="M48 10 L86 48 L48 30 Z" fill="#000" fill-opacity="0.08"/>
+        <path d="M48 30 L86 48 L48 86 Z" fill="#000" fill-opacity="0.03"/>
+      </svg>
+      <span class="label">48</span>
+    </div>
+    <div class="scale-item">
+      <svg viewBox="0 0 96 96" width="64" height="64" fill="none">
+        <path d="M48 10 L86 48 L48 86 L10 48 Z" fill="#FAFAF9"/>
+        <path d="M48 10 L48 30 L10 48 Z" fill="#000" fill-opacity="0.16"/>
+        <path d="M48 10 L86 48 L48 30 Z" fill="#000" fill-opacity="0.08"/>
+        <path d="M48 30 L86 48 L48 86 Z" fill="#000" fill-opacity="0.03"/>
+      </svg>
+      <span class="label">64</span>
+    </div>
+    <div class="scale-item">
+      <svg viewBox="0 0 96 96" width="96" height="96" fill="none">
+        <path d="M48 10 L86 48 L48 86 L10 48 Z" fill="#FAFAF9"/>
+        <path d="M48 10 L48 30 L10 48 Z" fill="#000" fill-opacity="0.16"/>
+        <path d="M48 10 L86 48 L48 30 Z" fill="#000" fill-opacity="0.08"/>
+        <path d="M48 30 L86 48 L48 86 Z" fill="#000" fill-opacity="0.03"/>
+      </svg>
+      <span class="label">96</span>
+    </div>
+  </div>
+
+  <!-- ============ SPEC ============ -->
+  <div class="section-title">Geometry &amp; spec <span class="meta">96 × 96 viewBox</span></div>
+  <div class="spec">
+<span class="c">// Cut Gem — pure geometry</span>
+<span class="c">// Vertices on a 96×96 viewBox:</span>
+<span class="c">//   top    : 48, 10</span>
+<span class="c">//   right  : 86, 48</span>
+<span class="c">//   bottom : 48, 86</span>
+<span class="c">//   left   : 10, 48</span>
+<span class="c">//   inner  : 48, 30   (facet meeting point — 25% from top)</span>
+
+<span class="c">// Body</span>
+<span class="k">&lt;path</span> <span class="v">d=</span><span class="s">"M48 10 L86 48 L48 86 L10 48 Z"</span> <span class="v">fill=</span><span class="s">"FILL"</span> <span class="k">/&gt;</span>
+
+<span class="c">// Facets — variable opacity overlays</span>
+<span class="k">&lt;path</span> <span class="v">d=</span><span class="s">"M48 10 L48 30 L10 48 Z"</span> <span class="v">fill=</span><span class="s">"OVERLAY"</span> <span class="v">opacity=</span><span class="s">"0.18"</span> <span class="k">/&gt;</span>  <span class="c">// brightest</span>
+<span class="k">&lt;path</span> <span class="v">d=</span><span class="s">"M48 10 L86 48 L48 30 Z"</span> <span class="v">fill=</span><span class="s">"OVERLAY"</span> <span class="v">opacity=</span><span class="s">"0.10"</span> <span class="k">/&gt;</span>  <span class="c">// medium</span>
+<span class="k">&lt;path</span> <span class="v">d=</span><span class="s">"M48 30 L86 48 L48 86 Z"</span> <span class="v">fill=</span><span class="s">"OVERLAY"</span> <span class="v">opacity=</span><span class="s">"0.04"</span> <span class="k">/&gt;</span>  <span class="c">// faintest</span>
+
+<span class="c">// Tokens</span>
+<span class="v">--gem-fill-light</span>: <span class="s">#18181B</span>
+<span class="v">--gem-fill-dark</span> : <span class="s">#FAFAF9</span>
+<span class="v">--gem-fill-accent</span>: <span class="s">oklch(0.56 0.18 275)</span>
+  </div>
+
+  <p style="margin-top: 56px; text-align: center; font-family: 'Geist Mono'; font-size: 11px; color: var(--faint);">
+    Questify · Cut Gem · April 2026
+  </p>
+
+</div>
+</body>
+</html>

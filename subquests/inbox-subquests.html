@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Questify — Inbox avec sub-quests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+html,body{margin:0;padding:0;font-family:'Geist',ui-sans-serif,system-ui,sans-serif;background:#fff;color:#18181b;height:100%}
+*{box-sizing:border-box}
+button{font-family:inherit;color:inherit;cursor:pointer}
+#root{height:100vh;overflow:hidden}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:#e4e4e7;border-radius:99px}
+.row-actions{opacity:0;transition:opacity 120ms ease}
+.row:hover .row-actions,.row-actions.open{opacity:1}
+@keyframes xpFloat{0%{opacity:0;transform:translateY(0)}20%{opacity:1}100%{opacity:0;transform:translateY(-18px)}}
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const {useState,useMemo,useEffect,useRef} = React;
+
+const T = {
+  bg:'#ffffff', sideBg:'oklch(0.985 0.004 280)', border:'oklch(0.91 0.006 280)',
+  text:'oklch(0.2 0.01 280)', dim:'oklch(0.52 0.012 280)', faint:'oklch(0.66 0.01 280)',
+  accent:'oklch(0.55 0.17 290)', accentFg:'#fff', accentSubtle:'oklch(0.95 0.03 290)', accentBorder:'oklch(0.85 0.06 290)',
+  danger:'oklch(0.6 0.18 25)', dangerSubtle:'oklch(0.95 0.05 25)',
+  rowHover:'oklch(0.975 0.004 280)',
+};
+const DIFF = {
+  Trivial:{fg:'oklch(0.5 0.01 270)',bg:'oklch(0.95 0.005 270)'},
+  Easy:{fg:'oklch(0.5 0.11 150)',bg:'oklch(0.94 0.04 150)'},
+  Medium:{fg:'oklch(0.55 0.13 230)',bg:'oklch(0.94 0.04 230)'},
+  Hard:{fg:'oklch(0.58 0.15 45)',bg:'oklch(0.95 0.06 55)'},
+  Epic:{fg:'oklch(0.5 0.16 290)',bg:'oklch(0.94 0.045 290)'},
+};
+const PROJECT_TINT = {Polytech:'oklch(0.55 0.13 270)',Firelink:'oklch(0.6 0.16 35)',Questify:'oklch(0.55 0.13 220)',CKA:'oklch(0.55 0.11 150)'};
+
+// ---- seed data: quests with subquests ----
+const SEED = [
+  {id:'q1',title:'Ajout collaboration dans un projet (backend + frontend)',diff:'Epic',xp:150,project:'Questify',due:null,recurring:false,
+    subs:[{id:'s1',title:'Design du schéma de permissions',xp:50,done:false},{id:'s2',title:'Endpoint API invite',xp:60,done:false},{id:'s3',title:'UI de partage',xp:40,done:true}]},
+  {id:'q2',title:'Cours Linux Foundation (LFS158)',diff:'Epic',xp:150,project:'Polytech',due:null,recurring:false,subs:[]},
+  {id:'q3',title:'Investiguer Stalwart',diff:'Hard',xp:100,project:null,due:null,recurring:false,
+    subs:[{id:'s4',title:'Lire la doc self-hosting',xp:20,done:true},{id:'s5',title:'Tester en local avec Docker',xp:30,done:false}]},
+  {id:'q4',title:'Migrations DB avec Flyway',diff:'Hard',xp:100,project:'Questify',due:null,recurring:false,subs:[]},
+  {id:'q5',title:'Custom Dashboards pour Questify',diff:'Hard',xp:100,project:'Questify',due:'2026-05-22',overdue:true,recurring:false,
+    subs:[{id:'s6',title:'Widget XP hebdo',xp:25,done:false},{id:'s7',title:'Widget streak',xp:25,done:false},{id:'s8',title:'Export CSV',xp:25,done:false},{id:'s9',title:'Filtre par région',xp:25,done:false}]},
+  {id:'q6',title:'Point hebdo Questify',diff:'Medium',xp:30,project:'Questify',due:null,recurring:true,subs:[]},
+  {id:'q7',title:'Liaison FerrisKey',diff:'Hard',xp:100,project:'Firelink',due:null,recurring:false,
+    subs:[{id:'s10',title:'Setup OAuth client',xp:40,done:false},{id:'s11',title:'Mapper les rôles',xp:40,done:false}]},
+  {id:'q8',title:'Implémenter OTel',diff:'Hard',xp:100,project:'CKA',due:null,recurring:false,subs:[]},
+];
+
+function subProgress(q){ if(!q.subs.length) return null; const done=q.subs.filter(s=>s.done).length; return {done,total:q.subs.length}; }
+
+// ---- atoms ----
+const Checkbox = ({size=16,checked,onClick,disabled}) => (
+  <button onClick={onClick} disabled={disabled} style={{width:size,height:size,flexShrink:0,borderRadius:size>13?5:4,
+    border:`1.5px solid ${checked?T.accent:'oklch(0.8 0.008 280)'}`,background:checked?T.accent:'transparent',
+    display:'inline-flex',alignItems:'center',justifyContent:'center',padding:0,cursor:disabled?'default':'pointer'}}>
+    {checked && <svg width={size*0.6} height={size*0.6} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+  </button>
+);
+const DiffPill = ({diff,mini}) => { const c=DIFF[diff]; return (
+  <span style={{display:'inline-flex',alignItems:'center',gap:4,fontSize:mini?10:11,fontWeight:500,padding:mini?'1px 6px':'2px 8px',
+    borderRadius:5,background:c.bg,color:c.fg,flexShrink:0}}>{diff}</span>
+);};
+const ProjectTag = ({name,mini}) => (
+  <span style={{display:'inline-flex',alignItems:'center',gap:4,fontSize:mini?10:11,color:T.dim,flexShrink:0}}>
+    <span style={{width:6,height:6,borderRadius:1.5,background:PROJECT_TINT[name]||T.faint}}/>{name}
+  </span>
+);
+const XPBadge = ({xp,mini,muted}) => (
+  <span style={{display:'inline-flex',alignItems:'center',gap:2,fontFamily:'Geist Mono',fontSize:mini?10:11,fontWeight:500,
+    padding:mini?'1px 6px':'3px 9px',borderRadius:999,background:muted?'oklch(0.96 0.006 280)':T.accentSubtle,
+    color:muted?T.faint:T.accent,border:`1px solid ${muted?T.border:T.accentBorder}`,flexShrink:0}}>+{xp} <span style={{opacity:0.7,fontSize:mini?8:9}}>XP</span></span>
+);
+const Chevron = ({open,size=12}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+    style={{transform:open?'rotate(90deg)':'none',transition:'transform 120ms ease',flexShrink:0}}><polyline points="9 6 15 12 9 18"/></svg>
+);
+const MiniBar = ({done,total,w=30}) => (
+  <span style={{display:'inline-flex',alignItems:'center',gap:6,flexShrink:0}}>
+    <span style={{width:w,height:4,borderRadius:99,background:'oklch(0.92 0.006 280)',overflow:'hidden'}}>
+      <span style={{display:'block',height:'100%',width:`${total?done/total*100:0}%`,background:done===total?'oklch(0.6 0.14 150)':T.accent,borderRadius:99}}/>
+    </span>
+    <span style={{fontFamily:'Geist Mono',fontSize:10.5,color:T.faint}}>{done}/{total}</span>
+  </span>
+);
+const RecurIcon = ({size=12}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,color:T.faint}}>
+    <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+  </svg>
+);
+const XPFloat = ({xp}) => (
+  <span style={{position:'absolute',right:60,top:'50%',fontFamily:'Geist Mono',fontSize:13,fontWeight:600,color:T.accent,
+    animation:'xpFloat 900ms ease-out forwards',pointerEvents:'none'}}>+{xp} XP</span>
+);
+
+// ---- dropdown menu (click to toggle, closes on outside click) ----
+function ActionsMenu({items,size=26,open,onOpen,onClose}){
+  const ref = useRef(null);
+  useEffect(()=>{
+    if(!open) return;
+    const h = e => { if(ref.current && !ref.current.contains(e.target)) onClose(); };
+    document.addEventListener('mousedown',h);
+    return ()=>document.removeEventListener('mousedown',h);
+  },[open]);
+  return (
+    <div ref={ref} style={{position:'relative',flexShrink:0}} className={`row-actions${open?' open':''}`}>
+      <button onClick={e=>{e.stopPropagation();open?onClose():onOpen();}} style={{width:size,height:size,display:'inline-flex',
+        alignItems:'center',justifyContent:'center',background:'none',border:'none',borderRadius:6,color:T.dim}}>
+        <svg width={size*0.5} height={size*0.5} viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+      </button>
+      {open && (
+        <div style={{position:'absolute',right:0,top:size+2,zIndex:20,minWidth:160,background:'#fff',
+          border:`1px solid ${T.border}`,borderRadius:9,boxShadow:'0 8px 24px rgba(0,0,0,0.12)',padding:4}}>
+          {items.map((it,i)=> it.divider ? <div key={i} style={{height:1,background:T.border,margin:'4px 0'}}/> : (
+            <button key={i} onClick={e=>{e.stopPropagation();onClose();it.onClick();}} style={{display:'flex',alignItems:'center',gap:8,
+              width:'100%',padding:'7px 9px',fontSize:12.5,background:'none',border:'none',borderRadius:6,textAlign:'left',
+              color:it.danger?T.danger:T.text}}
+              onMouseEnter={e=>e.currentTarget.style.background='oklch(0.96 0.006 280)'}
+              onMouseLeave={e=>e.currentTarget.style.background='none'}>
+              <span style={{width:14,textAlign:'center',opacity:0.8}}>{it.icon}</span>{it.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---- delete confirm dialog ----
+function ConfirmDeleteDialog({target,onCancel,onConfirm}){
+  if(!target) return null;
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.35)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:50}} onClick={onCancel}>
+      <div onClick={e=>e.stopPropagation()} style={{width:340,background:'#fff',borderRadius:14,padding:'22px 22px 16px',
+        display:'flex',flexDirection:'column',alignItems:'center',gap:14,boxShadow:'0 20px 60px rgba(0,0,0,0.25)'}}>
+        <div style={{width:48,height:48,borderRadius:99,background:T.dangerSubtle,display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={T.danger} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+        </div>
+        <div style={{textAlign:'center'}}>
+          <div style={{fontSize:14.5,fontWeight:600}}>Supprimer « {target.title} » ?</div>
+          <div style={{fontSize:12.5,color:T.dim,marginTop:5,lineHeight:1.5}}>
+            {target.subs && target.subs.length>0 ? `Cette action supprime aussi ${target.subs.length} sub-quest${target.subs.length>1?'s':''}. C'est irréversible.` : "Cette action est irréversible."}
+          </div>
+        </div>
+        <div style={{display:'flex',gap:8,marginTop:2}}>
+          <button onClick={onCancel} style={{padding:'8px 16px',fontSize:12.5,fontWeight:500,background:'#fff',
+            border:`1px solid ${T.border}`,borderRadius:8}}>Annuler</button>
+          <button onClick={onConfirm} style={{padding:'8px 16px',fontSize:12.5,fontWeight:500,background:T.danger,
+            color:'#fff',border:'none',borderRadius:8}}>Supprimer</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---- sidebar / topbar (matches current app chrome) ----
+const NavItem = ({label,active,icon}) => (
+  <div style={{display:'flex',alignItems:'center',gap:10,padding:'7px 10px',borderRadius:7,fontSize:13.5,
+    color:active?T.text:T.dim,background:active?'oklch(0.94 0.01 280)':'transparent',fontWeight:active?500:400}}>
+    <span style={{width:15,textAlign:'center',fontSize:13,opacity:0.85}}>{icon}</span>{label}
+  </div>
+);
+const Sidebar = () => (
+  <div style={{width:216,flexShrink:0,background:T.sideBg,borderRight:`1px solid ${T.border}`,display:'flex',flexDirection:'column',padding:'14px 10px',gap:18,height:'100%',overflowY:'auto'}}>
+    <div style={{display:'flex',alignItems:'center',gap:9,padding:'2px 6px'}}>
+      <div style={{width:30,height:30,borderRadius:8,background:'oklch(0.7 0.1 75)',flexShrink:0}}/>
+      <div><div style={{fontSize:13.5,fontWeight:600}}>Axel</div><div style={{fontSize:11,color:T.faint}}>Lvl 6 · Wanderer</div></div>
+    </div>
+    <div>
+      <div style={{fontSize:10.5,color:T.faint,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em',padding:'0 8px 6px'}}>Navigation</div>
+      <NavItem label="Inbox" icon="◧" active/>
+      <NavItem label="Today" icon="☀"/>
+      <NavItem label="Upcoming" icon="▤"/>
+      <NavItem label="Habits" icon="↻"/>
+      <NavItem label="Regions" icon="◎"/>
+    </div>
+    <div>
+      <div style={{fontSize:10.5,color:T.faint,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em',padding:'0 8px 6px'}}>Projects</div>
+      <NavItem label="View all" icon="▢"/>
+      <NavItem label="Firelink" icon="🔥"/>
+      <NavItem label="Polytech" icon="🎓"/>
+      <NavItem label="CKA" icon="⚓"/>
+      <NavItem label="Questify" icon="💎"/>
+    </div>
+    <div>
+      <div style={{fontSize:10.5,color:T.faint,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em',padding:'0 8px 6px'}}>Insights</div>
+      <NavItem label="Progress" icon="↗"/>
+      <NavItem label="Stats" icon="▥"/>
+      <NavItem label="History" icon="◷"/>
+    </div>
+    <div style={{flex:1}}/>
+    <NavItem label="Admin" icon="⚙"/>
+  </div>
+);
+const Topbar = () => (
+  <div style={{display:'flex',alignItems:'center',gap:14,padding:'0 20px',height:52,borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+    <span style={{color:T.dim,display:'flex'}}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg></span>
+    <span style={{fontSize:13.5,fontWeight:500}}>Inbox</span>
+    <div style={{flex:1}}/>
+    <div style={{display:'inline-flex',alignItems:'center',gap:7,padding:'5px 11px',background:T.accentSubtle,borderRadius:999,border:`1px solid ${T.accentBorder}`}}>
+      <span style={{color:T.accent,fontSize:11}}>⚡</span><span style={{fontFamily:'Geist Mono',fontSize:12,fontWeight:500,color:T.accent}}>6,200 XP</span>
+      <span style={{fontSize:11,color:T.faint}}>· Lvl 6</span>
+    </div>
+    <span style={{color:T.faint}}>🔔</span>
+  </div>
+);
+
+// ---- toolbar ----
+const Segmented = ({options,value,onChange}) => (
+  <div style={{display:'flex',padding:2,background:'oklch(0.96 0.006 280)',border:`1px solid ${T.border}`,borderRadius:8}}>
+    {options.map(o=>(
+      <button key={o} onClick={()=>onChange(o)} style={{padding:'5px 11px',fontSize:12,borderRadius:6,fontWeight:500,
+        background:o===value?'#fff':'transparent',color:o===value?T.text:T.dim,
+        border:o===value?`1px solid ${T.border}`:'1px solid transparent',
+        boxShadow:o===value?'0 1px 2px rgba(0,0,0,0.05)':'none'}}>{o}</button>
+    ))}
+  </div>
+);
+const Toolbar = ({density,setDensity}) => (
+  <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14,flexWrap:'wrap'}}>
+    <div style={{display:'flex',alignItems:'center',gap:8,padding:'7px 12px',border:`1px solid ${T.border}`,borderRadius:9,flex:1,maxWidth:340}}>
+      <span style={{color:T.faint,fontSize:13}}>⌕</span><span style={{fontSize:13,color:T.faint,flex:1}}>Search quests…</span>
+      <span style={{fontFamily:'Geist Mono',fontSize:10,padding:'2px 5px',background:'oklch(0.96 0.006 280)',color:T.faint,border:`1px solid ${T.border}`,borderRadius:4}}>⌘K</span>
+    </div>
+    {['All','Due date'].map(f=>(<span key={f} style={{fontSize:12.5,color:T.dim,padding:'4px 8px'}}>{f}</span>))}
+    <div style={{flex:1}}/>
+    <Segmented options={['Comfort','Compact','Ultra']} value={density} onChange={setDensity}/>
+  </div>
+);
+const Tabs = ({count}) => (
+  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
+    <div style={{display:'flex',gap:6}}>
+      {[['All',count,true],['Today',0,false],['Overdue',1,false]].map(([l,n,a])=>(
+        <span key={l} style={{padding:'5px 11px',fontSize:12.5,fontWeight:a?500:400,color:a?T.text:T.dim,
+          background:a?'oklch(0.96 0.006 280)':'transparent',border:`1px solid ${a?T.border:'transparent'}`,borderRadius:7}}>
+          {l} <span style={{fontFamily:'Geist Mono',opacity:0.6,marginLeft:4}}>{n}</span></span>
+      ))}
+    </div>
+    <span style={{fontSize:11.5,color:T.faint,fontFamily:'Geist Mono'}}>{count} of {count}</span>
+  </div>
+);
+
+// ---- subquest row + list (shared across densities) ----
+function SubRow({s,density,onComplete,onEdit,onDelete,menuOpen,onMenuOpen,onMenuClose}){
+  const h = density==='ultra'? '5px 2px' : density==='compact' ? '6px 2px' : '8px 2px';
+  const cb = density==='comfort'?15:12;
+  return (
+    <div className="row" style={{display:'flex',alignItems:'center',gap:8,padding:h,borderRadius:6,position:'relative'}}>
+      <Checkbox size={cb} checked={s.done} onClick={()=>onComplete(s.id)} disabled={s.done}/>
+      <span onClick={()=>onEdit(s)} style={{fontSize:density==='comfort'?13:12,color:s.done?T.faint:T.text,textDecoration:s.done?'line-through':'none',flex:1,
+        overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',cursor:'pointer',minWidth:0}}>{s.title}</span>
+      {!s.done && <XPBadge xp={s.xp} mini muted/>}
+      <ActionsMenu size={22} open={menuOpen} onOpen={onMenuOpen} onClose={onMenuClose} items={[
+        {icon:'✎',label:'Modifier',onClick:()=>onEdit(s)},
+        {icon:'✕',label:'Supprimer',danger:true,onClick:()=>onDelete(s)},
+      ]}/>
+    </div>
+  );
+}
+function SubList({subs,density,onComplete,onEdit,onDelete,menuState,setMenuState}){
+  return (
+    <div style={{marginLeft:density==='comfort'?30:22,marginTop:density==='comfort'?6:2,paddingLeft:14,
+      borderLeft:`1.5px solid ${T.border}`}}>
+      {subs.map(s=>(
+        <SubRow key={s.id} s={s} density={density} onComplete={onComplete} onEdit={onEdit} onDelete={onDelete}
+          menuOpen={menuState===s.id} onMenuOpen={()=>setMenuState(s.id)} onMenuClose={()=>setMenuState(null)}/>
+      ))}
+    </div>
+  );
+}
+
+// ---- comfort row ----
+function ComfortRow({q,open,onToggle,onComplete,onEdit,onDelete,onAddSub,completingXP,menuState,setMenuState}){
+  const prog = subProgress(q);
+  return (
+    <div className="row" style={{background:'#fff',border:`1px solid ${T.border}`,borderRadius:10,marginBottom:8,overflow:'hidden',position:'relative'}}>
+      <div style={{display:'grid',gridTemplateColumns:'auto 1fr auto auto',alignItems:'start',gap:14,padding:'14px 16px'}}>
+        <Checkbox size={18} checked={!!completingXP} onClick={()=>onComplete(q)}/>
+        <div style={{minWidth:0}} onClick={()=>onEdit(q)}>
+          <div style={{fontSize:14.5,fontWeight:500,cursor:'pointer'}}>{q.title}</div>
+          <div style={{display:'flex',alignItems:'center',gap:10,marginTop:8,flexWrap:'wrap'}}>
+            <DiffPill diff={q.diff}/>
+            {q.recurring && <RecurIcon/>}
+            {q.project && <ProjectTag name={q.project}/>}
+          </div>
+        </div>
+        <XPBadge xp={q.xp}/>
+        <ActionsMenu open={menuState===q.id} onOpen={()=>setMenuState(q.id)} onClose={()=>setMenuState(null)} items={[
+          {icon:'✎',label:'Modifier',onClick:()=>onEdit(q)},
+          ...(q.recurring?[{icon:'⏭',label:'Passer',onClick:()=>{}}]:[]),
+          {icon:'＋',label:'Ajouter une sub-quest',onClick:()=>onAddSub(q)},
+          {divider:true},
+          {icon:'✕',label:'Supprimer',danger:true,onClick:()=>onDelete(q)},
+        ]}/>
+        {completingXP && <XPFloat xp={completingXP}/>}
+      </div>
+      {prog && (
+        <div style={{padding:'0 16px 14px'}}>
+          <button onClick={onToggle} style={{display:'flex',alignItems:'center',gap:8,background:'none',border:'none',padding:'4px 0',color:T.dim}}>
+            <Chevron open={open}/>
+            <span style={{fontSize:12.5}}>{prog.done}/{prog.total} subquests</span>
+            <MiniBar done={prog.done} total={prog.total}/>
+          </button>
+          {open && <SubList subs={q.subs} density="comfort" onComplete={id=>onComplete(q,id)} onEdit={onEdit} onDelete={onDelete}
+            menuState={menuState} setMenuState={setMenuState}/>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---- compact row ----
+function CompactRow({q,open,onToggle,first,onComplete,onEdit,onDelete,onAddSub,completingXP,menuState,setMenuState}){
+  const prog = subProgress(q);
+  return (
+    <div className="row" style={{borderTop:first?'none':`1px solid ${T.border}`,position:'relative'}}>
+      <div style={{display:'grid',gridTemplateColumns:'auto auto 1fr auto auto auto auto auto',alignItems:'center',gap:10,padding:'8px 14px',minHeight:38}}>
+        <Checkbox size={14} checked={!!completingXP} onClick={()=>onComplete(q)}/>
+        {prog ? (
+          <button onClick={onToggle} style={{background:'none',border:'none',padding:0,display:'flex',color:T.dim}}><Chevron open={open} size={11}/></button>
+        ) : <span style={{width:11}}/>}
+        <span onClick={()=>onEdit(q)} style={{fontSize:13,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',cursor:'pointer',minWidth:0}}>{q.title}</span>
+        {q.recurring && <RecurIcon/>}
+        {prog && <MiniBar done={prog.done} total={prog.total} w={22}/>}
+        {q.project ? <ProjectTag name={q.project} mini/> : <span/>}
+        <DiffPill diff={q.diff} mini/>
+        <XPBadge xp={q.xp} mini/>
+        <ActionsMenu size={22} open={menuState===q.id} onOpen={()=>setMenuState(q.id)} onClose={()=>setMenuState(null)} items={[
+          {icon:'✎',label:'Modifier',onClick:()=>onEdit(q)},
+          {icon:'＋',label:'Ajouter une sub-quest',onClick:()=>onAddSub(q)},
+          {divider:true},
+          {icon:'✕',label:'Supprimer',danger:true,onClick:()=>onDelete(q)},
+        ]}/>
+        {completingXP && <XPFloat xp={completingXP}/>}
+      </div>
+      {prog && open && <div style={{padding:'0 14px 8px'}}><SubList subs={q.subs} density="compact" onComplete={id=>onComplete(q,id)} onEdit={onEdit} onDelete={onDelete}
+        menuState={menuState} setMenuState={setMenuState}/></div>}
+    </div>
+  );
+}
+
+// ---- ultra row ----
+function UltraRow({q,open,onToggle,idx,onComplete,onEdit,onDelete,onAddSub,completingXP,menuState,setMenuState}){
+  const prog = subProgress(q);
+  const c = DIFF[q.diff];
+  return (
+    <div className="row" style={{background:idx%2?'oklch(0.985 0.004 280)':'#fff',position:'relative'}}>
+      <div style={{display:'grid',gridTemplateColumns:'auto auto auto 1fr auto auto auto',alignItems:'center',gap:8,padding:'5px 12px',minHeight:28}}>
+        <Checkbox size={12} checked={!!completingXP} onClick={()=>onComplete(q)}/>
+        {prog ? (
+          <button onClick={onToggle} style={{background:'none',border:'none',padding:0,display:'flex',color:T.faint}}><Chevron open={open} size={9}/></button>
+        ) : <span style={{width:9}}/>}
+        <span title={q.diff} style={{width:7,height:7,borderRadius:99,background:c.fg,flexShrink:0}}/>
+        <span onClick={()=>onEdit(q)} style={{fontSize:12,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',cursor:'pointer',minWidth:0}}>{q.title}</span>
+        {prog && <span style={{fontFamily:'Geist Mono',fontSize:10,color:T.faint}}>{prog.done}/{prog.total}</span>}
+        <span style={{fontFamily:'Geist Mono',fontSize:10.5,color:T.accent,minWidth:34,textAlign:'right'}}>+{q.xp}</span>
+        <ActionsMenu size={20} open={menuState===q.id} onOpen={()=>setMenuState(q.id)} onClose={()=>setMenuState(null)} items={[
+          {icon:'✎',label:'Modifier',onClick:()=>onEdit(q)},
+          {icon:'＋',label:'Ajouter une sub-quest',onClick:()=>onAddSub(q)},
+          {divider:true},
+          {icon:'✕',label:'Supprimer',danger:true,onClick:()=>onDelete(q)},
+        ]}/>
+        {completingXP && <XPFloat xp={completingXP}/>}
+      </div>
+      {prog && open && <div style={{padding:'0 12px 5px'}}><SubList subs={q.subs} density="ultra" onComplete={id=>onComplete(q,id)} onEdit={onEdit} onDelete={onDelete}
+        menuState={menuState} setMenuState={setMenuState}/></div>}
+    </div>
+  );
+}
+
+function App(){
+  const [density,setDensity] = useState(()=>localStorage.getItem('qf-density')||'Compact');
+  const [openIds,setOpenIds] = useState(()=>new Set(['q1']));
+  const [quests,setQuests] = useState(SEED);
+  const [deleteTarget,setDeleteTarget] = useState(null); // {kind:'quest'|'sub', quest, sub?}
+  const [completing,setCompleting] = useState({}); // id -> xp (transient)
+  const [menuState,setMenuState] = useState(null);
+
+  const setD = (v)=>{ setDensity(v); localStorage.setItem('qf-density',v); };
+  const toggle = (id)=> setOpenIds(prev=>{ const n=new Set(prev); n.has(id)?n.delete(id):n.add(id); return n; });
+
+  const flashXP = (id,xp)=>{ setCompleting(p=>({...p,[id]:xp})); setTimeout(()=>setCompleting(p=>{const n={...p};delete n[id];return n;}),900); };
+
+  // complete: quest(no sub id)=complete whole quest; quest(subId)=complete a subquest
+  const handleComplete = (q,subId)=>{
+    if(subId){
+      const sub = q.subs.find(s=>s.id===subId);
+      if(!sub || sub.done) return;
+      flashXP(subId,sub.xp);
+      setQuests(prev=>prev.map(qq=>qq.id!==q.id?qq:{...qq,subs:qq.subs.map(s=>s.id===subId?{...s,done:true}:s)}));
+    } else {
+      flashXP(q.id,q.xp);
+      setTimeout(()=>setQuests(prev=>prev.filter(qq=>qq.id!==q.id)),650);
+    }
+  };
+  const handleEdit = (item)=>{ /* opens edit dialog in the real app */ };
+  const handleAddSub = (q)=>{
+    const title = window.prompt('Titre de la sub-quest ?');
+    if(!title) return;
+    setQuests(prev=>prev.map(qq=>qq.id!==q.id?qq:{...qq,subs:[...qq.subs,{id:'s'+Date.now(),title,xp:20,done:false}]}));
+    setOpenIds(prev=>new Set(prev).add(q.id));
+  };
+  const askDelete = (q,sub)=> setDeleteTarget(sub?{title:sub.title,subs:null,questId:q.id,subId:sub.id}:{title:q.title,subs:q.subs,questId:q.id});
+  const confirmDelete = ()=>{
+    if(!deleteTarget) return;
+    if(deleteTarget.subId){
+      setQuests(prev=>prev.map(qq=>qq.id!==deleteTarget.questId?qq:{...qq,subs:qq.subs.filter(s=>s.id!==deleteTarget.subId)}));
+    } else {
+      setQuests(prev=>prev.filter(qq=>qq.id!==deleteTarget.questId));
+    }
+    setDeleteTarget(null);
+  };
+
+  return (
+    <div style={{display:'flex',height:'100%'}}>
+      <Sidebar/>
+      <div style={{flex:1,display:'flex',flexDirection:'column',minWidth:0}}>
+        <Topbar/>
+        <div style={{flex:1,overflowY:'auto',padding:'22px 28px'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginBottom:18,gap:12}}>
+            <div>
+              <h1 style={{margin:0,fontSize:25,fontWeight:600,letterSpacing:'-0.02em'}}>Inbox</h1>
+              <div style={{fontSize:13,color:T.dim,marginTop:4}}>All quests, unassigned & pending.</div>
+            </div>
+            <button style={{display:'inline-flex',alignItems:'center',gap:6,padding:'8px 14px',fontSize:13,fontWeight:500,
+              whiteSpace:'nowrap',flexShrink:0,
+              background:T.accent,color:T.accentFg,border:'none',borderRadius:9}}>+ New quest</button>
+          </div>
+          <Toolbar density={density} setDensity={setD}/>
+          <Tabs count={quests.length}/>
+          {density==='Comfort' && (
+            <div>{quests.map(q=>
+              <ComfortRow key={q.id} q={q} open={openIds.has(q.id)} onToggle={()=>toggle(q.id)}
+                onComplete={(qq,subId)=>handleComplete(qq,subId)}
+                onEdit={handleEdit} onAddSub={handleAddSub}
+                onDelete={(item)=> item.subs!==undefined ? askDelete(item) : askDelete(q,item)}
+                completingXP={completing[q.id]} menuState={menuState} setMenuState={setMenuState}/>
+            )}</div>
+          )}
+          {density==='Compact' && (
+            <div style={{border:`1px solid ${T.border}`,borderRadius:10,overflow:'hidden'}}>
+              {quests.map((q,i)=>
+                <CompactRow key={q.id} q={q} first={i===0} open={openIds.has(q.id)} onToggle={()=>toggle(q.id)}
+                  onComplete={(qq,subId)=>handleComplete(qq,subId)}
+                  onEdit={handleEdit} onAddSub={handleAddSub}
+                  onDelete={(item)=> item.subs!==undefined ? askDelete(item) : askDelete(q,item)}
+                  completingXP={completing[q.id]} menuState={menuState} setMenuState={setMenuState}/>
+              )}
+            </div>
+          )}
+          {density==='Ultra' && (
+            <div style={{border:`1px solid ${T.border}`,borderRadius:10,overflow:'hidden'}}>
+              {quests.map((q,i)=>
+                <UltraRow key={q.id} q={q} idx={i} open={openIds.has(q.id)} onToggle={()=>toggle(q.id)}
+                  onComplete={(qq,subId)=>handleComplete(qq,subId)}
+                  onEdit={handleEdit} onAddSub={handleAddSub}
+                  onDelete={(item)=> item.subs!==undefined ? askDelete(item) : askDelete(q,item)}
+                  completingXP={completing[q.id]} menuState={menuState} setMenuState={setMenuState}/>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      <ConfirmDeleteDialog target={deleteTarget} onCancel={()=>setDeleteTarget(null)} onConfirm={confirmDelete}/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

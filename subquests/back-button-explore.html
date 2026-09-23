@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Questify — "Back to projects" exploration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #fafaf9;
+      --bg-elev: #ffffff;
+      --bg-subtle: #f4f4f5;
+      --border: #e7e5e4;
+      --border-strong: #d6d3d1;
+      --text: #18181b;
+      --text-dim: #52525b;
+      --text-faint: #a1a1aa;
+      --accent: oklch(0.56 0.18 275);
+      --accent-fg: #ffffff;
+      --accent-subtle: oklch(0.96 0.02 275);
+      --accent-border: oklch(0.88 0.06 275);
+    }
+    html, body { margin: 0; padding: 0; font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; background: var(--bg); color: var(--text); }
+    * { box-sizing: border-box; }
+    button { font-family: inherit; color: inherit; }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-presets="react" src="design-canvas.jsx"></script>
+  <script type="text/babel" data-presets="react" src="back-button-variants.jsx"></script>
+  <script type="text/babel" data-presets="react">
+    const Canvas = window.DesignCanvas;
+    const Section = window.DCSection;
+    const Artboard = window.DCArtboard;
+    const V = window.BackVariants;
+
+    const App = () => (
+      <Canvas
+        title="Questify — “Back to projects” exploration"
+        subtitle="6 directions to improve the small grey link above the project title."
+      >
+        <Section id="current" title="Where we are today">
+          <Artboard id="cur" label="Current — thin grey link, low affordance" width={860} height={220}>
+            <V.Current />
+          </Artboard>
+        </Section>
+
+        <Section id="quick-wins" title="Quick wins — same idea, more presence">
+          <Artboard id="v1" label="① Subtle pill — clear affordance" width={860} height={220}>
+            <V.PillButton />
+          </Artboard>
+          <Artboard id="v2" label="② Icon-only back, paired with title" width={860} height={220}>
+            <V.IconBeside />
+          </Artboard>
+        </Section>
+
+        <Section id="structural" title="Structural — promote it into the breadcrumb">
+          <Artboard id="v3" label="③ Topbar breadcrumb — kills the duplicate “Project” label" width={860} height={220}>
+            <V.TopbarBreadcrumb />
+          </Artboard>
+          <Artboard id="v4" label="④ Inline breadcrumb above the title" width={860} height={220}>
+            <V.InlineBreadcrumb />
+          </Artboard>
+        </Section>
+
+        <Section id="ambitious" title="More ambitious — turn it into a project switcher">
+          <Artboard id="v5" label="⑤ Project switcher chip (click to preview menu)" width={860} height={340}>
+            <V.SwitcherChip />
+          </Artboard>
+          <Artboard id="v6" label="⑥ Sticky side rail — back never leaves the viewport" width={860} height={300}>
+            <V.SideRail />
+          </Artboard>
+        </Section>
+      </Canvas>
+    );
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

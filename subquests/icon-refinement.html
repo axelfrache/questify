@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Questify — Gem & Path refinement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fafaf9;
+    --panel: #ffffff;
+    --bg-subtle: #f4f4f5;
+    --border: #e7e5e4;
+    --border-strong: #d6d3d1;
+    --text: #18181b;
+    --dim: #52525b;
+    --faint: #a1a1aa;
+    --accent: oklch(0.56 0.18 275);
+    --accent-2: oklch(0.68 0.16 275);
+    --accent-subtle: oklch(0.96 0.02 275);
+    --accent-border: oklch(0.88 0.06 275);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    -webkit-font-smoothing: antialiased; line-height: 1.5;
+    letter-spacing: -0.005em;
+  }
+  .mono { font-family: 'Geist Mono', ui-monospace, monospace; }
+  .page { max-width: 1200px; margin: 0 auto; padding: 56px 32px 96px; }
+
+  .header { margin-bottom: 40px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 11px; border-radius: 999px;
+    background: var(--accent-subtle); color: var(--accent);
+    border: 1px solid var(--accent-border);
+    font-family: 'Geist Mono'; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.06em; font-weight: 500;
+    margin-bottom: 16px;
+  }
+  h1 { margin: 0 0 12px; font-size: 36px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; }
+  .lede { max-width: 720px; font-size: 15px; color: var(--dim); line-height: 1.55; margin: 0; }
+
+  .family-title {
+    margin: 56px 0 8px; font-size: 22px; font-weight: 600;
+    letter-spacing: -0.02em; display: flex; align-items: baseline; gap: 12px;
+  }
+  .family-title .label {
+    font-family: 'Geist Mono'; font-size: 11px; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500;
+  }
+  .family-sub {
+    font-size: 14px; color: var(--dim); max-width: 700px;
+    margin: 0 0 24px; line-height: 1.55;
+  }
+
+  .grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+  }
+  @media (max-width: 1000px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+
+  .variant {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+    display: flex; flex-direction: column;
+    transition: border-color 200ms;
+  }
+  .variant:hover { border-color: var(--border-strong); }
+  .variant.pick { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-subtle); }
+  .variant .canvas {
+    aspect-ratio: 1.1 / 1;
+    display: grid; place-items: center;
+    background:
+      radial-gradient(circle at center, color-mix(in oklch, var(--accent) 4%, transparent), transparent 70%),
+      linear-gradient(var(--bg) 1px, transparent 1px) 0 0 / 100% 20px,
+      linear-gradient(90deg, var(--bg) 1px, transparent 1px) 0 0 / 20px 100%,
+      var(--panel);
+    border-bottom: 1px solid var(--border);
+  }
+  .variant .canvas svg { width: 88px; height: 88px; }
+  .variant .body { padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+  .variant .num { font-family: 'Geist Mono'; font-size: 10px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.08em; }
+  .variant .num.pick-label { color: var(--accent); font-weight: 500; }
+  .variant h3 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+  .variant p { margin: 2px 0 0; font-size: 12px; color: var(--dim); line-height: 1.5; }
+
+  /* "Hero" feature for the front-runner */
+  .hero-pick {
+    margin-top: 32px; padding: 40px;
+    background: var(--text); color: var(--bg);
+    border-radius: 16px; position: relative; overflow: hidden;
+    display: grid; grid-template-columns: 220px 1fr; gap: 40px; align-items: center;
+  }
+  @media (max-width: 720px) { .hero-pick { grid-template-columns: 1fr; text-align: center; } }
+  .hero-pick::before {
+    content: ''; position: absolute; right: -120px; top: -80px;
+    width: 380px; height: 380px; border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in oklch, var(--accent) 60%, transparent) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .hero-pick .visual {
+    width: 220px; height: 220px;
+    display: grid; place-items: center;
+    background: color-mix(in oklch, var(--bg) 6%, transparent);
+    border-radius: 16px; border: 1px solid color-mix(in oklch, var(--bg) 12%, transparent);
+    position: relative;
+  }
+  .hero-pick .text { position: relative; }
+  .hero-pick h2 { margin: 0 0 10px; font-size: 28px; letter-spacing: -0.025em; font-weight: 600; }
+  .hero-pick p { margin: 0; font-size: 14px; color: color-mix(in oklch, var(--bg) 70%, transparent); line-height: 1.6; max-width: 560px; }
+  .hero-pick ul {
+    margin: 16px 0 0; padding: 0; list-style: none;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .hero-pick ul li {
+    font-size: 13px; color: color-mix(in oklch, var(--bg) 80%, transparent);
+    padding-left: 18px; position: relative;
+  }
+  .hero-pick ul li::before {
+    content: ''; position: absolute; left: 0; top: 7px;
+    width: 6px; height: 6px; border-radius: 50%; background: var(--accent-2);
+  }
+
+  /* Application strip */
+  .apps {
+    margin-top: 24px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 14px; padding: 28px;
+  }
+  .apps h3 { margin: 0 0 18px; font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+  .apps-grid {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px;
+  }
+  @media (max-width: 900px) { .apps-grid { grid-template-columns: repeat(3, 1fr); } }
+  .app-cell {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    padding: 18px 8px; background: var(--bg-subtle);
+    border: 1px solid var(--border); border-radius: 10px;
+  }
+  .app-cell .label { font-family: 'Geist Mono'; font-size: 10px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.06em; }
+  .ios-icon {
+    width: 64px; height: 64px; border-radius: 16px;
+    background: var(--text); color: var(--bg); display: grid; place-items: center;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  }
+  .ios-icon.accent { background: var(--accent); color: white; }
+  .ios-icon.cream { background: oklch(0.96 0.02 80); color: var(--text); border: 1px solid var(--border); }
+  .fav {
+    width: 32px; height: 32px; background: var(--text); color: var(--bg);
+    border-radius: 6px; display: grid; place-items: center;
+  }
+  .word {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 17px; font-weight: 600; letter-spacing: -0.025em; color: var(--text);
+  }
+  .word .mark { width: 22px; height: 22px; color: var(--text); }
+
+  /* Footnote */
+  .foot { margin-top: 56px; text-align: center; font-family: 'Geist Mono'; font-size: 11px; color: var(--faint); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="header">
+    <span class="eyebrow">● Round 2 · Gem & Path</span>
+    <h1>Refining the two finalists.</h1>
+    <p class="lede">
+      Five variations of <strong>Gem</strong> and five of <strong>Path</strong>, each pushing a different
+      lever — symmetry, weight, negative space, level of abstraction. The goal: find the one mark that
+      survives everywhere and feels unmistakably Questify.
+    </p>
+  </header>
+
+  <!-- =================== GEM FAMILY =================== -->
+  <div class="family-title">
+    Gem family <span class="label">G1 → G5</span>
+  </div>
+  <p class="family-sub">
+    The gem says <em>reward</em>, <em>achievement</em>, <em>milestone</em>. The risk is looking generic
+    or RPG-cheesy — these variations dial that back with precise geometry, asymmetry, and clean negative space.
+  </p>
+
+  <div class="grid">
+
+    <!-- G1 — original -->
+    <article class="variant">
+      <div class="canvas">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M48 14 L78 48 L48 82 L18 48 Z"/>
+          <path d="M18 48 L48 32 L78 48" stroke-width="4"/>
+          <path d="M48 32 L48 14" stroke-width="4"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num">G1 · Original</div>
+        <h3>Classic facet</h3>
+        <p>The starting point — symmetric diamond with two facets.</p>
+      </div>
+    </article>
+
+    <!-- G2 — solid + facet line -->
+    <article class="variant pick">
+      <div class="canvas">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="0">
+          <!-- solid base -->
+          <path d="M48 12 L82 48 L48 84 L14 48 Z" fill="currentColor"/>
+          <!-- inner facet — cut out, creating a "Q" feeling -->
+          <path d="M48 12 L82 48 L48 30 Z" fill="var(--panel)" opacity="0.18"/>
+          <path d="M48 30 L82 48 L48 84 Z" fill="var(--panel)" opacity="0.08"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num pick-label">● G2 · Recommended</div>
+        <h3>Cut gem</h3>
+        <p>Solid silhouette with two cut facets giving depth without strokes. Reads as one shape at 16px.</p>
+      </div>
+    </article>
+
+    <!-- G3 — quest "Q" hidden inside -->
+    <article class="variant">
+      <div class="canvas">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+          <!-- diamond outline -->
+          <path d="M48 14 L80 48 L48 82 L16 48 Z"/>
+          <!-- the Q tail: small cut at bottom-right -->
+          <path d="M58 72 L72 86" stroke-width="6"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num">G3</div>
+        <h3>Q-gem</h3>
+        <p>A diamond with a small tail that turns it into a hidden "Q". Subtle and ownable.</p>
+      </div>
+    </article>
+
+    <!-- G4 — stacked gems / progress -->
+    <article class="variant">
+      <div class="canvas">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+          <!-- three gems, increasing -->
+          <path d="M20 78 L28 70 L36 78 L28 86 Z" fill="currentColor"/>
+          <path d="M38 60 L50 48 L62 60 L50 72 Z" fill="currentColor" opacity="0.55"/>
+          <path d="M58 38 L74 22 L90 38 L74 54 Z" fill="currentColor" opacity="0.25"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num">G4</div>
+        <h3>Stacked rewards</h3>
+        <p>Three gems gaining size — the gem becomes a level-up timeline.</p>
+      </div>
+    </article>
+
+    <!-- G5 — half-cut, asymmetric -->
+    <article class="variant">
+      <div class="canvas">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="0">
+          <!-- left half outline, right half filled -->
+          <path d="M48 12 L82 48 L48 84 L48 12 Z" fill="currentColor"/>
+          <path d="M48 12 L14 48 L48 84 L48 12 Z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num">G5</div>
+        <h3>Half-cut</h3>
+        <p>Asymmetric — half outline, half solid. Distinctive but slightly tricky at small sizes.</p>
+      </div>
+    </article>
+
+    <!-- G6 — gem inside circle -->
+    <article class="variant">
+      <div class="canvas">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+          <circle cx="48" cy="48" r="36"/>
+          <path d="M48 28 L66 48 L48 68 L30 48 Z" fill="currentColor"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num">G6</div>
+        <h3>Crystal core</h3>
+        <p>A gem cradled inside a circle — sealed, precious, tokenized. Works beautifully as an app icon.</p>
+      </div>
+    </article>
+
+  </div>
+
+  <!-- =================== PATH FAMILY =================== -->
+  <div class="family-title">
+    Path family <span class="label">P1 → P5</span>
+  </div>
+  <p class="family-sub">
+    Path says <em>journey</em>, <em>step-by-step</em>, <em>progression</em>. The risk is looking like a
+    generic chart or a stair icon — these variations push toward something more architectural, more
+    intentional.
+  </p>
+
+  <div class="grid">
+
+    <!-- P1 — original stepped Q -->
+    <article class="variant">
+      <div class="canvas">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="square" stroke-linejoin="miter">
+          <path d="M16 76 L16 56 L36 56 L36 36 L56 36 L56 16 L80 16" />
+          <rect x="60" y="60" width="20" height="20" fill="currentColor" stroke="none"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num">P1 · Original</div>
+        <h3>Stairs + flag</h3>
+        <p>Steps up, sealed by a solid block at the top. Clear but reads as "chart".</p>
+      </div>
+    </article>
+
+    <!-- P2 — RECOMMENDED: round-cap path with target dot -->
+    <article class="variant pick">
+      <div class="canvas">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+          <!-- a continuous curve climbing through 3 inflexions -->
+          <path d="M14 78 C 30 78, 30 56, 46 56 S 64 36, 80 36" />
+          <!-- end-cap target -->
+          <circle cx="80" cy="36" r="7" fill="currentColor" stroke="none"/>
+          <!-- start dot -->
+          <circle cx="14" cy="78" r="3" fill="currentColor" stroke="none"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num pick-label">● P2 · Recommended</div>
+        <h3>The Trail</h3>
+        <p>One single fluid curve from start dot to goal dot. Soft, optimistic, and unmistakable at any size.</p>
+      </div>
+    </article>
+
+    <!-- P3 — terraced ascent (architectural) -->
+    <article class="variant">
+      <div class="canvas">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="0">
+          <!-- 4 stacked rectangles, each shorter, gaining height -->
+          <rect x="10" y="62" width="78" height="22" fill="currentColor" opacity="0.25" rx="3"/>
+          <rect x="22" y="44" width="54" height="22" fill="currentColor" opacity="0.45" rx="3"/>
+          <rect x="34" y="26" width="30" height="22" fill="currentColor" opacity="0.7" rx="3"/>
+          <rect x="42" y="8"  width="14" height="22" fill="currentColor" rx="3"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num">P3</div>
+        <h3>Tiered</h3>
+        <p>Four terraces stacking toward a peak. The gradient of opacity reads as <em>building toward</em>.</p>
+      </div>
+    </article>
+
+    <!-- P4 — diagonal arrow with way-points -->
+    <article class="variant">
+      <div class="canvas">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+          <!-- dotted path with three waypoints -->
+          <circle cx="18" cy="78" r="5" fill="currentColor" stroke="none"/>
+          <circle cx="48" cy="48" r="5" fill="currentColor" stroke="none"/>
+          <line x1="22" y1="74" x2="44" y2="52" stroke-dasharray="2 6" stroke-width="3"/>
+          <line x1="52" y1="44" x2="74" y2="22" stroke-dasharray="2 6" stroke-width="3"/>
+          <!-- final star/target -->
+          <path d="M78 18 L82 26 L90 28 L84 34 L86 42 L78 38 L70 42 L72 34 L66 28 L74 26 Z" fill="currentColor" stroke="none"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num">P4</div>
+        <h3>Waypoints</h3>
+        <p>Two checkpoints leading to a star — overt, story-driven. Risks looking like a treasure-map cliché.</p>
+      </div>
+    </article>
+
+    <!-- P5 — Q as a path (minimal letterform) -->
+    <article class="variant">
+      <div class="canvas">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+          <!-- a near-circle that's been "walked" but not closed — like a Q whose tail kicks out -->
+          <path d="M68 22 A 28 28 0 1 0 76 70" />
+          <!-- the tail of the Q — pointing forward/up -->
+          <path d="M64 60 L84 80" />
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num">P5</div>
+        <h3>Open Q</h3>
+        <p>A single-stroke Q that doesn't quite close — a path you're still walking. Clever but reads as a letter first.</p>
+      </div>
+    </article>
+
+    <!-- P6 — summit silhouette path -->
+    <article class="variant">
+      <div class="canvas">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+          <!-- continuous polyline going up like a mountain ridge -->
+          <path d="M10 78 L26 62 L36 70 L52 40 L66 54 L86 22"/>
+          <!-- summit dot -->
+          <circle cx="86" cy="22" r="6" fill="currentColor" stroke="none"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="num">P6</div>
+        <h3>Ridge</h3>
+        <p>A polyline of ascending peaks. Active and direct, but flirts with the sport-tracker cliché.</p>
+      </div>
+    </article>
+
+  </div>
+
+  <!-- =================== HERO PICK =================== -->
+  <div class="hero-pick">
+    <div class="visual">
+      <svg viewBox="0 0 96 96" width="140" height="140" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" style="color: white;">
+        <path d="M14 78 C 30 78, 30 56, 46 56 S 64 36, 80 36" />
+        <circle cx="80" cy="36" r="7" fill="white" stroke="none"/>
+        <circle cx="14" cy="78" r="3" fill="white" stroke="none"/>
+      </svg>
+    </div>
+    <div class="text">
+      <h2>P2 — The Trail</h2>
+      <p>If I had to pick just one across both families, this is it. A single curve that reads as a path, an arc of progress, and (squint) a quiet lowercase q. It's the only mark in either family that carries motion — your eye walks it from the small start dot to the larger goal dot.</p>
+      <ul>
+        <li>One continuous stroke. Trivial to redraw, animate, scale.</li>
+        <li>Asymmetric weight (small dot → big dot) communicates direction without an arrow.</li>
+        <li>Pairs with the Geist wordmark beautifully — same round terminals.</li>
+        <li>Survives at 16px because the silhouette is unique, not detail-dependent.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- =================== APPLICATIONS =================== -->
+  <div class="apps">
+    <h3>P2 across surfaces</h3>
+    <div class="apps-grid">
+
+      <div class="app-cell">
+        <div class="ios-icon">
+          <svg viewBox="0 0 96 96" width="40" height="40" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 78 C 30 78, 30 56, 46 56 S 64 36, 80 36" />
+            <circle cx="80" cy="36" r="7" fill="currentColor" stroke="none"/>
+            <circle cx="14" cy="78" r="3" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+        <span class="label">App icon · dark</span>
+      </div>
+
+      <div class="app-cell">
+        <div class="ios-icon accent">
+          <svg viewBox="0 0 96 96" width="40" height="40" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 78 C 30 78, 30 56, 46 56 S 64 36, 80 36" />
+            <circle cx="80" cy="36" r="7" fill="currentColor" stroke="none"/>
+            <circle cx="14" cy="78" r="3" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+        <span class="label">App icon · accent</span>
+      </div>
+
+      <div class="app-cell">
+        <div class="ios-icon cream">
+          <svg viewBox="0 0 96 96" width="40" height="40" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 78 C 30 78, 30 56, 46 56 S 64 36, 80 36" />
+            <circle cx="80" cy="36" r="7" fill="currentColor" stroke="none"/>
+            <circle cx="14" cy="78" r="3" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+        <span class="label">App icon · cream</span>
+      </div>
+
+      <div class="app-cell">
+        <div class="fav">
+          <svg viewBox="0 0 96 96" width="20" height="20" fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 78 C 30 78, 30 56, 46 56 S 64 36, 80 36" />
+            <circle cx="80" cy="36" r="9" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+        <span class="label">Favicon · 16</span>
+      </div>
+
+      <div class="app-cell">
+        <div class="word">
+          <svg class="mark" viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 78 C 30 78, 30 56, 46 56 S 64 36, 80 36" />
+            <circle cx="80" cy="36" r="8" fill="currentColor" stroke="none"/>
+            <circle cx="14" cy="78" r="4" fill="currentColor" stroke="none"/>
+          </svg>
+          Questify
+        </div>
+        <span class="label">Wordmark</span>
+      </div>
+
+      <div class="app-cell">
+        <div class="word" style="background: var(--accent); color: white; padding: 6px 12px; border-radius: 8px;">
+          <svg class="mark" viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" style="color: white;">
+            <path d="M14 78 C 30 78, 30 56, 46 56 S 64 36, 80 36" />
+            <circle cx="80" cy="36" r="8" fill="currentColor" stroke="none"/>
+            <circle cx="14" cy="78" r="4" fill="currentColor" stroke="none"/>
+          </svg>
+          Questify
+        </div>
+        <span class="label">Lockup · accent</span>
+      </div>
+
+    </div>
+  </div>
+
+  <p class="foot">Questify · Identity exploration · April 2026</p>
+
+</div>
+</body>
+</html>
