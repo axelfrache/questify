@@ -83,3 +83,28 @@ export function gradeKey(grade: string): string {
 export function gradeStyle(grade: string): GradeStyle {
   return GRADE_STYLES[gradeKey(grade)] ?? FALLBACK_GRADE_STYLE;
 }
+
+export interface GradeRequirement {
+  name: string;
+  minLevel: number;
+  questsRequired: number;
+}
+
+export const GRADES: GradeRequirement[] = [
+  { name: 'Flint', minLevel: 1, questsRequired: 0 },
+  { name: 'Iron', minLevel: 6, questsRequired: 10 },
+  { name: 'Gold', minLevel: 11, questsRequired: 25 },
+  { name: 'Obsidian', minLevel: 21, questsRequired: 60 },
+  { name: 'Sapphire', minLevel: 36, questsRequired: 150 },
+  { name: 'Diamond', minLevel: 51, questsRequired: 400 },
+];
+
+export function getGradeIndex(gradeLabel: string): number {
+  return GRADES.findIndex((g) => g.name === gradeKey(gradeLabel));
+}
+
+export function getNextGrade(currentGrade: string): GradeRequirement | null {
+  const idx = getGradeIndex(currentGrade);
+  if (idx === -1 || idx >= GRADES.length - 1) return null;
+  return GRADES[idx + 1];
+}

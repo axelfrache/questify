@@ -510,7 +510,11 @@
   },
   "level_up": {
     "title": "Niveau supérieur",
-    "new_grade": "Nouveau grade débloqué",
+    "level_reached": "Tu passes niveau {{level}}",
+    "new_grade": "Nouveau grade",
+    "xp_gained": "XP gagnée",
+    "towards_next_level": "Vers Lvl {{level}}",
+    "view_progress": "Voir la progression",
     "continue": "Continuer"
   },
   "admin": {

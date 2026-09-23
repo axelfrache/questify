@@ -7,56 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { GradeGem } from '@/components/ui/grade-badge';
 import { Zap, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { gradeKey, gradeStyle } from '@/lib/grade-config';
-
-const GRADES = [
-  {
-    name: 'Flint',
-    minLevel: 1,
-    questsRequired: 0,
-    tooltip: 'Every spark begins here. Strike the stone.',
-  },
-  {
-    name: 'Iron',
-    minLevel: 6,
-    questsRequired: 10,
-    tooltip: 'Solid. Reliable. You hold your ground.',
-  },
-  {
-    name: 'Gold',
-    minLevel: 11,
-    questsRequired: 25,
-    tooltip: "You've earned something precious. Don't stop now.",
-  },
-  {
-    name: 'Obsidian',
-    minLevel: 21,
-    questsRequired: 60,
-    tooltip: 'Forged under volcanic pressure. Sharp, dark, unstoppable.',
-  },
-  {
-    name: 'Sapphire',
-    minLevel: 36,
-    questsRequired: 150,
-    tooltip: 'Rare and brilliant. You are not like the others.',
-  },
-  {
-    name: 'Diamond',
-    minLevel: 51,
-    questsRequired: 400,
-    tooltip: 'Formed under the greatest pressure. Nothing can break you.',
-  },
-];
-
-function getGradeIndex(gradeLabel: string) {
-  return GRADES.findIndex((g) => g.name === gradeKey(gradeLabel));
-}
-
-function getNextGrade(currentGrade: string) {
-  const idx = getGradeIndex(currentGrade);
-  if (idx === -1 || idx >= GRADES.length - 1) return null;
-  return GRADES[idx + 1];
-}
+import { GRADES, getGradeIndex, getNextGrade, gradeKey, gradeStyle } from '@/lib/grade-config';
 
 function getGradeProgress(level: number, currentGrade: string) {
   const grade = GRADES.find((g) => g.name === gradeKey(currentGrade));
