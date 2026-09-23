@@ -71,3 +71,4 @@ Thumbs.db
 *.tar.gz
 *.rar
 !.mvn/wrapper/maven-wrapper.jar
+brevo
