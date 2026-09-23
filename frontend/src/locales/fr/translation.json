@@ -97,6 +97,8 @@
     "password_placeholder": "Votre mot de passe",
     "forgot_password": "Mot de passe oublié ?",
     "logging_in": "Connexion...",
+    "redirecting": "Redirection...",
+    "redirect_failed": "Une erreur est survenue. Veuillez réessayer.",
     "submit": "Continuer l'aventure",
     "new_user": "Nouvel explorateur ?",
     "signup_link": "Commencer l'aventure"
@@ -122,7 +124,6 @@
     "req_upper": "Une lettre majuscule",
     "req_lower": "Une lettre minuscule",
     "req_number": "Un chiffre",
-    "signin_failed": "Compte créé, mais la connexion automatique a échoué. Veuillez vous connecter.",
     "register_failed": "Inscription échouée. Veuillez réessayer.",
     "creating": "Création du compte...",
     "submit": "Commencer mon aventure",

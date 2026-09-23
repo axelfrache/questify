@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError, api, type UserDto } from '@/lib/api';
-import { clearOidcSession, isOidcEnabled, loginWithOidcPassword } from '@/lib/oidc';
+import { clearOidcSession, isOidcEnabled, startOidcLogin } from '@/lib/oidc';
 import { queryKeys } from '@/hooks/use-api';
 
 interface User {
@@ -18,7 +18,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email?: string, password?: string) => Promise<void>;
   register: (
     username: string,
     email: string,
@@ -85,19 +85,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (email?: string, password?: string) => {
     if (isOidcEnabled()) {
-      queryClient.removeQueries({
-        predicate: ({ queryKey }) => queryKey[0] !== 'auth',
-      });
-      await loginWithOidcPassword(email, password);
-      await refreshCurrentUser();
+      await startOidcLogin();
       return;
     }
     queryClient.removeQueries({
       predicate: ({ queryKey }) => queryKey[0] !== 'auth',
     });
-    await api.login({ email, password });
+    await api.login({ email: email as string, password: password as string });
     await refreshCurrentUser();
   };
 
@@ -109,28 +105,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     lastName: string
   ) => {
     if (isOidcEnabled()) {
-      queryClient.removeQueries({
-        predicate: ({ queryKey }) => queryKey[0] !== 'auth',
-      });
-      let accountAlreadyExists = false;
       try {
         await api.register({ username, email, password, firstName, lastName });
       } catch (err) {
         if (isAccountAlreadyRegistered(err)) {
-          accountAlreadyExists = true;
-        } else {
-          throw err;
-        }
-      }
-      try {
-        await loginWithOidcPassword(email, password);
-      } catch (err) {
-        if (accountAlreadyExists) {
           throw new Error('An account already exists with this email. Please log in.');
         }
         throw err;
       }
-      await refreshCurrentUser();
+      await startOidcLogin();
       return;
     }
     queryClient.removeQueries({

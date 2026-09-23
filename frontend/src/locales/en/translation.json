@@ -97,6 +97,8 @@
     "password_placeholder": "Your password",
     "forgot_password": "Forgot password?",
     "logging_in": "Logging in...",
+    "redirecting": "Redirecting...",
+    "redirect_failed": "Something went wrong. Please try again.",
     "submit": "Continue Journey",
     "new_user": "New explorer?",
     "signup_link": "Start your journey"
@@ -122,7 +124,6 @@
     "req_upper": "One uppercase letter",
     "req_lower": "One lowercase letter",
     "req_number": "One number",
-    "signin_failed": "Account created, but automatic sign-in failed. Please try signing in.",
     "register_failed": "Registration failed. Please try again.",
     "creating": "Creating account...",
     "submit": "Start My Journey",

@@ -32,7 +32,7 @@ interface TokenResponse {
 
 export class OidcAuthenticationError extends Error {
   constructor() {
-    super('Invalid email or password');
+    super('Authentication failed. Please try again.');
     this.name = 'OidcAuthenticationError';
   }
 }
@@ -105,24 +105,6 @@ async function requestToken(body: URLSearchParams) {
   }
 
   return (await response.json()) as TokenResponse;
-}
-
-export async function loginWithOidcPassword(username: string, password: string) {
-  if (!isOidcEnabled()) {
-    throw new Error('OIDC is not configured');
-  }
-
-  clearOidcSession();
-  const tokens = await requestToken(
-    new URLSearchParams({
-      grant_type: 'password',
-      client_id: OIDC_CLIENT_ID,
-      username,
-      password,
-      scope: OIDC_SCOPES,
-    })
-  );
-  storeTokens(tokens);
 }
 
 export async function refreshOidcSession() {

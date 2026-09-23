@@ -12,7 +12,6 @@ import { Eye, EyeOff, Check, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { ModeToggle } from '@/components/mode-toggle';
-import { OidcAuthenticationError } from '@/lib/oidc';
 import { useTranslation } from 'react-i18next';
 
 const signupSchema = z.object({
@@ -74,9 +73,7 @@ export function SignupPage() {
       await registerUser(data.username, data.email, data.password, data.firstName, data.lastName);
       navigate('/inbox');
     } catch (err: unknown) {
-      if (err instanceof OidcAuthenticationError) {
-        setError(t('signup.signin_failed'));
-      } else if (err && typeof err === 'object' && 'message' in err) {
+      if (err && typeof err === 'object' && 'message' in err) {
         setError((err as { message: string }).message);
       } else {
         setError(t('signup.register_failed'));
