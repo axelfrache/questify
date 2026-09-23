@@ -27,18 +27,20 @@ export function fireConfettiFromElement(element: HTMLElement) {
   });
 }
 
+const levelUpConfetti = confetti.create(undefined, { resize: true, useWorker: true });
+
 export function fireLevelUpConfetti() {
   const colors = themeConfettiColors();
   const defaults = { colors, ticks: 160, gravity: 0.9, zIndex: 120 };
 
-  confetti({
+  levelUpConfetti({
     ...defaults,
     particleCount: 80,
     spread: 100,
     startVelocity: 35,
     origin: { x: 0.5, y: 0.4 },
   });
-  confetti({
+  levelUpConfetti({
     ...defaults,
     particleCount: 40,
     angle: 60,
@@ -46,7 +48,7 @@ export function fireLevelUpConfetti() {
     startVelocity: 45,
     origin: { x: 0, y: 0.7 },
   });
-  confetti({
+  levelUpConfetti({
     ...defaults,
     particleCount: 40,
     angle: 120,
