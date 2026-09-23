@@ -1,14 +1,5 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ChevronDown,
-  ChevronRight,
-  Loader2,
-  Edit,
-  Trash,
-  Calendar,
-  MoreHorizontal,
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, Loader2, Edit, Trash, Calendar, MoreHorizontal } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,65 +14,112 @@ import { useSubquests } from '@/hooks/use-api';
 import type { QuestResponse } from '@/lib/api';
 import { formatDistanceToNow } from 'date-fns';
 
+interface SubquestProgressToggleProps {
+  completed: number;
+  total: number;
+  open: boolean;
+  onToggle: () => void;
+  compact?: boolean;
+  faded?: boolean;
+}
+
+export function SubquestProgressToggle({
+  completed,
+  total,
+  open,
+  onToggle,
+  compact = false,
+  faded = false,
+}: SubquestProgressToggleProps) {
+  const { t } = useTranslation();
+  const percent = total > 0 ? (completed / total) * 100 : 0;
+  const isDone = total > 0 && completed === total;
+
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        onToggle();
+      }}
+      className={cn(
+        'inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors shrink-0',
+        compact ? 'text-[11px]' : 'text-xs',
+        faded && 'opacity-50'
+      )}
+    >
+      {open ? (
+        <ChevronDown className={compact ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
+      ) : (
+        <ChevronRight className={compact ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
+      )}
+      <span
+        className={cn(
+          'inline-block h-1 rounded-full bg-muted overflow-hidden',
+          compact ? 'w-6' : 'w-8'
+        )}
+      >
+        <span
+          className={cn('block h-full rounded-full', isDone ? 'bg-green-500' : 'bg-primary')}
+          style={{ width: `${percent}%` }}
+        />
+      </span>
+      {compact ? (
+        <span className="font-mono tabular-nums">
+          {completed}/{total}
+        </span>
+      ) : (
+        <span className="font-medium">{t('subquests.count', { completed, total })}</span>
+      )}
+    </button>
+  );
+}
+
 interface InlineSubquestsProps {
   parentQuest: QuestResponse;
+  isOpen: boolean;
   onComplete?: (id: string, element?: HTMLElement) => void;
   onEdit?: (quest: QuestResponse) => void;
   onDelete?: (id: string) => void;
+  compact?: boolean;
 }
 
 export function InlineSubquests({
   parentQuest,
+  isOpen,
   onComplete,
   onEdit,
   onDelete,
+  compact = false,
 }: InlineSubquestsProps) {
   const { t } = useTranslation();
-  const [isExpanded, setIsExpanded] = useState(false);
-  const { data: subquests, isLoading } = useSubquests(parentQuest.templateId, isExpanded);
+  const { data: subquests, isLoading } = useSubquests(parentQuest.templateId, isOpen);
 
-  const hasSubquests = parentQuest.subquestCount > 0;
-  if (!hasSubquests) return null;
+  if (!isOpen) return null;
 
   return (
-    <div className="mt-3 pt-3 border-t border-border/50">
-      <button
-        type="button"
-        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        {isExpanded ? (
-          <ChevronDown className="h-3.5 w-3.5" />
-        ) : (
-          <ChevronRight className="h-3.5 w-3.5" />
-        )}
-        <span className="font-medium">
-          {t('subquests.count', {
-            completed: parentQuest.completedSubquestCount,
-            total: parentQuest.subquestCount,
-          })}
-        </span>
-      </button>
-
-      {isExpanded && (
-        <div className="mt-2 ml-1 pl-3 border-l-2 border-muted/60 space-y-0.5">
-          {isLoading ? (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              {t('subquests.loading')}
-            </div>
-          ) : (
-            subquests?.map((subquest) => (
-              <SubquestRow
-                key={subquest.id}
-                subquest={subquest}
-                onComplete={onComplete}
-                onEdit={onEdit}
-                onDelete={onDelete}
-              />
-            ))
-          )}
+    <div
+      className={cn(
+        'ml-1 pl-3 border-l-2 border-muted/60 space-y-0.5',
+        compact ? 'mt-1.5' : 'mt-2'
+      )}
+    >
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          {t('subquests.loading')}
         </div>
+      ) : (
+        subquests?.map((subquest) => (
+          <SubquestRow
+            key={subquest.id}
+            subquest={subquest}
+            onComplete={onComplete}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            compact={compact}
+          />
+        ))
       )}
     </div>
   );
@@ -92,9 +130,10 @@ interface SubquestRowProps {
   onComplete?: (id: string, element?: HTMLElement) => void;
   onEdit?: (quest: QuestResponse) => void;
   onDelete?: (id: string) => void;
+  compact?: boolean;
 }
 
-function SubquestRow({ subquest, onComplete, onEdit, onDelete }: SubquestRowProps) {
+function SubquestRow({ subquest, onComplete, onEdit, onDelete, compact = false }: SubquestRowProps) {
   const { t } = useTranslation();
   const isCompleted = subquest.status === 'COMPLETED';
 
@@ -114,7 +153,8 @@ function SubquestRow({ subquest, onComplete, onEdit, onDelete }: SubquestRowProp
   return (
     <div
       className={cn(
-        'flex items-center gap-2 py-1.5 px-1 -mx-1 rounded group/subquest transition-colors',
+        'flex items-center gap-2 px-1 -mx-1 rounded group/subquest transition-colors',
+        compact ? 'py-1' : 'py-1.5',
         'hover:bg-muted/40',
         isCompleted && 'opacity-50'
       )}
@@ -129,7 +169,8 @@ function SubquestRow({ subquest, onComplete, onEdit, onDelete }: SubquestRowProp
       {/* Title */}
       <span
         className={cn(
-          'text-xs text-muted-foreground flex-1 min-w-0 truncate cursor-pointer hover:text-foreground',
+          'text-muted-foreground flex-1 min-w-0 truncate cursor-pointer hover:text-foreground',
+          compact ? 'text-[11px]' : 'text-xs',
           isCompleted && 'line-through'
         )}
         onClick={() => onEdit?.(subquest)}
@@ -141,7 +182,7 @@ function SubquestRow({ subquest, onComplete, onEdit, onDelete }: SubquestRowProp
       {/* Inline metadata */}
       <div className="flex items-center gap-2 flex-shrink-0">
         {/* Due date */}
-        {subquest.dueDate && !isCompleted && (
+        {subquest.dueDate && !isCompleted && !compact && (
           <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground/70">
             <Calendar className="h-2.5 w-2.5" />
             {formatDueDate(subquest.dueDate)}

@@ -11,7 +11,7 @@ import {
 import { MoreVertical, Edit, Trash, SkipForward, Plus, Repeat2, UserPlus } from 'lucide-react';
 import { DifficultyChip } from '@/components/ui/quest-meta-chip';
 import { XpBadge } from '@/components/ui/xp-badge';
-import { InlineSubquests } from '@/components/InlineSubquests';
+import { InlineSubquests, SubquestProgressToggle } from '@/components/InlineSubquests';
 import { cn } from '@/lib/utils';
 import { RECURRENCE_LABELS } from '@/lib/quest-config';
 import type { QuestResponse } from '@/lib/api';
@@ -56,6 +56,7 @@ function QuestCardInner({
 }: QuestCardProps) {
   const { t } = useTranslation();
   const [completing, setCompleting] = useState(false);
+  const [subquestsOpen, setSubquestsOpen] = useState(false);
   const isCompact = density === 'compact';
   const isCompleted = quest.status === 'COMPLETED';
   const hasRecurrence = quest.recurrenceInterval !== 'NONE';
@@ -178,15 +179,14 @@ function QuestCardInner({
           )}
 
           {hasSubquests && (
-            <span
-              className={cn(
-                'shrink-0 font-mono text-[10px] text-muted-foreground',
-                'rounded border border-border px-1.5 py-0.5 leading-none',
-                isCompleted && 'opacity-50'
-              )}
-            >
-              {quest.completedSubquestCount}/{quest.subquestCount}
-            </span>
+            <SubquestProgressToggle
+              completed={quest.completedSubquestCount}
+              total={quest.subquestCount}
+              open={subquestsOpen}
+              onToggle={() => setSubquestsOpen((open) => !open)}
+              compact
+              faded={isCompleted}
+            />
           )}
 
           <DifficultyChip difficulty={quest.difficulty} faded={isCompleted} />
@@ -309,14 +309,37 @@ function QuestCardInner({
         </div>
       )}
 
-      {!isCompact && showInlineSubquests && hasSubquests && (
-        <div className="px-4 pb-3">
+      {isCompact && showInlineSubquests && hasSubquests && subquestsOpen && (
+        <div className="px-3 pb-1.5">
           <InlineSubquests
             parentQuest={quest}
+            isOpen={subquestsOpen}
             onComplete={onComplete}
             onEdit={onEdit}
             onDelete={onDelete}
+            compact
           />
+        </div>
+      )}
+
+      {!isCompact && showInlineSubquests && hasSubquests && (
+        <div className="px-4 pb-3">
+          <div className="mt-3 pt-3 border-t border-border/50">
+            <SubquestProgressToggle
+              completed={quest.completedSubquestCount}
+              total={quest.subquestCount}
+              open={subquestsOpen}
+              onToggle={() => setSubquestsOpen((open) => !open)}
+              faded={isCompleted}
+            />
+            <InlineSubquests
+              parentQuest={quest}
+              isOpen={subquestsOpen}
+              onComplete={onComplete}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          </div>
         </div>
       )}
 
