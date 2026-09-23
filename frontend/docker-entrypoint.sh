@@ -10,4 +10,7 @@ window.__QUESTIFY_CONFIG__ = {
 };
 JSEOF
 
+resolver_ip=$(awk '/^nameserver/{print $2; exit}' /etc/resolv.conf)
+sed -i "s/^\(\s*resolver\) .*/\1 ${resolver_ip} valid=10s ipv6=off;/" /etc/nginx/conf.d/default.conf
+
 exec nginx -g 'daemon off;'
