@@ -151,9 +151,7 @@ function MiniCalendar({
                     {cell}
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="top">
-                  {t('upcoming.calendar_day', { count })}
-                </TooltipContent>
+                <TooltipContent side="top">{t('upcoming.calendar_day', { count })}</TooltipContent>
               </Tooltip>
             );
           })}
@@ -493,7 +491,9 @@ export function UpcomingPage() {
             <StatRow
               label={t('upcoming.busiest_day')}
               value={
-                stats.busiestDay ? format(stats.busiestDay, 'EEE MMM d', { locale: dateLocale }) : '—'
+                stats.busiestDay
+                  ? format(stats.busiestDay, 'EEE MMM d', { locale: dateLocale })
+                  : '—'
               }
             />
             <StatRow label={t('upcoming.free_days')} value={stats.freeDays} />
@@ -543,9 +543,7 @@ export function UpcomingPage() {
           <LoadStrip
             days={loadDays}
             selectedDay={selectedDay}
-            onSelectDay={(dateStr) =>
-              setSelectedDay((prev) => (prev === dateStr ? null : dateStr))
-            }
+            onSelectDay={(dateStr) => setSelectedDay((prev) => (prev === dateStr ? null : dateStr))}
           />
         )}
 

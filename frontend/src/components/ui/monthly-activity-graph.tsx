@@ -205,7 +205,9 @@ export function MonthlyActivityGraph({
               </span>
               <span>
                 <span className="font-mono font-medium text-foreground">{activeDays}</span>
-                <span className="ml-1 text-muted-foreground">{t('activity_graph.active_days')}</span>
+                <span className="ml-1 text-muted-foreground">
+                  {t('activity_graph.active_days')}
+                </span>
               </span>
               <span>
                 <span className="font-mono font-medium text-foreground">+{monthXp}</span>

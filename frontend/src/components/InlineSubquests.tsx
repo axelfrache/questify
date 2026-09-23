@@ -1,5 +1,13 @@
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronRight, Loader2, Edit, Trash, Calendar, MoreHorizontal } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  Loader2,
+  Edit,
+  Trash,
+  Calendar,
+  MoreHorizontal,
+} from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import {
@@ -134,7 +142,13 @@ interface SubquestRowProps {
   compact?: boolean;
 }
 
-function SubquestRow({ subquest, onComplete, onEdit, onDelete, compact = false }: SubquestRowProps) {
+function SubquestRow({
+  subquest,
+  onComplete,
+  onEdit,
+  onDelete,
+  compact = false,
+}: SubquestRowProps) {
   const { t } = useTranslation();
   const dateLocale = useDateLocale();
   const isCompleted = subquest.status === 'COMPLETED';
