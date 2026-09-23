@@ -75,8 +75,9 @@ public class KeycloakRegistrationService {
 
   private void sendVerificationEmail(String adminBase, String token, URI createdLocation) {
     if (createdLocation == null) {
-      log.warn("Keycloak did not return a Location header for the created user; "
-          + "skipping verification email");
+      log.warn(
+          "Keycloak did not return a Location header for the created user; "
+              + "skipping verification email");
       return;
     }
     var path = createdLocation.getPath();
@@ -91,9 +92,7 @@ public class KeycloakRegistrationService {
           .toBodilessEntity();
     } catch (RestClientResponseException ex) {
       log.warn(
-          "Failed to send Keycloak verification email for user {}: {}",
-          userId,
-          ex.getStatusCode());
+          "Failed to send Keycloak verification email for user {}: {}", userId, ex.getStatusCode());
     }
   }
 
