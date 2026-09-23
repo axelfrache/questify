@@ -356,6 +356,12 @@ services:
         condition: service_healthy
       notification-service:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
     networks:
       - questify-network
 
@@ -367,7 +373,8 @@ services:
     ports:
       - "80:8080"
     depends_on:
-      - gateway
+      gateway:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/"]
       interval: 30s
