@@ -8,12 +8,14 @@ import java.net.URI;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 @Profile({"prod", "production"})
@@ -24,6 +26,12 @@ public class KeycloakRegistrationService {
   private final FerrisKeyConfig ferrisKeyConfig;
   private final KeycloakAdminClient keycloakAdminClient;
   private final RestClient restClient = RestClient.create();
+
+  @Value("${questify.oidc.client-id:questify-frontend}")
+  private String frontendClientId;
+
+  @Value("${questify.oidc.verification-return-uri:https://app.getquestify.com/auth/continue}")
+  private String verificationReturnUri;
 
   @WithSpan("auth.keycloak_register")
   public void register(RegisterRequest request) {
@@ -86,7 +94,14 @@ public class KeycloakRegistrationService {
     try {
       restClient
           .put()
-          .uri(adminBase + "/users/" + userId + "/send-verify-email")
+          .uri(
+              UriComponentsBuilder.fromUriString(adminBase)
+                  .pathSegment("users", userId, "send-verify-email")
+                  .queryParam("client_id", frontendClientId)
+                  .queryParam("redirect_uri", verificationReturnUri)
+                  .build()
+                  .encode()
+                  .toUri())
           .header("Authorization", "Bearer " + token)
           .retrieve()
           .toBodilessEntity();

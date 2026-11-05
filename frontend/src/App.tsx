@@ -33,6 +33,11 @@ const ResetPasswordPage = lazy(async () => {
   return { default: module.ResetPasswordPage };
 });
 
+const AuthContinuePage = lazy(async () => {
+  const module = await import('@/pages/AuthContinuePage');
+  return { default: module.AuthContinuePage };
+});
+
 const AuthCallbackPage = lazy(async () => {
   const module = await import('@/pages/AuthCallbackPage');
   return { default: module.AuthCallbackPage };
@@ -149,6 +154,7 @@ function App() {
                   path="/realms/:realmName/overview"
                   element={<Navigate to="/login" replace />}
                 />
+                <Route path="/auth/continue" element={<AuthContinuePage />} />
                 <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
                 <Route
