@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError, api, type UserDto } from '@/lib/api';
 import { clearOidcSession, isOidcEnabled, startOidcLogin } from '@/lib/oidc';
@@ -55,6 +56,7 @@ function isAccountAlreadyRegistered(error: unknown) {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
+  const location = useLocation();
 
   const clearSessionQueries = useCallback(() => {
     queryClient.setQueryData(queryKeys.auth.me, null);
@@ -66,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: currentUser, isLoading } = useQuery({
     queryKey: queryKeys.auth.me,
     queryFn: () => api.getCurrentUser(),
-    enabled: !isOidcEnabled() || typeof window !== 'undefined',
+    enabled: !isOidcEnabled() || location.pathname !== '/auth/callback',
     retry: false,
   });
 
@@ -87,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email?: string, password?: string) => {
     if (isOidcEnabled()) {
-      await startOidcLogin();
+      await startOidcLogin('/inbox');
       return;
     }
     queryClient.removeQueries({
@@ -113,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         throw err;
       }
-      await startOidcLogin();
+      await startOidcLogin('/inbox');
       return;
     }
     queryClient.removeQueries({

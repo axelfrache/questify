@@ -99,6 +99,9 @@
     "logging_in": "Logging in...",
     "redirecting": "Redirecting...",
     "redirect_failed": "Something went wrong. Please try again.",
+    "signing_in": "Signing you in...",
+    "callback_failed": "Unable to complete sign-in. Please try again.",
+    "back_to_login": "Back to login",
     "submit": "Continue Journey",
     "new_user": "New explorer?",
     "signup_link": "Start your journey"

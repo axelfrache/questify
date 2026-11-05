@@ -99,6 +99,9 @@
     "logging_in": "Connexion...",
     "redirecting": "Redirection...",
     "redirect_failed": "Une erreur est survenue. Veuillez réessayer.",
+    "signing_in": "Connexion en cours…",
+    "callback_failed": "Impossible de terminer la connexion. Veuillez réessayer.",
+    "back_to_login": "Retour à la connexion",
     "submit": "Continuer l'aventure",
     "new_user": "Nouvel explorateur ?",
     "signup_link": "Commencer l'aventure"
