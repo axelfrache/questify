@@ -1,28 +1,51 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { api } from '@/lib/api';
 import { completeOidcLogin } from '@/lib/oidc';
 import { queryKeys } from '@/hooks/use-api';
 
 export function AuthCallbackPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
+  const [hasError, setHasError] = useState(false);
+  const completion = useRef<Promise<string> | null>(null);
 
   useEffect(() => {
-    completeOidcLogin()
-      .then(async (returnTo) => {
-        await queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
-        navigate(returnTo, { replace: true });
-      })
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : 'Authentication failed');
+    let active = true;
+    completion.current ??= completeOidcLogin().then(async (returnTo) => {
+      await queryClient.fetchQuery({
+        queryKey: queryKeys.auth.me,
+        queryFn: () => api.getCurrentUser(),
+        staleTime: 0,
+        retry: false,
       });
+      return returnTo;
+    });
+    completion.current
+      .then((returnTo) => {
+        if (active) navigate(returnTo, { replace: true });
+      })
+      .catch(() => {
+        if (active) setHasError(true);
+      });
+    return () => {
+      active = false;
+    };
   }, [navigate, queryClient]);
 
-  if (error) {
-    return <div className="flex min-h-svh items-center justify-center">{error}</div>;
+  if (hasError) {
+    return (
+      <div className="flex min-h-svh flex-col items-center justify-center gap-4">
+        <p role="alert">{t('login.callback_failed')}</p>
+        <Link to="/login" className="underline">
+          {t('login.back_to_login')}
+        </Link>
+      </div>
+    );
   }
 
-  return <div className="flex min-h-svh items-center justify-center">Signing you in...</div>;
+  return <div className="flex min-h-svh items-center justify-center">{t('login.signing_in')}</div>;
 }

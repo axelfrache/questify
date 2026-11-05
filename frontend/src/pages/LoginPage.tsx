@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,7 +24,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export function LoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -66,6 +66,10 @@ export function LoginPage() {
       setError(t('login.redirect_failed'));
     }
   };
+
+  if (!isLoading && isAuthenticated) {
+    return <Navigate to="/inbox" replace />;
+  }
 
   return (
     <div className="flex min-h-svh items-center justify-center bg-background p-4 animate-in fade-in duration-500 relative">
