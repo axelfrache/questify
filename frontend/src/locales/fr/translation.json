@@ -101,6 +101,8 @@
     "redirect_failed": "Une erreur est survenue. Veuillez réessayer.",
     "signing_in": "Connexion en cours…",
     "callback_failed": "Impossible de terminer la connexion. Veuillez réessayer.",
+    "context_missing": "La connexion a été commencée dans un autre onglet ou sa session n’est plus disponible. Continuez pour vous connecter ici.",
+    "continue_sign_in": "Continuer la connexion",
     "back_to_login": "Retour à la connexion",
     "submit": "Continuer l'aventure",
     "new_user": "Nouvel explorateur ?",
