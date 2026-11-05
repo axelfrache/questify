@@ -101,6 +101,8 @@
     "redirect_failed": "Something went wrong. Please try again.",
     "signing_in": "Signing you in...",
     "callback_failed": "Unable to complete sign-in. Please try again.",
+    "context_missing": "Sign-in started in another tab or its session is no longer available. Continue to sign in here.",
+    "continue_sign_in": "Continue sign-in",
     "back_to_login": "Back to login",
     "submit": "Continue Journey",
     "new_user": "New explorer?",

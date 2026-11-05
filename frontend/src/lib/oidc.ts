@@ -37,6 +37,13 @@ export class OidcAuthenticationError extends Error {
   }
 }
 
+export class OidcContextMissingError extends Error {
+  constructor() {
+    super('OIDC login context is missing');
+    this.name = 'OidcContextMissingError';
+  }
+}
+
 function trimTrailingSlash(value: string) {
   return value.replace(/\/+$/, '');
 }
@@ -163,8 +170,16 @@ export async function completeOidcLogin(search = window.location.search) {
   const expectedState = sessionStorage.getItem(STATE_KEY);
   const verifier = sessionStorage.getItem(PKCE_VERIFIER_KEY);
 
-  if (!code || !state || state !== expectedState || !verifier) {
+  if (params.has('error') || !code || !state) {
     throw new Error('Invalid OIDC callback');
+  }
+
+  if (expectedState && state !== expectedState) {
+    throw new Error('Invalid OIDC callback');
+  }
+
+  if (!expectedState || !verifier) {
+    throw new OidcContextMissingError();
   }
 
   const tokens = await requestToken(
